@@ -1,0 +1,97 @@
+import { Button } from "@/components/ui/button";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useState } from "react";
+
+interface StickyBuyButtonProps {
+  onBuyClick: () => void;
+}
+
+export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    const heroButton = document.querySelector('[data-hero-cta]');
+    const guaranteeButton = document.querySelector('[data-guarantee-cta]');
+
+    const handleScroll = () => {
+      if (!heroButton) return;
+
+      const heroRect = heroButton.getBoundingClientRect();
+      const heroOutOfView = heroRect.bottom < 0 || heroRect.top > window.innerHeight;
+
+      // Check if guarantee button is visible
+      let guaranteeInView = false;
+      if (guaranteeButton) {
+        const guaranteeRect = guaranteeButton.getBoundingClientRect();
+        guaranteeInView = guaranteeRect.top < window.innerHeight && guaranteeRect.bottom > 0;
+      }
+
+      // Show sticky button only when hero button is out of view AND guarantee button is not visible
+      setIsVisible(heroOutOfView && !guaranteeInView);
+    };
+
+    handleScroll(); // Check initial state
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ y: 100, opacity: 0 }}
+      animate={{
+        y: isVisible ? 0 : 100,
+        opacity: isVisible ? 1 : 0
+      }}
+      transition={{
+        duration: 0.4,
+        ease: [0.25, 0.46, 0.45, 0.94] // easeOutQuad for smooth feel
+      }}
+      className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
+    >
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 pb-6 md:pb-8">
+        <div className="bg-black/90 backdrop-blur-xl border border-border/30 rounded-lg p-4 md:p-5 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-center sm:text-left w-full sm:w-auto">
+              <div>
+                <p className="text-sm md:text-base font-medium text-foreground">
+                  NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> - Lentes rojos para dormir mejor
+                </p>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  <span className="line-through text-foreground/40">320,000 Gs</span>
+                  {" "}
+                  <span className="text-lg md:text-xl font-bold text-primary ml-2">280,000 Gs</span>
+                </p>
+              </div>
+            </div>
+
+            <motion.div
+              animate={{
+                boxShadow: [
+                  "0 0 30px rgba(239, 68, 68, 0.3)",
+                  "0 0 40px rgba(239, 68, 68, 0.5)",
+                  "0 0 30px rgba(239, 68, 68, 0.3)",
+                ],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="rounded-lg w-full sm:w-auto"
+            >
+              <Button
+                variant="hero"
+                size="lg"
+                className="w-full sm:min-w-[200px] h-12 md:h-14 text-sm md:text-base"
+                onClick={onBuyClick}
+              >
+                Comprar Ahora
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
