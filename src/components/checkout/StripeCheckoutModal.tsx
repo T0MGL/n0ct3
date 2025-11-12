@@ -77,6 +77,12 @@ const CheckoutForm = ({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}?payment=success`,
+          payment_method_data: {
+            billing_details: {
+              name: 'Customer',
+              email: 'customer@nocte.studio',
+            },
+          },
         },
         redirect: 'if_required',
       });

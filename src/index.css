@@ -105,3 +105,18 @@ All colors MUST be HSL.
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Hide Stripe Link (secure fast checkout) */
+[data-testid*="link"],
+[data-testid*="Link"],
+.p-PaymentMethodSelector-chip[value*="link"],
+.p-PaymentMethodSelector-chip[value*="Link"],
+button[aria-label*="Link"],
+button[aria-label*="link"],
+.LinkAuthenticationElement,
+[class*="LinkAuthenticationElement"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
