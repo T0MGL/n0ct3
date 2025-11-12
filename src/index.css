@@ -98,12 +98,19 @@ All colors MUST be HSL.
 /* Hide Stripe Dev Tools widget in development */
 .__PrivateStripeElement-devTools,
 .__PrivateStripeElement iframe[name*="devtools"],
+.__PrivateStripeElement iframe[name*="__privateStripeFrame"],
 #stripe-devtools,
-[data-stripe-devtools] {
+[data-stripe-devtools],
+iframe[name*="__privateStripeController"],
+iframe[src*="js.stripe.com"][name*="__privateStripe"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Hide Stripe Link (secure fast checkout) */

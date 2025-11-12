@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { PaymentRequest } from '@stripe/stripe-js';
 import { X } from 'lucide-react';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
-import type { PaymentRequestEvent } from '@/types/stripe';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 
 interface StripeCheckoutModalProps {
@@ -15,7 +13,6 @@ interface StripeCheckoutModalProps {
   onSuccess: () => void;
   amount: number;
   currency: string;
-  quantity: number;
 }
 
 const CheckoutForm = ({
@@ -23,17 +20,11 @@ const CheckoutForm = ({
   onClose,
   amount,
   currency,
-  quantity
 }: Omit<StripeCheckoutModalProps, 'isOpen'>) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { createPaymentIntent } = useStripePayment();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
-  const [canMakePayment, setCanMakePayment] = useState(false);
-  const paymentButtonRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize Payment Request (Apple Pay/Google Pay) - DISABLED for now
@@ -120,8 +111,7 @@ const CheckoutForm = ({
               card: 'never',
               auBecsDebit: 'never',
               bancontact: 'never',
-              idealBank: 'never',
-              p24Bank: 'never',
+              ideal: 'never',
               sepaDebit: 'never',
               sofort: 'never',
               usBankAccount: 'never'
@@ -193,7 +183,6 @@ export const StripeCheckoutModal = ({
   onSuccess,
   amount,
   currency,
-  quantity
 }: StripeCheckoutModalProps) => {
   const [stripePromise] = useState(() => getStripe());
   const { createPaymentIntent } = useStripePayment();
@@ -216,7 +205,7 @@ export const StripeCheckoutModal = ({
             paymentMethodId: 'pending',
             email: 'customer@placeholder.com',
             metadata: {
-              quantity: quantity.toString(),
+              quantity: '1',
               product: 'NOCTE Red-Tinted Glasses',
             },
           });
@@ -227,7 +216,7 @@ export const StripeCheckoutModal = ({
           trackAddPaymentInfo({
             value: amount,
             currency: currency.toUpperCase(),
-            num_items: quantity,
+            num_items: 1,
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Error al inicializar el pago';
@@ -244,7 +233,7 @@ export const StripeCheckoutModal = ({
       setClientSecret(null);
       setInitError(null);
     }
-  }, [isOpen, amount, currency, quantity, createPaymentIntent]);
+  }, [isOpen, amount, currency, createPaymentIntent]);
 
   return (
     <AnimatePresence>
@@ -284,7 +273,7 @@ export const StripeCheckoutModal = ({
                 Finalizar Compra
               </h2>
               <p className="text-sm text-muted-foreground">
-                {quantity === 1 ? '1 NOCTE®' : `${quantity} NOCTE®`} Red-Tinted Glasses
+                NOCTE® Red-Tinted Glasses
               </p>
             </div>
 
@@ -332,7 +321,6 @@ export const StripeCheckoutModal = ({
                       borderRadius: '8px',
                     },
                   },
-                  paymentMethodOrder: ['apple_pay', 'google_pay', 'card'],
                 }}
               >
                 <CheckoutForm
@@ -340,7 +328,6 @@ export const StripeCheckoutModal = ({
                   onClose={onClose}
                   amount={amount}
                   currency={currency}
-                  quantity={quantity}
                 />
               </Elements>
             )}

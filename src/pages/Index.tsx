@@ -328,7 +328,6 @@ const Index = () => {
         onSuccess={handlePaymentSuccess}
         amount={checkoutData.quantity === 2 ? 420000 : 280000}
         currency="pyg"
-        quantity={checkoutData.quantity}
       />
 
       <PaymentFallbackModal
