@@ -33,7 +33,7 @@ export const useStripePayment = (): UseStripePaymentReturn => {
       }
 
       // Call backend to create payment intent
-      const response = await fetch(`${API_CONFIG.baseUrl}/create-payment-intent`, {
+      const response = await fetch(`${API_CONFIG.baseUrl}/api/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
