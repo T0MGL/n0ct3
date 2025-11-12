@@ -103,8 +103,8 @@ const CheckoutForm = ({
           options={{
             layout: 'accordion',
             wallets: {
-              applePay: 'always',
-              googlePay: 'always',
+              applePay: 'auto',
+              googlePay: 'auto',
             },
             terms: {
               card: 'never',
