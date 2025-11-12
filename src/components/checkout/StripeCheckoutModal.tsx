@@ -102,7 +102,7 @@ const CheckoutForm = ({
         <PaymentElement
           options={{
             layout: {
-              type: 'tabs',
+              type: 'accordion',
               defaultCollapsed: false,
               radios: false,
               spacedAccordionItems: true
@@ -118,6 +118,13 @@ const CheckoutForm = ({
               billingDetails: {
                 address: {
                   country: 'PY'
+                }
+              }
+            },
+            fields: {
+              billingDetails: {
+                address: {
+                  country: 'never'
                 }
               }
             }
@@ -387,10 +394,6 @@ export const StripeCheckoutModal = ({
                         backgroundColor: '#1a1a1a',
                       },
                     },
-                  },
-                  wallets: {
-                    applePay: 'auto',
-                    googlePay: 'auto',
                   },
                   loader: 'auto',
                 }}

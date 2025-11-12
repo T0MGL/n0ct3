@@ -47,7 +47,7 @@ export async function getGoogleMapsLink(
   address?: string
 ): Promise<GeocodeResponse> {
   try {
-    const response = await fetch(`${API_CONFIG.baseUrl}/geocode`, {
+    const response = await fetch(`${API_CONFIG.baseUrl}/api/geocode`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,15 +90,15 @@ export async function sendOrderToN8N(
   try {
     console.log('📦 Sending order to backend...', orderData);
 
-    // Generate Google Maps link
+    // Generate Google Maps link (more precise version)
     let googleMapsLink: string | null = null;
 
     // If we have lat/long from geolocation, use those (most accurate)
     if (orderData.lat && orderData.long) {
       googleMapsLink = `https://www.google.com/maps?q=${orderData.lat},${orderData.long}`;
       console.log('📍 Google Maps link from coordinates:', googleMapsLink);
-    } else {
-      // Otherwise, try geocoding with address
+    } else if (orderData.address && orderData.location) {
+      // If we have both address and location, use geocoding for precision
       try {
         const geocodeResult = await getGoogleMapsLink(
           orderData.location,
@@ -110,10 +110,15 @@ export async function sendOrderToN8N(
         console.warn('⚠️ Could not generate Google Maps link:', error);
         // Continue without link
       }
+    } else if (orderData.location) {
+      // Fallback: just use location/city
+      const encodedLocation = encodeURIComponent(orderData.location);
+      googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+      console.log('📍 Google Maps link from location only:', googleMapsLink);
     }
 
     // Send complete order data to backend
-    const response = await fetch(`${API_CONFIG.baseUrl}/send-order`, {
+    const response = await fetch(`${API_CONFIG.baseUrl}/api/send-order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
