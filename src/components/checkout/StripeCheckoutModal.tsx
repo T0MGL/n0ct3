@@ -6,6 +6,7 @@ import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
+import { CheckoutProgressBar } from './CheckoutProgressBar';
 
 interface StripeCheckoutModalProps {
   isOpen: boolean;
@@ -268,18 +269,23 @@ export const StripeCheckoutModal = ({
             </button>
 
             {/* Header */}
-            <div className="mb-6 text-center pt-6">
-              <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
-                <p className="text-xs font-semibold text-primary tracking-wide">
-                  PAGO SEGURO
+            <div className="mb-6 text-center pt-6 space-y-6">
+              {/* Progress Bar */}
+              <CheckoutProgressBar currentStep={3} />
+
+              <div>
+                <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                  <p className="text-xs font-semibold text-primary tracking-wide">
+                    PAGO SEGURO
+                  </p>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                  Finalizar Compra
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Orden #{customerData.orderNumber}
                 </p>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Finalizar Compra
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Orden #{customerData.orderNumber}
-              </p>
             </div>
 
             {/* Stripe Elements */}

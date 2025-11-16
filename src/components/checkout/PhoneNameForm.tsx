@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckoutProgressBar } from "./CheckoutProgressBar";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
@@ -151,10 +152,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
             )}
 
             <div className="space-y-6">
-              {/* Step Indicator */}
-              <p className="text-xs text-muted-foreground text-center">
-                Paso 2 de 2: Datos personales
-              </p>
+              {/* Progress Bar */}
+              <CheckoutProgressBar currentStep={2} />
 
               {/* Headline */}
               <div className="text-center space-y-3">

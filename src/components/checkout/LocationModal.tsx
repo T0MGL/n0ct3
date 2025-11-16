@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { MapPinIcon, HomeIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckoutProgressBar } from "./CheckoutProgressBar";
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -112,10 +113,8 @@ export const LocationModal = ({ isOpen, onLocationSubmit, onClose }: LocationMod
             )}
 
             <div className="space-y-6">
-              {/* Step Indicator */}
-              <p className="text-xs text-muted-foreground text-center">
-                Paso 1 de 2: Ubicación
-              </p>
+              {/* Progress Bar */}
+              <CheckoutProgressBar currentStep={1} />
 
               {/* Headline */}
               <div className="text-center space-y-3">
