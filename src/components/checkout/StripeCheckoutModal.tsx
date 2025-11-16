@@ -50,9 +50,13 @@ const CheckoutForm = ({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}?payment=success`,
-          // Don't collect any billing details - we handle delivery info separately
+          // Provide minimum required billing details (country is required by Stripe)
           payment_method_data: {
-            billing_details: {},
+            billing_details: {
+              address: {
+                country: 'PY', // Paraguay - default country for this business
+              },
+            },
           },
         },
         redirect: 'if_required', // Only redirect if absolutely necessary (3D Secure, etc)
