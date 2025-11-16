@@ -290,7 +290,7 @@ const Index = () => {
       {/* Header */}
       <header className="fixed top-0 w-full bg-black/60 backdrop-blur-xl border-b border-border/30 z-50">
         <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-4 md:py-5 flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tighter">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tighter">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
           <button
             onClick={handleBuyClick}
             className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight"
