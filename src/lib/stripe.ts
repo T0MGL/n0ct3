@@ -20,7 +20,9 @@ export const getStripe = (): Promise<Stripe | null> => {
   }
 
   if (!stripePromise) {
-    stripePromise = loadStripe(stripePublishableKey);
+    stripePromise = loadStripe(stripePublishableKey, {
+      advancedFraudSignals: false, // Disable dev tools widget
+    });
   }
 
   return stripePromise;

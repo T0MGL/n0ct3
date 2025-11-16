@@ -60,7 +60,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
                 <p className="text-xs md:text-sm text-muted-foreground">
                   <span className="line-through text-foreground/40">320,000 Gs</span>
                   {" "}
-                  <span className="text-lg md:text-xl font-bold text-primary ml-2">280,000 Gs</span>
+                  <span className="text-lg md:text-xl font-bold text-primary ml-2">279,000 Gs</span>
                 </p>
               </div>
             </div>

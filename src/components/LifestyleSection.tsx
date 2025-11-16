@@ -29,7 +29,7 @@ export const LifestyleSection = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6"
         >
@@ -46,7 +46,7 @@ export const LifestyleSection = () => {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6 }}
             className="relative order-2 lg:order-1"
           >
@@ -69,7 +69,7 @@ export const LifestyleSection = () => {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-8 order-1 lg:order-2"
           >
@@ -80,7 +80,7 @@ export const LifestyleSection = () => {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, amount: 0.4 }}
                   transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
                   className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-primary/50 hover:border-primary transition-all duration-300"
                 >
@@ -107,7 +107,7 @@ export const LifestyleSection = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-16 md:mt-20 text-center"
         >

@@ -66,7 +66,7 @@ export const UpsellModal = ({ isOpen, onClose, onSelectUpsell, onSelectSingle }:
                 <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg font-semibold text-foreground">1 NOCTE<sup className="text-[0.3em]">®</sup></h3>
-                    <span className="text-2xl font-bold text-foreground">280,000 Gs</span>
+                    <span className="text-2xl font-bold text-foreground">279,000 Gs</span>
                   </div>
                   <div className="space-y-1.5 text-sm text-muted-foreground">
                     <p>1 lente + estuche + paño</p>
@@ -82,8 +82,8 @@ export const UpsellModal = ({ isOpen, onClose, onSelectUpsell, onSelectSingle }:
                   <div className="flex justify-between items-center mb-3 mt-1">
                     <h3 className="text-lg font-semibold text-foreground">2 NOCTE<sup className="text-[0.3em]">®</sup></h3>
                     <div className="text-right">
-                      <span className="text-sm text-muted-foreground line-through block">560,000 Gs</span>
-                      <span className="text-2xl font-bold text-primary">420,000 Gs</span>
+                      <span className="text-sm text-muted-foreground line-through block">640,000 Gs</span>
+                      <span className="text-2xl font-bold text-primary">558,000 Gs</span>
                     </div>
                   </div>
 

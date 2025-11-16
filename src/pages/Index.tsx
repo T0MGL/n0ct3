@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { HeroSection } from "@/components/HeroSection";
 import { ScienceSection } from "@/components/ScienceSection";
 import { ProductGallery } from "@/components/ProductGallery";
@@ -24,6 +25,9 @@ import {
 } from "@/lib/meta-pixel";
 
 const Index = () => {
+  // UI state
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
+
   // Checkout state management
   const [showUpsell, setShowUpsell] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
@@ -85,7 +89,7 @@ const Index = () => {
       content_name: 'NOCTE® Red Light Blocking Glasses - Pack x2',
       content_ids: ['nocte-red-glasses-2pack'],
       num_items: 2,
-      value: 420000,
+      value: 558000,
       currency: 'PYG',
     });
 
@@ -102,7 +106,7 @@ const Index = () => {
       content_name: 'NOCTE® Red Light Blocking Glasses',
       content_ids: ['nocte-red-glasses'],
       num_items: 1,
-      value: 280000,
+      value: 279000,
       currency: 'PYG',
     });
 
@@ -114,6 +118,11 @@ const Index = () => {
   const handlePaymentSuccess = () => {
     setShowStripeCheckout(false);
     setShowLocation(true); // Show location modal after successful payment
+  };
+
+  const handleBackToUpsell = () => {
+    setShowStripeCheckout(false);
+    setShowUpsell(true); // Go back to quantity selection
   };
 
   const handleStripeCheckoutClose = () => {
@@ -131,6 +140,12 @@ const Index = () => {
       orderNumber: generateOrderNumber(),
       paymentIntentId: "",
     });
+  };
+
+  const handlePayOnDeliveryFromCheckout = () => {
+    setCheckoutData((prev) => ({ ...prev, paymentMethod: "cash" }));
+    setShowStripeCheckout(false);
+    setShowLocation(true); // Go directly to location modal
   };
 
   const handlePayOnDelivery = () => {
@@ -188,7 +203,7 @@ const Index = () => {
     setCheckoutData(updatedCheckoutData);
     setShowPhoneForm(false);
 
-    const totalAmount = checkoutData.quantity === 2 ? 420000 : 280000;
+    const totalAmount = checkoutData.quantity === 2 ? 558000 : 279000;
 
     // Send order to n8n webhook
     try {
@@ -279,7 +294,7 @@ const Index = () => {
   const orderData = useMemo(() => ({
     orderNumber: checkoutData.orderNumber,
     products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
-    total: checkoutData.quantity === 2 ? "420,000 Gs" : "280,000 Gs",
+    total: checkoutData.quantity === 2 ? "558,000 Gs" : "279,000 Gs",
     location: checkoutData.location,
     phone: checkoutData.phone,
     name: checkoutData.name,
@@ -287,8 +302,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-black text-foreground">
+      {/* Delivery Banner */}
+      <DeliveryBanner onVisibilityChange={setIsBannerVisible} />
+
       {/* Header */}
-      <header className="fixed top-0 w-full bg-black/60 backdrop-blur-xl border-b border-border/30 z-50">
+      <header className={`fixed ${isBannerVisible ? 'top-[36px] md:top-[40px]' : 'top-0'} w-full bg-black/60 backdrop-blur-xl border-b border-border/30 z-50 transition-all duration-300`}>
         <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-4 md:py-5 flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tighter">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
           <button
@@ -301,7 +319,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 md:pt-20">
+      <main className={`${isBannerVisible ? 'pt-[100px] md:pt-[108px]' : 'pt-16 md:pt-20'} transition-all duration-300`}>
         <HeroSection onBuyClick={handleBuyClick} />
         <ProductGallery />
         <ScienceSection />
@@ -327,8 +345,10 @@ const Index = () => {
       <StripeCheckoutModal
         isOpen={showStripeCheckout}
         onClose={handleStripeCheckoutClose}
+        onBack={handleBackToUpsell}
         onSuccess={handlePaymentSuccess}
-        amount={checkoutData.quantity === 2 ? 420000 : 280000}
+        onPayOnDelivery={handlePayOnDeliveryFromCheckout}
+        amount={checkoutData.quantity === 2 ? 558000 : 279000}
         currency="pyg"
       />
 
@@ -364,20 +384,6 @@ const Index = () => {
           <p className="text-muted-foreground font-light text-xs md:text-sm">
             Úsalos antes de dormir. Duerme profundo.
           </p>
-
-          {/* Payment Methods - Powered by Stripe */}
-          <div className="flex flex-col items-center justify-center gap-3 pt-2">
-            <div className="flex items-center gap-2">
-              <img
-                src="https://cdn.brandfolder.io/KGT2DTA4/at/8vbr8k4mr5xjwk4hxq4t9vs/Stripe_wordmark_-_blurple.svg"
-                alt="Powered by Stripe"
-                className="h-5 opacity-60"
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground/50">
-              Aceptamos Visa, Mastercard, American Express y más
-            </p>
-          </div>
 
           <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light">
             © 2025 NOCTE® Todos los Derechos Reservados

@@ -10,18 +10,38 @@ export const CountdownTimer = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    // Set target date to 24 hours from now
-    const targetDate = new Date();
-    targetDate.setHours(targetDate.getHours() + 24);
+    const STORAGE_KEY = 'nocte-countdown-target';
+
+    // Get or create target date
+    const getTargetDate = (): Date => {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+
+      if (stored) {
+        const storedDate = new Date(stored);
+        // If stored date is in the future, use it
+        if (storedDate.getTime() > Date.now()) {
+          return storedDate;
+        }
+      }
+
+      // Create new target date 24 hours from now
+      const newTarget = new Date();
+      newTarget.setHours(newTarget.getHours() + 24);
+      sessionStorage.setItem(STORAGE_KEY, newTarget.toISOString());
+      return newTarget;
+    };
+
+    let targetDate = getTargetDate();
 
     const timer = setInterval(() => {
       const now = new Date().getTime();
       const distance = targetDate.getTime() - now;
 
       if (distance < 0) {
-        clearInterval(timer);
         // Reset to 24 hours when countdown ends
+        targetDate = new Date();
         targetDate.setHours(targetDate.getHours() + 24);
+        sessionStorage.setItem(STORAGE_KEY, targetDate.toISOString());
       }
 
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

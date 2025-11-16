@@ -106,7 +106,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   <p className="text-sm md:text-base text-foreground/60">
                     <span className="line-through text-foreground/40">320,000 Gs</span>
                     {" "}
-                    <span className="text-2xl md:text-3xl font-bold text-primary ml-2">280,000 Gs</span>
+                    <span className="text-2xl md:text-3xl font-bold text-primary ml-2">279,000 Gs</span>
                   </p>
                   <div className="flex items-center gap-2 text-xs md:text-sm text-primary/80 font-medium">
                     <ExclamationTriangleIcon className="w-4 h-4" />

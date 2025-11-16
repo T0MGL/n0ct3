@@ -101,7 +101,7 @@ export const trackViewContent = (params?: {
     content_category: 'Sleep & Wellness',
     content_ids: ['nocte-red-glasses'],
     content_type: 'product',
-    value: 280000,
+    value: 279000,
     currency: 'PYG',
   };
 
@@ -128,7 +128,7 @@ export const trackInitiateCheckout = (params?: {
     content_category: 'Sleep & Wellness',
     content_ids: ['nocte-red-glasses'],
     num_items: 1,
-    value: 280000,
+    value: 279000,
     currency: 'PYG',
   };
 

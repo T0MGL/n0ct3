@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X } from 'lucide-react';
+import { BanknotesIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
@@ -10,7 +11,9 @@ import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 interface StripeCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack: () => void;
   onSuccess: () => void;
+  onPayOnDelivery: () => void;
   amount: number;
   currency: string;
 }
@@ -138,7 +141,9 @@ const CheckoutForm = ({
 export const StripeCheckoutModal = ({
   isOpen,
   onClose,
+  onBack,
   onSuccess,
+  onPayOnDelivery,
   amount,
   currency,
 }: StripeCheckoutModalProps) => {
@@ -147,10 +152,11 @@ export const StripeCheckoutModal = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [showStripeForm, setShowStripeForm] = useState(false);
 
-  // Create payment intent when modal opens
+  // Create payment intent when user selects digital payment
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && showStripeForm) {
       const initPayment = async () => {
         setIsInitializing(true);
         setInitError(null);
@@ -186,12 +192,13 @@ export const StripeCheckoutModal = ({
       };
 
       initPayment();
-    } else {
+    } else if (!isOpen) {
       // Reset when modal closes - force complete unmount
       setClientSecret(null);
       setInitError(null);
+      setShowStripeForm(false);
     }
-  }, [isOpen, amount, currency, createPaymentIntent]);
+  }, [isOpen, showStripeForm, amount, currency, createPaymentIntent]);
 
   return (
     <AnimatePresence>
@@ -220,6 +227,16 @@ export const StripeCheckoutModal = ({
               <X className="w-5 h-5" />
             </button>
 
+            {/* Back Button */}
+            {!showStripeForm && (
+              <button
+                onClick={onBack}
+                className="absolute top-4 left-4 text-sm text-muted-foreground hover:text-foreground transition-colors z-10 flex items-center gap-1"
+              >
+                ← Volver
+              </button>
+            )}
+
             {/* Header */}
             <div className="mb-6 text-center">
               <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
@@ -235,60 +252,176 @@ export const StripeCheckoutModal = ({
               </p>
             </div>
 
-            {/* Loading State */}
-            {isInitializing && (
-              <div className="py-12 text-center">
-                <div className="inline-block w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                <p className="mt-4 text-muted-foreground">Preparando pago...</p>
-              </div>
-            )}
+            {/* Payment Method Selection */}
+            {!showStripeForm && (
+              <div className="space-y-5">
+                {/* Pago Digital - Recommended */}
+                <div className="p-5 bg-primary/10 border-2 border-primary/50 rounded-xl space-y-3 relative overflow-hidden">
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-primary rounded-full">
+                    <p className="text-xs font-bold text-white">RECOMENDADO</p>
+                  </div>
 
-            {/* Error State */}
-            {initError && (
-              <div className="space-y-4">
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <p className="text-sm text-red-400">{initError}</p>
+                  <div className="flex items-start gap-3">
+                    <CreditCardIcon className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-foreground mb-2">
+                        Pago seguro con tarjeta
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Procesado por Stripe. Paga con Face ID, Google Pay, Apple Pay o cualquier tarjeta de débito/crédito.
+                      </p>
+                      <div className="space-y-1.5 mb-3">
+                        <p className="text-xs text-foreground flex items-center gap-2">
+                          ✓ Aceptamos Ueno, Itaú, Familiar, Vision, Rio
+                        </p>
+                        <p className="text-xs text-foreground flex items-center gap-2">
+                          ✓ Delivery GRATIS incluido
+                        </p>
+                        <p className="text-xs text-foreground flex items-center gap-2">
+                          ✓ Pago instantáneo y seguro
+                        </p>
+                        <p className="text-xs text-foreground flex items-center gap-2">
+                          ✓ Confirmación inmediata por email
+                        </p>
+                        <p className="text-xs text-foreground flex items-center gap-2">
+                          ✓ Protección de compra garantizada
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-black/20 rounded-lg border border-primary/20">
+                        <img
+                          src="https://cdn.brandfolder.io/KGT2DTA4/at/8vbr8k4mr5xjwk4hxq4t9vs/Stripe_wordmark_-_blurple.svg"
+                          alt="Powered by Stripe"
+                          className="h-4 opacity-70"
+                        />
+                        <span className="text-[10px] text-muted-foreground">
+                          Procesamiento seguro
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => setShowStripeForm(true)}
+                    variant="hero"
+                    size="lg"
+                    className="w-full mt-3 font-bold"
+                  >
+                    Pagar con tarjeta ahora
+                  </Button>
                 </div>
+
+                {/* Pagar al recibir - Alternative */}
+                <div className="p-4 bg-secondary/30 border border-border rounded-lg">
+                  <div className="flex items-start gap-3 mb-3">
+                    <BanknotesIcon className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="text-base font-semibold text-foreground mb-1">
+                        Pago al recibir
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Paga en efectivo cuando recibas el producto
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={onPayOnDelivery}
+                    variant="outline"
+                    size="default"
+                    className="w-full bg-secondary/50 hover:bg-secondary/80"
+                  >
+                    Continuar con pago al recibir
+                  </Button>
+                </div>
+
+                {/* Total */}
+                <div className="flex justify-between items-center p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <span className="font-semibold text-foreground">Total a pagar:</span>
+                  <span className="text-2xl font-bold text-primary">
+                    {formatPrice(amount, currency)}
+                  </span>
+                </div>
+
+                {/* Cancel Button */}
                 <Button
-                  onClick={onClose}
+                  type="button"
                   variant="outline"
                   size="lg"
                   className="w-full bg-transparent border-border/50 hover:bg-secondary/50"
+                  onClick={onClose}
                 >
-                  Cerrar
+                  Cancelar
                 </Button>
               </div>
             )}
 
-            {/* Stripe Elements */}
-            {!isInitializing && !initError && clientSecret && (
-              <Elements
-                key={clientSecret}
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  locale: 'es',
-                  appearance: {
-                    theme: 'night',
-                    variables: {
-                      colorPrimary: '#EF4444',
-                      colorBackground: '#000000',
-                      colorText: '#F9FAFB',
-                      colorDanger: '#DC2626',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      fontSizeBase: '16px',
-                      borderRadius: '8px',
-                    },
-                  },
-                }}
-              >
-                <CheckoutForm
-                  onSuccess={onSuccess}
-                  onClose={onClose}
-                  amount={amount}
-                  currency={currency}
-                />
-              </Elements>
+            {/* Stripe Payment Form */}
+            {showStripeForm && (
+              <>
+                {/* Back Button */}
+                <button
+                  onClick={() => setShowStripeForm(false)}
+                  className="mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                >
+                  ← Volver a métodos de pago
+                </button>
+
+                {/* Loading State */}
+                {isInitializing && (
+                  <div className="py-12 text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                    <p className="mt-4 text-muted-foreground">Preparando pago...</p>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {initError && (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                      <p className="text-sm text-red-400">{initError}</p>
+                    </div>
+                    <Button
+                      onClick={() => setShowStripeForm(false)}
+                      variant="outline"
+                      size="lg"
+                      className="w-full bg-transparent border-border/50 hover:bg-secondary/50"
+                    >
+                      Volver
+                    </Button>
+                  </div>
+                )}
+
+                {/* Stripe Elements */}
+                {!isInitializing && !initError && clientSecret && (
+                  <Elements
+                    key={clientSecret}
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      locale: 'es',
+                      appearance: {
+                        theme: 'night',
+                        variables: {
+                          colorPrimary: '#EF4444',
+                          colorBackground: '#000000',
+                          colorText: '#F9FAFB',
+                          colorDanger: '#DC2626',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          fontSizeBase: '16px',
+                          borderRadius: '8px',
+                        },
+                      },
+                    }}
+                  >
+                    <CheckoutForm
+                      onSuccess={onSuccess}
+                      onClose={() => setShowStripeForm(false)}
+                      amount={amount}
+                      currency={currency}
+                    />
+                  </Elements>
+                )}
+              </>
             )}
           </motion.div>
         </motion.div>

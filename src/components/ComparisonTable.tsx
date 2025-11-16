@@ -27,7 +27,7 @@ const comparisons = [
       { label: "Bloqueo de luz azul", value: "99%", isGood: true },
       { label: "Mejora el sueño", value: "Máximo", isGood: true },
       { label: "Garantía", value: "30 días", isGood: true },
-      { label: "Precio", value: "280k Gs", isGood: true },
+      { label: "Precio", value: "279k Gs", isGood: true },
     ],
     isNocte: true,
   },
@@ -103,7 +103,7 @@ export const ComparisonTable = () => {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-center mb-12 md:mb-16 space-y-4 md:space-y-6"
         >
@@ -158,7 +158,7 @@ export const ComparisonTable = () => {
                   key={index}
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
+                  viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.4, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
                   className={`p-8 md:p-10 border-2 w-[280px] md:w-[340px] flex-shrink-0 ${
                     option.isNocte
