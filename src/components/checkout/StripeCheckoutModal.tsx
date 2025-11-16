@@ -75,6 +75,7 @@ const CheckoutForm = ({
               phone: '+595123456789',
               address: {
                 country: 'US',
+                postal_code: '00000',
               },
             },
           },
@@ -103,9 +104,15 @@ const CheckoutForm = ({
         <PaymentElement
           options={{
             layout: 'tabs',
+            wallets: {
+              applePay: 'auto',
+              googlePay: 'auto',
+            },
             fields: {
               billingDetails: 'never'
-            }
+            },
+            // Disable Link checkout
+            paymentMethodOrder: ['card', 'apple_pay', 'google_pay']
           }}
         />
       </div>
