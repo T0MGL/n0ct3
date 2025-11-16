@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { ScienceSection } from "@/components/ScienceSection";
 import { ProductGallery } from "@/components/ProductGallery";
@@ -276,14 +276,14 @@ const Index = () => {
     });
   };
 
-  const orderData = {
+  const orderData = useMemo(() => ({
     orderNumber: checkoutData.orderNumber,
     products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
     total: checkoutData.quantity === 2 ? "420,000 Gs" : "280,000 Gs",
     location: checkoutData.location,
     phone: checkoutData.phone,
     name: checkoutData.name,
-  };
+  }), [checkoutData]);
 
   return (
     <div className="min-h-screen bg-black text-foreground">
