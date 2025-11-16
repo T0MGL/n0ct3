@@ -82,8 +82,8 @@ export const UpsellModal = ({ isOpen, onClose, onSelectUpsell, onSelectSingle }:
                   <div className="flex justify-between items-center mb-3 mt-1">
                     <h3 className="text-lg font-semibold text-foreground">2 NOCTE<sup className="text-[0.3em]">®</sup></h3>
                     <div className="text-right">
-                      <span className="text-sm text-muted-foreground line-through block">640,000 Gs</span>
-                      <span className="text-2xl font-bold text-primary">558,000 Gs</span>
+                      <span className="text-sm text-muted-foreground line-through block">558,000 Gs</span>
+                      <span className="text-2xl font-bold text-primary">418,500 Gs</span>
                     </div>
                   </div>
 
@@ -93,7 +93,7 @@ export const UpsellModal = ({ isOpen, onClose, onSelectUpsell, onSelectSingle }:
 
                   <div className="pt-3 border-t border-border/30">
                     <p className="text-sm font-semibold text-accent">
-                      Ahorras 140,000 Gs
+                      Ahorras 139,500 Gs
                     </p>
                   </div>
                 </div>

@@ -89,7 +89,7 @@ const Index = () => {
       content_name: 'NOCTE® Red Light Blocking Glasses - Pack x2',
       content_ids: ['nocte-red-glasses-2pack'],
       num_items: 2,
-      value: 558000,
+      value: 418500,
       currency: 'PYG',
     });
 
@@ -203,7 +203,7 @@ const Index = () => {
     setCheckoutData(updatedCheckoutData);
     setShowPhoneForm(false);
 
-    const totalAmount = checkoutData.quantity === 2 ? 558000 : 279000;
+    const totalAmount = checkoutData.quantity === 2 ? 418500 : 279000;
 
     // Send order to n8n webhook
     try {
@@ -294,7 +294,7 @@ const Index = () => {
   const orderData = useMemo(() => ({
     orderNumber: checkoutData.orderNumber,
     products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
-    total: checkoutData.quantity === 2 ? "558,000 Gs" : "279,000 Gs",
+    total: checkoutData.quantity === 2 ? "418,500 Gs" : "279,000 Gs",
     location: checkoutData.location,
     phone: checkoutData.phone,
     name: checkoutData.name,
@@ -348,7 +348,7 @@ const Index = () => {
         onBack={handleBackToUpsell}
         onSuccess={handlePaymentSuccess}
         onPayOnDelivery={handlePayOnDeliveryFromCheckout}
-        amount={checkoutData.quantity === 2 ? 558000 : 279000}
+        amount={checkoutData.quantity === 2 ? 418500 : 279000}
         currency="pyg"
       />
 
