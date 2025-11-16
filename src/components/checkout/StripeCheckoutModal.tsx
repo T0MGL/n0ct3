@@ -31,28 +31,6 @@ const CheckoutForm = ({
   // Using PaymentElement instead which handles both native and card payments
   // TODO: Re-enable if needed for explicit Apple Pay/Google Pay buttons
 
-  // Auto-submit when payment details are complete
-  useEffect(() => {
-    if (!elements || !stripe || isProcessing) return;
-
-    const paymentElement = elements.getElement('payment');
-    if (!paymentElement) return;
-
-    // Listen for changes in the payment element
-    const handleChange = (event: { complete?: boolean }) => {
-      if (event.complete && !isProcessing) {
-        // Payment details are complete, auto-submit
-        formRef.current?.requestSubmit();
-      }
-    };
-
-    paymentElement.on('change', handleChange);
-
-    return () => {
-      paymentElement.off('change', handleChange);
-    };
-  }, [elements, stripe, isProcessing]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -68,13 +46,6 @@ const CheckoutForm = ({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}?payment=success`,
-          payment_method_data: {
-            billing_details: {
-              address: {
-                postal_code: '00000',
-              },
-            },
-          },
         },
         redirect: 'if_required',
       });
@@ -103,14 +74,6 @@ const CheckoutForm = ({
             wallets: {
               applePay: 'auto',
               googlePay: 'auto',
-            },
-            fields: {
-              billingDetails: {
-                name: 'never',
-                email: 'never',
-                phone: 'never',
-                address: 'never',
-              }
             },
             // Disable Link checkout
             paymentMethodOrder: ['card', 'apple_pay', 'google_pay']
@@ -304,6 +267,7 @@ export const StripeCheckoutModal = ({
                 stripe={stripePromise}
                 options={{
                   clientSecret,
+                  locale: 'es',
                   appearance: {
                     theme: 'night',
                     variables: {
