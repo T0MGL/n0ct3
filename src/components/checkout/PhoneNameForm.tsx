@@ -273,3 +273,5 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     </AnimatePresence>
   );
 };
+
+export default PhoneNameForm;

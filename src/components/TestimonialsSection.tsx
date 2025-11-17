@@ -6,25 +6,25 @@ const testimonials = [
     name: "Juan López",
     role: "Founder, Asunción",
     rating: 5,
-    quote: "Llevaba 3 meses sin dormir bien. Con NOCTE cambió todo. Ahora duermo 7-8 horas seguidas sin despertarme.",
+    quote: "Trabajo hasta las 2-3AM y antes no podía dormir hasta las 6. Con NOCTE me duermo a las 4AM sin problemas. Game changer total.",
   },
   {
     name: "María Fernández",
     role: "Desarrolladora, Remote",
     rating: 5,
-    quote: "Probé otros lentes transparentes y no funcionaban. Con NOCTE es REAL. Duermo profundo cada noche.",
+    quote: "Los uso mientras coneo de 8PM a 1AM. Termino mi día y me duermo en 15 minutos. Antes tardaba 2 horas dando vueltas. Es real.",
   },
   {
     name: "Carlos Gómez",
     role: "Emprendedor Tech, Fernando de la Mora",
     rating: 5,
-    quote: "30 días de garantía sin riesgo. Ya llevo 2 meses, no me lo saco nunca. Lo mejor que invertí este año.",
+    quote: "No son mágicos, pero funcionan. Los uso 3 horas antes de dormir mientras trabajo en mi laptop. Duermo profundo y despierto descansado.",
   },
   {
     name: "Andrea Pérez",
     role: "Consultora, Encarnación",
     rating: 5,
-    quote: "Literalmente cambió mi productividad. Duermo mejor = trabajo mejor. Recomiendo NOCTE al 100%.",
+    quote: "Pensé que era marketing. Pero después de 2 semanas usándolos en mis sesiones nocturnas, duermo como nunca. 100% recomendado.",
   },
 ];
 
@@ -64,10 +64,10 @@ export const TestimonialsSection = () => {
           className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4"
         >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-4">
-            Confían en NOCTE
+            Trabajan de noche. Duermen profundo.
           </h2>
           <p className="text-base md:text-xl text-muted-foreground px-4">
-            Emprendedores paraguayos duermen mejor
+            Emprendedores paraguayos que no sacrifican su sueño
           </p>
         </motion.div>
 
@@ -151,3 +151,5 @@ export const TestimonialsSection = () => {
     </section>
   );
 };
+
+export default TestimonialsSection;

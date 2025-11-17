@@ -14,12 +14,10 @@ export const ScienceSection = () => {
           className="text-center mb-16 md:mb-20 space-y-6 md:space-y-8"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4 leading-tight">
-            No todos los bloqueadores de luz azul son iguales.
+            Por qué los lentes rojos, no transparentes.
           </h2>
           <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground font-light max-w-4xl mx-auto px-4 leading-relaxed">
-            Los lentes transparentes se quedan cortos. Los lentes rojos van más profundo—bloqueando
-            el 99% de la luz azul que engaña a tu cerebro para entrar en 'modo día', para que
-            finalmente puedas dormir mejor y sentirte mejor.
+            Los lentes "anti-luz azul" transparentes bloquean apenas el 20-30%. <span className="text-foreground font-medium">No es suficiente.</span> Los lentes rojos de NOCTE bloquean el 99% del espectro 400-550nm—la luz que literalmente le grita a tu cerebro "¡despierta!" mientras trabajas de noche. Úsalos durante tus sesiones nocturnas, y tu cuerpo producirá melatonina como si fuera de noche... porque para tu cerebro, lo es.
           </p>
         </motion.div>
 
@@ -236,3 +234,5 @@ export const ScienceSection = () => {
     </section>
   );
 };
+
+export default ScienceSection;

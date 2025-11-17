@@ -8,20 +8,20 @@ import { motion } from "framer-motion";
 
 const faqs = [
   {
-    question: "¿Cómo funcionan los lentes rojos NOCTE?",
-    answer: "Úsalos 2-3 horas antes de dormir mientras trabajas o usas tu celular. Los lentes bloquean luz azul (400-550nm) que engaña al cerebro haciéndolo pensar que es de día. Al bloquearlo, tu cuerpo produce melatonina naturalmente y duermes profundo sin pastillas.",
+    question: "¿Los uso para dormir o para trabajar?",
+    answer: "Para trabajar/usar pantallas de noche. No son lentes para ponerte a dormir. Los usas mientras trabajas, estudias o scrolleas de noche (2-3 horas antes de dormir). Bloquean la luz azul que le dice a tu cerebro 'despierta', permitiendo que tu cuerpo produzca melatonina naturalmente. Resultado: cuando terminas tu sesión y vas a dormir, te duermes rápido y profundo.",
   },
   {
     question: "¿Cuál es la garantía de NOCTE?",
-    answer: "30 días completos. Si no duermes mejor en 30 días, devolvemos 100% de tu dinero. Sin preguntas, sin sorpresas. Garantía clara y honesta.",
+    answer: "30 días completos. Si después de usar NOCTE durante tus sesiones nocturnas no duermes mejor en 30 días, devolvemos 100% de tu dinero. Sin preguntas, sin sorpresas. Garantía clara y honesta.",
   },
   {
     question: "¿Cuánto tarda en llegar NOCTE?",
     answer: "Envío GRATIS a Asunción y Departamento Central. 1-2 días hábiles después de comprar. Packaging premium incluido.",
   },
   {
-    question: "¿Funcionan NOCTE si tengo insomnio severo?",
-    answer: "Sí, pero recomendamos rutina completa: NOCTE + sin pantalla 1 hora antes de dormir. Combina bien con técnicas de meditación.",
+    question: "¿Funcionan si trabajo hasta las 2-3AM?",
+    answer: "Sí, justamente para eso están diseñados. Úsalos durante tus sesiones nocturnas de trabajo (aunque sea hasta las 5AM). Tu cerebro producirá melatonina como si fuera de noche, permitiéndote dormir cuando termines tu día. Muchos emprendedores nocturnos reportan resultados increíbles.",
   },
   {
     question: "¿Qué incluye la caja de NOCTE?",
@@ -65,3 +65,5 @@ export const FAQSection = () => {
     </section>
   );
 };
+
+export default FAQSection;

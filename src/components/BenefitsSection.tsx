@@ -1,45 +1,24 @@
 import { EyeIcon, BoltIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { fadeInUpView, staggerContainer, staggerItem } from "@/lib/animations";
 
 const benefits = [
   {
     icon: EyeIcon,
-    title: "Alivia Fatiga Ocular",
-    description: "Bloquea luz azul (400-550nm) que causa cansancio después de 8 horas de pantalla.",
+    title: "Trabaja sin fatiga ocular",
+    description: "Úsalos durante tus sesiones nocturnas de trabajo. Bloquean la luz azul (400-550nm) que quema tus ojos después de 8+ horas de pantalla. Termina tu día sin ojos rojos ni cansancio visual.",
   },
   {
     icon: BoltIcon,
-    title: "Reduce Dolores de Cabeza",
-    description: "Sin más migrañas por tensión digital. Usuarios reportan 70% menos dolores.",
+    title: "Cero dolores de cabeza",
+    description: "La luz azul de las pantallas causa tensión que termina en migrañas. Con NOCTE, trabajas tranquilo. El 70% de nuestros usuarios reportan eliminación total de dolores de cabeza nocturnos.",
   },
   {
     icon: MoonIcon,
-    title: "Mejora el Sueño",
-    description: "Úsalos 2-3 horas antes de dormir mientras usas pantallas. Tu cuerpo producirá melatonina naturalmente.",
+    title: "Duerme profundo (el beneficio real)",
+    description: "Úsalos mientras trabajas o scrolleas de noche. Tu cerebro producirá melatonina naturalmente como si fuera de noche. Resultado: te duermes más rápido y despiertas descansado. No magic pills, solo ciencia.",
   },
 ];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
 
 export const BenefitsSection = () => {
   return (
@@ -48,21 +27,21 @@ export const BenefitsSection = () => {
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          {...fadeInUpView}
           className="text-center mb-12 md:mb-20 space-y-3 md:space-y-4"
         >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-4">
-            ¿Por qué NOCTE funciona?
+            Trabaja de noche sin sacrificar tu sueño
           </h2>
+          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
+            NOCTE no es un accesorio. Es tu protección contra la luz azul que te mantiene despierto cuando deberías estar durmiendo.
+          </p>
         </motion.div>
 
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          {...staggerContainer}
+          initial="initial"
+          whileInView="animate"
           viewport={{ once: true, amount: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-12"
         >
@@ -71,7 +50,7 @@ export const BenefitsSection = () => {
             return (
               <motion.div
                 key={index}
-                variants={itemVariants}
+                variants={staggerItem}
                 className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/50 transition-all duration-300"
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -97,3 +76,5 @@ export const BenefitsSection = () => {
     </section>
   );
 };
+
+export default BenefitsSection;

@@ -1,21 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { HeroSection } from "@/components/HeroSection";
-import { ScienceSection } from "@/components/ScienceSection";
-import { ProductGallery } from "@/components/ProductGallery";
-import { BenefitsSection } from "@/components/BenefitsSection";
-import { LifestyleSection } from "@/components/LifestyleSection";
-import { ComparisonTable } from "@/components/ComparisonTable";
-import { TestimonialsSection } from "@/components/TestimonialsSection";
-import { FAQSection } from "@/components/FAQSection";
-import { GuaranteeSection } from "@/components/GuaranteeSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
-import { UpsellModal } from "@/components/checkout/UpsellModal";
-import { LocationModal } from "@/components/checkout/LocationModal";
-import { PhoneNameForm } from "@/components/checkout/PhoneNameForm";
-import { SuccessPage } from "@/components/checkout/SuccessPage";
-import { PaymentFallbackModal } from "@/components/checkout/PaymentFallbackModal";
-import { StripeCheckoutModal } from "@/components/checkout/StripeCheckoutModal";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { OfferCTA } from "@/components/OfferCTA";
 import { sendOrderToN8N, generateOrderNumber } from "@/services/orderService";
 import {
   trackInitiateCheckout,
@@ -24,11 +12,31 @@ import {
   trackPurchase,
 } from "@/lib/meta-pixel";
 
+// Lazy load heavy sections that are below the fold
+const ProductGallery = lazy(() => import("@/components/ProductGallery"));
+const ScienceSection = lazy(() => import("@/components/ScienceSection"));
+const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
+const LifestyleSection = lazy(() => import("@/components/LifestyleSection"));
+const ComparisonTable = lazy(() => import("@/components/ComparisonTable"));
+const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
+const FAQSection = lazy(() => import("@/components/FAQSection"));
+const GuaranteeSection = lazy(() => import("@/components/GuaranteeSection"));
+
+// Lazy load checkout modals (only loaded when user clicks buy)
+const QuantitySelector = lazy(() => import("@/components/checkout/QuantitySelector").then(module => ({ default: module.QuantitySelector })));
+const UpsellModal = lazy(() => import("@/components/checkout/UpsellModal"));
+const LocationModal = lazy(() => import("@/components/checkout/LocationModal"));
+const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
+const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
+const PaymentFallbackModal = lazy(() => import("@/components/checkout/PaymentFallbackModal"));
+const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
+
 const Index = () => {
   // UI state
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
   // Checkout state management
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [showPaymentFallback, setShowPaymentFallback] = useState(false);
@@ -78,7 +86,30 @@ const Index = () => {
   const handleBuyClick = () => {
     // Track InitiateCheckout when user clicks buy button
     trackInitiateCheckout();
-    setShowUpsell(true);
+    setShowQuantitySelector(true);
+  };
+
+  const handleQuantitySelected = (quantity: number) => {
+    setCheckoutData((prev) => ({ ...prev, quantity }));
+    setShowQuantitySelector(false);
+
+    // If quantity is 1, show upsell offer
+    // If quantity is 2 or more, skip upsell and go directly to checkout
+    if (quantity === 1) {
+      setShowUpsell(true);
+    } else {
+      // Track AddToCart for multiple items
+      trackAddToCart({
+        content_name: `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
+        content_ids: [`nocte-red-glasses-${quantity}pack`],
+        num_items: quantity,
+        value: 279000 * quantity,
+        currency: 'PYG',
+      });
+
+      setCheckoutInProgress(true);
+      setShowLocation(true); // Go directly to location
+    }
   };
 
   const handleSelectUpsell = (colors: [string, string]) => {
@@ -120,7 +151,11 @@ const Index = () => {
     setShowStripeCheckout(false);
     setCheckoutData((prev) => ({ ...prev, paymentIntentId }));
 
-    const totalAmount = checkoutData.quantity === 2 ? 418500 : 279000;
+    // Calculate total: If upsell was accepted (2 units with discount), use 418500
+    // Otherwise, use regular price (279000 * quantity)
+    const totalAmount = checkoutData.quantity === 2 && checkoutData.colors
+      ? 418500
+      : 279000 * checkoutData.quantity;
 
     // Send order to n8n webhook with all collected data
     try {
@@ -157,12 +192,12 @@ const Index = () => {
     trackPurchase({
       value: totalAmount,
       currency: 'PYG',
-      content_name: checkoutData.quantity === 2
-        ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
-        : 'NOCTE® Red Light Blocking Glasses',
-      content_ids: checkoutData.quantity === 2
-        ? ['nocte-red-glasses-2pack']
-        : ['nocte-red-glasses'],
+      content_name: checkoutData.quantity === 1
+        ? 'NOCTE® Red Light Blocking Glasses'
+        : `NOCTE® Red Light Blocking Glasses - Pack x${checkoutData.quantity}`,
+      content_ids: checkoutData.quantity === 1
+        ? ['nocte-red-glasses']
+        : [`nocte-red-glasses-${checkoutData.quantity}pack`],
       num_items: checkoutData.quantity,
       order_id: checkoutData.orderNumber,
     });
@@ -288,14 +323,22 @@ const Index = () => {
     });
   };
 
-  const orderData = useMemo(() => ({
-    orderNumber: checkoutData.orderNumber,
-    products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
-    total: checkoutData.quantity === 2 ? "418,500 Gs" : "279,000 Gs",
-    location: checkoutData.location,
-    phone: checkoutData.phone,
-    name: checkoutData.name,
-  }), [checkoutData]);
+  const orderData = useMemo(() => {
+    // Calculate total: If upsell was accepted (2 units with discount), use 418500
+    // Otherwise, use regular price (279000 * quantity)
+    const totalAmount = checkoutData.quantity === 2 && checkoutData.colors
+      ? 418500
+      : 279000 * checkoutData.quantity;
+
+    return {
+      orderNumber: checkoutData.orderNumber,
+      products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
+      total: `${totalAmount.toLocaleString('es-PY')} Gs`,
+      location: checkoutData.location,
+      phone: checkoutData.phone,
+      name: checkoutData.name,
+    };
+  }, [checkoutData]);
 
   return (
     <div className="min-h-screen bg-black text-foreground">
@@ -318,68 +361,142 @@ const Index = () => {
       {/* Main Content */}
       <main className={`${isBannerVisible ? 'pt-[100px] md:pt-[108px]' : 'pt-16 md:pt-20'} transition-all duration-300`}>
         <HeroSection onBuyClick={handleBuyClick} />
-        <ProductGallery />
-        <ScienceSection />
-        <BenefitsSection />
-        <LifestyleSection />
-        <ComparisonTable />
-        <TestimonialsSection />
-        <FAQSection />
-        <GuaranteeSection onBuyClick={handleBuyClick} />
+
+        <Suspense fallback={<div className="h-96" />}>
+          <ProductGallery />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-96" />}>
+          <ScienceSection />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-96" />}>
+          <BenefitsSection />
+        </Suspense>
+
+        {/* CTA 1: After Benefits */}
+        <OfferCTA onBuyClick={handleBuyClick} />
+
+        <Suspense fallback={<div className="h-96" />}>
+          <LifestyleSection />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-96" />}>
+          <ComparisonTable />
+        </Suspense>
+
+        {/* CTA 2: After Comparison */}
+        <OfferCTA onBuyClick={handleBuyClick} />
+
+        <Suspense fallback={<div className="h-96" />}>
+          <TestimonialsSection />
+        </Suspense>
+
+        {/* CTA 3: After Testimonials (minimal) */}
+        <OfferCTA onBuyClick={handleBuyClick} variant="minimal" />
+
+        <Suspense fallback={<div className="h-96" />}>
+          <FAQSection />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-96" />}>
+          <GuaranteeSection onBuyClick={handleBuyClick} />
+        </Suspense>
       </main>
 
       {/* Sticky Buy Button */}
       <StickyBuyButton onBuyClick={handleBuyClick} />
 
-      {/* Checkout Modals */}
-      <UpsellModal
-        isOpen={showUpsell}
-        onClose={() => setShowUpsell(false)}
-        onSelectUpsell={handleSelectUpsell}
-        onSelectSingle={handleSelectSingle}
-      />
+      {/* WhatsApp Button */}
+      <WhatsAppButton phoneNumber="+595983912902" />
 
-      <StripeCheckoutModal
-        isOpen={showStripeCheckout}
-        onClose={handleStripeCheckoutClose}
-        onBack={() => setShowPhoneForm(true)}
-        onSuccess={handlePaymentSuccess}
-        amount={checkoutData.quantity === 2 ? 418500 : 279000}
-        currency="pyg"
-        customerData={{
-          name: checkoutData.name,
-          phone: checkoutData.phone,
-          location: checkoutData.location,
-          address: checkoutData.address,
-          orderNumber: checkoutData.orderNumber,
-          quantity: checkoutData.quantity,
-        }}
-      />
+      {/* Checkout Modals - Lazy loaded */}
+      {showQuantitySelector && (
+        <Suspense fallback={null}>
+          <QuantitySelector
+            isOpen={showQuantitySelector}
+            onClose={() => setShowQuantitySelector(false)}
+            onContinue={handleQuantitySelected}
+          />
+        </Suspense>
+      )}
 
-      <PaymentFallbackModal
-        isOpen={showPaymentFallback}
-        onPayOnDelivery={handlePayOnDelivery}
-        onRetryPayment={handleRetryPayment}
-        onCancel={() => setShowPaymentFallback(false)}
-      />
+      {showUpsell && (
+        <Suspense fallback={null}>
+          <UpsellModal
+            isOpen={showUpsell}
+            onClose={() => setShowUpsell(false)}
+            onSelectUpsell={handleSelectUpsell}
+            onSelectSingle={handleSelectSingle}
+          />
+        </Suspense>
+      )}
 
-      <LocationModal
-        isOpen={showLocation}
-        onLocationSubmit={handleLocationSubmit}
-        onClose={handleLocationClose}
-      />
+      {showStripeCheckout && (
+        <Suspense fallback={null}>
+          <StripeCheckoutModal
+            isOpen={showStripeCheckout}
+            onClose={handleStripeCheckoutClose}
+            onBack={() => setShowPhoneForm(true)}
+            onSuccess={handlePaymentSuccess}
+            amount={
+              checkoutData.quantity === 2 && checkoutData.colors
+                ? 418500
+                : 279000 * checkoutData.quantity
+            }
+            currency="pyg"
+            customerData={{
+              name: checkoutData.name,
+              phone: checkoutData.phone,
+              location: checkoutData.location,
+              address: checkoutData.address,
+              orderNumber: checkoutData.orderNumber,
+              quantity: checkoutData.quantity,
+            }}
+          />
+        </Suspense>
+      )}
 
-      <PhoneNameForm
-        isOpen={showPhoneForm}
-        onSubmit={handlePhoneSubmit}
-        onClose={handlePhoneFormClose}
-      />
+      {showPaymentFallback && (
+        <Suspense fallback={null}>
+          <PaymentFallbackModal
+            isOpen={showPaymentFallback}
+            onPayOnDelivery={handlePayOnDelivery}
+            onRetryPayment={handleRetryPayment}
+            onCancel={() => setShowPaymentFallback(false)}
+          />
+        </Suspense>
+      )}
 
-      <SuccessPage
-        isOpen={showSuccess}
-        orderData={orderData}
-        onClose={handleSuccessClose}
-      />
+      {showLocation && (
+        <Suspense fallback={null}>
+          <LocationModal
+            isOpen={showLocation}
+            onLocationSubmit={handleLocationSubmit}
+            onClose={handleLocationClose}
+          />
+        </Suspense>
+      )}
+
+      {showPhoneForm && (
+        <Suspense fallback={null}>
+          <PhoneNameForm
+            isOpen={showPhoneForm}
+            onSubmit={handlePhoneSubmit}
+            onClose={handlePhoneFormClose}
+          />
+        </Suspense>
+      )}
+
+      {showSuccess && (
+        <Suspense fallback={null}>
+          <SuccessPage
+            isOpen={showSuccess}
+            orderData={orderData}
+            onClose={handleSuccessClose}
+          />
+        </Suspense>
+      )}
 
       {/* Footer */}
       <footer className="bg-black border-t border-border/30 py-12 md:py-16 px-4 md:px-6">

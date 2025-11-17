@@ -276,3 +276,5 @@ export const LocationModal = ({ isOpen, onLocationSubmit, onClose }: LocationMod
     </AnimatePresence>
   );
 };
+
+export default LocationModal;

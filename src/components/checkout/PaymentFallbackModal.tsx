@@ -141,3 +141,5 @@ export const PaymentFallbackModal = ({
     </AnimatePresence>
   );
 };
+
+export default PaymentFallbackModal;

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useState } from "react";
+import { ShieldCheckIcon, TruckIcon } from "@heroicons/react/24/outline";
 
 interface StickyBuyButtonProps {
   onBuyClick: () => void;
@@ -51,20 +52,33 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
     >
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 pb-6 md:pb-8">
         <div className="bg-black/90 backdrop-blur-xl border border-border/30 rounded-lg p-4 md:p-5 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-center sm:text-left w-full sm:w-auto">
+          <div className="flex flex-col gap-4">
+            {/* Precio y detalles */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
               <div>
-                <p className="text-sm md:text-base font-medium text-foreground">
-                  NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> - Lentes rojos para dormir mejor
-                </p>
                 <p className="text-xs md:text-sm text-muted-foreground">
                   <span className="line-through text-foreground/40">320,000 Gs</span>
                   {" "}
-                  <span className="text-lg md:text-xl font-bold text-primary ml-2">279,000 Gs</span>
+                  <span className="text-xl md:text-2xl font-bold text-primary ml-2">279,000 Gs</span>
                 </p>
+                <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                  <TruckIcon className="w-4 h-4 text-gold/90" />
+                  <p className="text-xs text-gold/90 font-medium">
+                    Pedí hoy y recibí como máximo en 2 días
+                  </p>
+                </div>
+              </div>
+
+              {/* Sellos de credibilidad */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheckIcon className="w-5 h-5 text-gold" />
+                  <span className="whitespace-nowrap">Garantía 30 días</span>
+                </div>
               </div>
             </div>
 
+            {/* Botón de compra */}
             <motion.div
               animate={{
                 boxShadow: [
@@ -78,12 +92,12 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="rounded-lg w-full sm:w-auto"
+              className="rounded-lg"
             >
               <Button
                 variant="hero"
                 size="lg"
-                className="w-full sm:min-w-[200px] h-12 md:h-14 text-sm md:text-base"
+                className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
                 onClick={onBuyClick}
               >
                 Comprar Ahora

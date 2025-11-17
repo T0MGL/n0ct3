@@ -463,3 +463,5 @@ export const StripeCheckoutModal = ({
     </AnimatePresence>
   );
 };
+
+export default StripeCheckoutModal;

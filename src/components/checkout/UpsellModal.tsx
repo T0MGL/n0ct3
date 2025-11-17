@@ -126,3 +126,5 @@ export const UpsellModal = ({ isOpen, onClose, onSelectUpsell, onSelectSingle }:
     </AnimatePresence>
   );
 };
+
+export default UpsellModal;

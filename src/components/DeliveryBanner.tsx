@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { XMarkIcon, TruckIcon } from "@heroicons/react/24/outline";
 
@@ -6,25 +6,32 @@ interface DeliveryBannerProps {
   onVisibilityChange?: (isVisible: boolean) => void;
 }
 
+// Check localStorage synchronously before component renders
+const getBannerInitialState = (): boolean => {
+  try {
+    return localStorage.getItem("nocte-delivery-banner-closed") !== "true";
+  } catch {
+    return true;
+  }
+};
+
 export const DeliveryBanner = ({ onVisibilityChange }: DeliveryBannerProps) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(getBannerInitialState);
 
-  // Check localStorage on mount
+  // Notify parent of initial state only once
   useEffect(() => {
-    const bannerClosed = localStorage.getItem("nocte-delivery-banner-closed");
-    if (bannerClosed === "true") {
-      setIsVisible(false);
-      onVisibilityChange?.(false);
-    } else {
-      onVisibilityChange?.(true);
-    }
-  }, [onVisibilityChange]);
+    onVisibilityChange?.(isVisible);
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsVisible(false);
-    localStorage.setItem("nocte-delivery-banner-closed", "true");
+    try {
+      localStorage.setItem("nocte-delivery-banner-closed", "true");
+    } catch {
+      // Silently fail if localStorage is not available
+    }
     onVisibilityChange?.(false);
-  };
+  }, [onVisibilityChange]);
 
   return (
     <AnimatePresence>

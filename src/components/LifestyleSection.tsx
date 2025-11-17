@@ -55,6 +55,8 @@ export const LifestyleSection = () => {
               <img
                 src={productImage}
                 alt="NOCTE - Úsalos mientras trabajas de noche"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto drop-shadow-[0_8px_16px_rgba(239,68,68,0.25)] max-w-[500px] mx-auto"
               />
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur-sm px-6 py-3 rounded-lg border border-primary/50 shadow-lg">
@@ -121,3 +123,5 @@ export const LifestyleSection = () => {
     </section>
   );
 };
+
+export default LifestyleSection;

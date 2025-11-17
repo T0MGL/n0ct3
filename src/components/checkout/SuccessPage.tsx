@@ -136,3 +136,5 @@ export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) =>
     </AnimatePresence>
   );
 };
+
+export default SuccessPage;

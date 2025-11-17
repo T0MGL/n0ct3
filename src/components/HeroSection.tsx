@@ -4,7 +4,7 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
-import heroImage from "@/assets/nocte-product-hero.jpg";
+import heroImage from "@/assets/nocte-hero-lifestyle.jpg";
 import { StripePaymentButton } from "@/components/StripePaymentButton";
 import { PaymentSuccessModal } from "@/components/PaymentSuccessModal";
 import { trackViewContent } from "@/lib/meta-pixel";
@@ -37,7 +37,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
             className="space-y-6 md:space-y-10 text-center lg:text-left order-2 lg:order-1 w-full"
           >
             <div className="space-y-4 md:space-y-6">
@@ -49,12 +49,12 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
               </div>
 
               <h2 className="text-xl md:text-3xl lg:text-4xl font-light tracking-tight text-foreground/80">
-                Lentes rojos. Sueño profundo.
+                Trabaja en pantallas de noche. Duerme profundo después.
               </h2>
             </div>
 
             <p className="text-base md:text-lg lg:text-xl text-foreground/70 leading-relaxed max-w-xl mx-auto lg:mx-0 font-light px-4 md:px-0">
-              Úsalos mientras trabajas de noche. Duerme profundo después. Bloqueamos el 99% de luz azul para emprendedores que viven en pantallas.
+              <span className="text-foreground font-medium">No son lentes para dormir.</span> Son para trabajar, estudiar o scrollear de noche sin arruinar tu sueño. Bloquean el 99% de luz azul que le dice a tu cerebro "es de día" cuando deberías estar produciendo melatonina.
             </p>
 
             <div className="space-y-6 pt-2 md:pt-4">
@@ -126,16 +126,20 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
             className="relative order-1 lg:order-2 w-full"
           >
             <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px] md:blur-[120px] scale-75" />
             <div className="relative px-4 md:px-0">
-              <img
-                src={heroImage}
-                alt="NOCTE - Lentes rojos anti-luz azul premium"
-                className="relative w-full h-auto drop-shadow-[0_8px_16px_rgba(239,68,68,0.25)] max-w-[500px] md:max-w-full mx-auto"
-              />
+              <div className="relative w-full max-w-[600px] mx-auto overflow-hidden rounded-lg">
+                <img
+                  src={heroImage}
+                  alt="NOCTE - Lentes rojos anti-luz azul premium"
+                  loading="eager"
+                  fetchPriority="high"
+                  className="relative w-full h-auto drop-shadow-[0_8px_16px_rgba(239,68,68,0.25)]"
+                />
+              </div>
             </div>
           </motion.div>
         </div>

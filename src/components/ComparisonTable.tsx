@@ -210,3 +210,5 @@ export const ComparisonTable = () => {
     </section>
   );
 };
+
+export default ComparisonTable;

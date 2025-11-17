@@ -70,3 +70,5 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
     </>
   );
 };
+
+export default GuaranteeSection;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { fadeInUpView } from "@/lib/animations";
 import heroImage from "@/assets/nocte-product-hero.jpg";
 import sideView from "@/assets/nocte-side-view.jpg";
 import caseImage from "@/assets/nocte-case.jpg";
@@ -16,31 +17,28 @@ export const ProductGallery = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
-    <section className="py-16 md:py-24 px-4 bg-black">
+    <section data-section="product-gallery" className="py-16 md:py-24 px-4 bg-black">
       <div className="container max-w-[1200px] mx-auto">
         <div className="space-y-8">
           {/* Main Image */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            {...fadeInUpView}
             className="relative aspect-[4/3] md:aspect-video w-full overflow-hidden bg-gradient-to-b from-black via-card/20 to-black"
           >
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.15),transparent_60%)]" />
             <img
               src={images[selectedImage].src}
               alt={images[selectedImage].alt}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-contain drop-shadow-[0_0_80px_rgba(239,68,68,0.3)]"
             />
           </motion.div>
 
           {/* Thumbnail Grid */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+            {...fadeInUpView}
+            transition={{ ...fadeInUpView.transition, delay: 0.1 }}
             className="grid grid-cols-4 gap-3 md:gap-4"
           >
             {images.map((image, index) => (
@@ -56,6 +54,8 @@ export const ProductGallery = () => {
                 <img
                   src={image.src}
                   alt={image.alt}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </button>
@@ -66,3 +66,5 @@ export const ProductGallery = () => {
     </section>
   );
 };
+
+export default ProductGallery;
