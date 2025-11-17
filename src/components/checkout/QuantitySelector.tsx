@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { XMarkIcon, MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, MinusIcon, PlusIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 
 interface QuantitySelectorProps {
@@ -14,13 +14,11 @@ const UPSELL_PRICE = 418500; // 2 units with 50% OFF on second
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [showUpsell, setShowUpsell] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setQuantity(1);
-      setShowUpsell(false);
     }
   }, [isOpen]);
 
@@ -39,22 +37,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   const totalPrice = UNIT_PRICE * quantity;
 
   const handleContinue = () => {
-    // If user selected 1 unit, show upsell
-    if (quantity === 1 && !showUpsell) {
-      setShowUpsell(true);
-    } else {
-      // Otherwise, continue with selected quantity
-      onContinue(quantity);
-    }
-  };
-
-  const handleAcceptUpsell = () => {
-    setQuantity(2);
-    onContinue(2);
-  };
-
-  const handleRejectUpsell = () => {
-    onContinue(1);
+    onContinue(quantity);
   };
 
   return (
@@ -84,174 +67,80 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
               <XMarkIcon className="w-5 h-5" />
             </button>
 
-            {/* Content - Conditionally render based on showUpsell */}
-            <AnimatePresence mode="wait">
-              {!showUpsell ? (
-                <motion.div
-                  key="quantity"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-8"
-                >
-                  {/* Headline */}
-                  <div className="space-y-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                      ¿Cuántos NOCTE<sup className="text-[0.3em]">®</sup> quieres?
-                    </h2>
+            {/* Content */}
+            <div className="space-y-8">
+              {/* Headline */}
+              <div className="space-y-4 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+                  ¿Cuántos NOCTE<sup className="text-[0.3em]">®</sup> quieres?
+                </h2>
 
-                    <p className="text-base text-muted-foreground leading-relaxed">
-                      Selecciona la cantidad que deseas adquirir
-                    </p>
-                  </div>
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  Selecciona la cantidad que deseas adquirir
+                </p>
+              </div>
 
-                  {/* Quantity Selector */}
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-center gap-6">
-                      <button
-                        onClick={handleDecrease}
-                        disabled={quantity <= 1}
-                        className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-                      >
-                        <MinusIcon className="w-5 h-5" />
-                      </button>
-
-                      <div className="w-24 text-center">
-                        <p className="text-5xl font-bold text-foreground">{quantity}</p>
-                      </div>
-
-                      <button
-                        onClick={handleIncrease}
-                        disabled={quantity >= 10}
-                        className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-                      >
-                        <PlusIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    {/* Price Summary */}
-                    <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg space-y-3">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Precio unitario</span>
-                        <span className="text-foreground font-medium">
-                          {UNIT_PRICE.toLocaleString('es-PY')} Gs
-                        </span>
-                      </div>
-
-                      <div className="border-t border-border/30 pt-3 flex justify-between items-center">
-                        <span className="text-lg font-semibold text-foreground">Total</span>
-                        <span className="text-2xl font-bold text-primary">
-                          {totalPrice.toLocaleString('es-PY')} Gs
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                      <p className="text-sm text-center text-primary font-medium">
-                        Envío gratis a todo el Paraguay
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Continue Button */}
-                  <Button
-                    onClick={handleContinue}
-                    variant="hero"
-                    size="xl"
-                    className="w-full h-14 text-base font-semibold"
+              {/* Quantity Selector */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-center gap-6">
+                  <button
+                    onClick={handleDecrease}
+                    disabled={quantity <= 1}
+                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                   >
-                    Continuar con {quantity} {quantity === 1 ? 'unidad' : 'unidades'}
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="upsell"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-8"
-                >
-                  {/* Upsell Headline */}
-                  <div className="space-y-4 text-center">
-                    <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md">
-                      <p className="text-xs font-semibold text-primary tracking-wide">
-                        OFERTA ESPECIAL
-                      </p>
-                    </div>
+                    <MinusIcon className="w-5 h-5" />
+                  </button>
 
-                    <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                      Lleva 2 NOCTE<sup className="text-[0.3em]">®</sup> al 50% OFF
-                    </h2>
+                  <div className="w-24 text-center">
+                    <p className="text-5xl font-bold text-foreground">{quantity}</p>
+                  </div>
 
-                    <p className="text-base text-muted-foreground leading-relaxed">
-                      Segunda unidad con 50% de descuento
+                  <button
+                    onClick={handleIncrease}
+                    disabled={quantity >= 10}
+                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Price Summary */}
+                <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Precio unitario</span>
+                    <span className="text-foreground font-medium">
+                      {UNIT_PRICE.toLocaleString('es-PY')} Gs
+                    </span>
+                  </div>
+
+                  <div className="border-t border-border/30 pt-3 flex justify-between items-center">
+                    <span className="text-lg font-semibold text-foreground">Total</span>
+                    <span className="text-2xl font-bold text-primary">
+                      {totalPrice.toLocaleString('es-PY')} Gs
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-center justify-center gap-2">
+                    <TruckIcon className="w-5 h-5 text-primary" />
+                    <p className="text-sm text-primary font-medium">
+                      Envío gratis a todo el Paraguay
                     </p>
                   </div>
+                </div>
+              </div>
 
-                  {/* Pricing Comparison */}
-                  <div className="space-y-4">
-                    {/* Option 1 - Single */}
-                    <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-semibold text-foreground">1 NOCTE<sup className="text-[0.3em]">®</sup></h3>
-                        <span className="text-2xl font-bold text-foreground">279,000 Gs</span>
-                      </div>
-                      <div className="space-y-1.5 text-sm text-muted-foreground">
-                        <p>1 lente + estuche + paño</p>
-                      </div>
-                    </div>
-
-                    {/* Option 2 - Bundle (Highlighted) */}
-                    <div className="p-5 bg-primary/5 border-2 border-primary/30 rounded-lg relative">
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary rounded-md">
-                        <p className="text-xs font-bold text-white tracking-wide">RECOMENDADO</p>
-                      </div>
-
-                      <div className="flex justify-between items-center mb-3 mt-1">
-                        <h3 className="text-lg font-semibold text-foreground">2 NOCTE<sup className="text-[0.3em]">®</sup></h3>
-                        <div className="text-right">
-                          <span className="text-sm text-muted-foreground line-through block">558,000 Gs</span>
-                          <span className="text-2xl font-bold text-primary">418,500 Gs</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5 text-sm text-muted-foreground mb-3">
-                        <p>2 lentes + 2 estuches + 2 paños</p>
-                      </div>
-
-                      <div className="pt-3 border-t border-border/30">
-                        <p className="text-sm font-semibold text-accent">
-                          Ahorras 139,500 Gs
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="space-y-3 pt-2">
-                    <Button
-                      onClick={handleAcceptUpsell}
-                      variant="hero"
-                      size="xl"
-                      className="w-full h-14 text-base font-semibold"
-                    >
-                      Sí, quiero 2 NOCTE<sup className="text-[0.3em]">®</sup> con 50% OFF
-                    </Button>
-
-                    <Button
-                      onClick={handleRejectUpsell}
-                      variant="outline"
-                      size="lg"
-                      className="w-full h-12 text-sm font-medium bg-transparent border-border/50 hover:bg-secondary/50"
-                    >
-                      No, prefiero solo 1
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              {/* Continue Button */}
+              <Button
+                onClick={handleContinue}
+                variant="hero"
+                size="xl"
+                className="w-full h-14 text-base font-semibold"
+              >
+                Continuar con {quantity} {quantity === 1 ? 'unidad' : 'unidades'}
+              </Button>
+            </div>
           </motion.div>
         </motion.div>
       )}

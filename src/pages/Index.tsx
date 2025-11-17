@@ -90,18 +90,14 @@ const Index = () => {
     setShowQuantitySelector(false);
 
     // Track AddToCart
-    const value = quantity === 2 ? 418500 : 279000 * quantity;
+    const value = 279000 * quantity;
     trackAddToCart({
-      content_name: quantity === 2
-        ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
-        : quantity === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
-      content_ids: quantity === 2
-        ? ['nocte-red-glasses-2pack']
-        : quantity === 1
-          ? ['nocte-red-glasses']
-          : [`nocte-red-glasses-${quantity}pack`],
+      content_name: quantity === 1
+        ? 'NOCTE® Red Light Blocking Glasses'
+        : `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
+      content_ids: quantity === 1
+        ? ['nocte-red-glasses']
+        : [`nocte-red-glasses-${quantity}pack`],
       num_items: quantity,
       value,
       currency: 'PYG',
@@ -116,11 +112,8 @@ const Index = () => {
     setShowStripeCheckout(false);
     setCheckoutData((prev) => ({ ...prev, paymentIntentId }));
 
-    // Calculate total: If upsell was accepted (2 units with discount), use 418500
-    // Otherwise, use regular price (279000 * quantity)
-    const totalAmount = checkoutData.quantity === 2 && checkoutData.colors
-      ? 418500
-      : 279000 * checkoutData.quantity;
+    // Calculate total
+    const totalAmount = 279000 * checkoutData.quantity;
 
     // Send order to n8n webhook with all collected data
     try {
@@ -243,11 +236,8 @@ const Index = () => {
   };
 
   const orderData = useMemo(() => {
-    // Calculate total: If upsell was accepted (2 units with discount), use 418500
-    // Otherwise, use regular price (279000 * quantity)
-    const totalAmount = checkoutData.quantity === 2 && checkoutData.colors
-      ? 418500
-      : 279000 * checkoutData.quantity;
+    // Calculate total
+    const totalAmount = 279000 * checkoutData.quantity;
 
     return {
       orderNumber: checkoutData.orderNumber,
@@ -357,11 +347,7 @@ const Index = () => {
             onClose={handleStripeCheckoutClose}
             onBack={handleBackToPhoneForm}
             onSuccess={handlePaymentSuccess}
-            amount={
-              checkoutData.quantity === 2
-                ? 418500
-                : 279000 * checkoutData.quantity
-            }
+            amount={279000 * checkoutData.quantity}
             currency="pyg"
             customerData={{
               name: checkoutData.name,
