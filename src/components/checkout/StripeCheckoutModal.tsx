@@ -144,15 +144,22 @@ const CheckoutForm = ({
                 phone: 'never',
                 address: {
                   country: 'never',
+                  postalCode: 'never',
                 },
               },
             },
             defaultValues: {
               billingDetails: {
+                name: customerData.name,
                 address: {
                   country: 'PY',
+                  city: customerData.location,
                 },
               },
+            },
+            wallets: {
+              applePay: 'auto',
+              googlePay: 'auto',
             },
             terms: {
               card: 'never',
