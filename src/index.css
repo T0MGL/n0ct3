@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 86% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 43 74% 66%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 86% 54%;
+
+    --radius: 0.75rem;
+
+    --gold: 43 74% 66%;
+    --neon: 190 100% 50%;
+
+    --gradient-red: linear-gradient(135deg, hsl(0 86% 20% / 0.4), transparent);
+    --gradient-red-strong: linear-gradient(180deg, hsl(0 0% 0%), hsl(0 30% 5%), hsl(0 0% 0%));
+    --glow-red: 0 0 80px hsl(0 86% 54% / 0.3);
+    --glow-gold: 0 0 40px hsl(43 74% 66% / 0.3);
+
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tighter;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .glow-red {
+    box-shadow: var(--glow-red);
+  }
+
+  .glow-gold {
+    box-shadow: var(--glow-gold);
+  }
+
+  .gradient-red-overlay {
+    background: var(--gradient-red);
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 20px hsl(0 91% 59% / 0.3);
+    }
+    to {
+      box-shadow: 0 0 40px hsl(0 91% 59% / 0.6);
+    }
+  }
+}
+
+/* Hide Stripe Dev Tools widget in development */
+.__PrivateStripeElement-devTools {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Only hide specific dev tools iframes, not payment iframes */
+iframe[name="__privateStripeController0"],
+iframe[name="__privateStripeController1"],
+iframe[name="__privateStripeController2"],
+iframe[name="__privateStripeController3"],
+iframe[name="__privateStripeController4"],
+iframe[name="__privateStripeController5"],
+iframe[name="__privateStripeController6"],
+iframe[name="__privateStripeController7"],
+iframe[name="__privateStripeController8"] {
+  /* Don't hide these - they're needed for payment */
+}
+
+/* Hide the floating dev tools button if it appears */
+#stripe-devtools,
+[data-stripe-devtools="true"] {
+  display: none !important;
+}
+
+/* Hide Stripe Link (secure fast checkout) */
+[data-testid*="link"],
+[data-testid*="Link"],
+.p-PaymentMethodSelector-chip[value*="link"],
+.p-PaymentMethodSelector-chip[value*="Link"],
+button[aria-label*="Link"],
+button[aria-label*="link"],
+.LinkAuthenticationElement,
+[class*="LinkAuthenticationElement"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}

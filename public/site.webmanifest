@@ -1,0 +1,28 @@
+{
+  "name": "NOCTE - Lentes Rojos Anti-Luz Azul",
+  "short_name": "NOCTE",
+  "description": "Lentes rojos premium que bloquean 99% de luz azul para mejorar tu sueño",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#EF4444",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "es-PY",
+  "dir": "ltr",
+  "categories": ["health", "shopping", "lifestyle"],
+  "screenshots": []
+}
