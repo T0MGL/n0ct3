@@ -380,7 +380,7 @@ export const StripeCheckoutModal = ({
             {/* Header */}
             <div className="mb-6 text-center pt-6 space-y-6">
               {/* Progress Bar */}
-              <CheckoutProgressBar currentStep={3} />
+              <CheckoutProgressBar currentStep={2} />
 
               <div>
                 <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">

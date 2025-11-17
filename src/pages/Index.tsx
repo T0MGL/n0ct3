@@ -24,8 +24,6 @@ const GuaranteeSection = lazy(() => import("@/components/GuaranteeSection"));
 
 // Lazy load checkout modals (only loaded when user clicks buy)
 const QuantitySelector = lazy(() => import("@/components/checkout/QuantitySelector").then(module => ({ default: module.QuantitySelector })));
-const UpsellModal = lazy(() => import("@/components/checkout/UpsellModal"));
-const LocationModal = lazy(() => import("@/components/checkout/LocationModal"));
 const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
 const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
 const PaymentFallbackModal = lazy(() => import("@/components/checkout/PaymentFallbackModal"));
@@ -37,10 +35,8 @@ const Index = () => {
 
   // Checkout state management
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
-  const [showUpsell, setShowUpsell] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [showPaymentFallback, setShowPaymentFallback] = useState(false);
-  const [showLocation, setShowLocation] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkoutInProgress, setCheckoutInProgress] = useState(false);
@@ -93,57 +89,26 @@ const Index = () => {
     setCheckoutData((prev) => ({ ...prev, quantity }));
     setShowQuantitySelector(false);
 
-    // If quantity is 1, show upsell offer
-    // If quantity is 2 or more, skip upsell and go directly to checkout
-    if (quantity === 1) {
-      setShowUpsell(true);
-    } else {
-      // Track AddToCart for multiple items
-      trackAddToCart({
-        content_name: `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
-        content_ids: [`nocte-red-glasses-${quantity}pack`],
-        num_items: quantity,
-        value: 279000 * quantity,
-        currency: 'PYG',
-      });
-
-      setCheckoutInProgress(true);
-      setShowLocation(true); // Go directly to location
-    }
-  };
-
-  const handleSelectUpsell = (colors: [string, string]) => {
-    setCheckoutData((prev) => ({ ...prev, quantity: 2, colors }));
-
-    // Track AddToCart for 2-pack upsell
+    // Track AddToCart
+    const value = quantity === 2 ? 418500 : 279000 * quantity;
     trackAddToCart({
-      content_name: 'NOCTE® Red Light Blocking Glasses - Pack x2',
-      content_ids: ['nocte-red-glasses-2pack'],
-      num_items: 2,
-      value: 418500,
+      content_name: quantity === 2
+        ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
+        : quantity === 1
+          ? 'NOCTE® Red Light Blocking Glasses'
+          : `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
+      content_ids: quantity === 2
+        ? ['nocte-red-glasses-2pack']
+        : quantity === 1
+          ? ['nocte-red-glasses']
+          : [`nocte-red-glasses-${quantity}pack`],
+      num_items: quantity,
+      value,
       currency: 'PYG',
     });
 
-    setShowUpsell(false);
-    setCheckoutInProgress(true); // Activate protection
-    setShowLocation(true); // STEP 1: Get delivery location
-  };
-
-  const handleSelectSingle = () => {
-    setCheckoutData((prev) => ({ ...prev, quantity: 1 }));
-
-    // Track AddToCart for single item
-    trackAddToCart({
-      content_name: 'NOCTE® Red Light Blocking Glasses',
-      content_ids: ['nocte-red-glasses'],
-      num_items: 1,
-      value: 279000,
-      currency: 'PYG',
-    });
-
-    setShowUpsell(false);
-    setCheckoutInProgress(true); // Activate protection
-    setShowLocation(true); // STEP 1: Get delivery location
+    setCheckoutInProgress(true);
+    setShowPhoneForm(true); // Go directly to phone/location form
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
@@ -205,9 +170,9 @@ const Index = () => {
     setShowSuccess(true);
   };
 
-  const handleBackToUpsell = () => {
+  const handleBackToPhoneForm = () => {
     setShowStripeCheckout(false);
-    setShowUpsell(true); // Go back to quantity selection
+    setShowPhoneForm(true);
   };
 
   const handleStripeCheckoutClose = () => {
@@ -227,66 +192,20 @@ const Index = () => {
     });
   };
 
-  const handlePayOnDeliveryFromCheckout = () => {
-    setCheckoutData((prev) => ({ ...prev, paymentMethod: "cash" }));
-    setShowStripeCheckout(false);
-    setShowLocation(true); // Go directly to location modal
-  };
-
-  const handlePayOnDelivery = () => {
-    setCheckoutData((prev) => ({ ...prev, paymentMethod: "cash" }));
-    setShowPaymentFallback(false);
-    setShowLocation(true);
-  };
-
-  const handleRetryPayment = () => {
-    setShowPaymentFallback(false);
-    // TODO: Re-trigger Stripe checkout
-    setTimeout(() => {
-      setShowLocation(true);
-    }, 2000);
-  };
-
-  const handleLocationSubmit = (location: { city: string; address: string; lat?: number; long?: number }) => {
-    setCheckoutData((prev) => ({
-      ...prev,
-      location: location.city,
-      address: location.address || prev.address,
-      lat: location.lat,
-      long: location.long,
-    }));
-    setShowLocation(false);
-    setShowPhoneForm(true);
-  };
-
-  const handleLocationClose = () => {
-    setShowLocation(false);
-    setCheckoutInProgress(false);
-    // Reset checkout state when user cancels
-    setCheckoutData({
-      quantity: 1,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-    });
-  };
-
-  const handlePhoneSubmit = (data: { name: string; phone: string; address?: string }) => {
-    // STEP 2: Store personal info and proceed to payment
+  const handlePhoneSubmit = (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => {
+    // Store personal info and location, then proceed to payment
     setCheckoutData((prev) => ({
       ...prev,
       name: data.name,
       phone: data.phone,
-      address: data.address || prev.address,
+      location: data.location,
+      address: data.address,
+      lat: data.lat,
+      long: data.long,
     }));
 
     setShowPhoneForm(false);
-    setShowStripeCheckout(true); // STEP 3: Show payment with all info collected
+    setShowStripeCheckout(true); // Show payment with all info collected
   };
 
   const handlePhoneFormClose = () => {
@@ -421,13 +340,12 @@ const Index = () => {
         </Suspense>
       )}
 
-      {showUpsell && (
+      {showPhoneForm && (
         <Suspense fallback={null}>
-          <UpsellModal
-            isOpen={showUpsell}
-            onClose={() => setShowUpsell(false)}
-            onSelectUpsell={handleSelectUpsell}
-            onSelectSingle={handleSelectSingle}
+          <PhoneNameForm
+            isOpen={showPhoneForm}
+            onSubmit={handlePhoneSubmit}
+            onClose={handlePhoneFormClose}
           />
         </Suspense>
       )}
@@ -437,10 +355,10 @@ const Index = () => {
           <StripeCheckoutModal
             isOpen={showStripeCheckout}
             onClose={handleStripeCheckoutClose}
-            onBack={() => setShowPhoneForm(true)}
+            onBack={handleBackToPhoneForm}
             onSuccess={handlePaymentSuccess}
             amount={
-              checkoutData.quantity === 2 && checkoutData.colors
+              checkoutData.quantity === 2
                 ? 418500
                 : 279000 * checkoutData.quantity
             }
@@ -461,29 +379,9 @@ const Index = () => {
         <Suspense fallback={null}>
           <PaymentFallbackModal
             isOpen={showPaymentFallback}
-            onPayOnDelivery={handlePayOnDelivery}
-            onRetryPayment={handleRetryPayment}
+            onPayOnDelivery={() => {}}
+            onRetryPayment={() => {}}
             onCancel={() => setShowPaymentFallback(false)}
-          />
-        </Suspense>
-      )}
-
-      {showLocation && (
-        <Suspense fallback={null}>
-          <LocationModal
-            isOpen={showLocation}
-            onLocationSubmit={handleLocationSubmit}
-            onClose={handleLocationClose}
-          />
-        </Suspense>
-      )}
-
-      {showPhoneForm && (
-        <Suspense fallback={null}>
-          <PhoneNameForm
-            isOpen={showPhoneForm}
-            onSubmit={handlePhoneSubmit}
-            onClose={handlePhoneFormClose}
           />
         </Suspense>
       )}

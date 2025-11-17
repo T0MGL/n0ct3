@@ -1,20 +1,39 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
-  onSubmit: (data: { name: string; phone: string; address?: string }) => void;
+  onSubmit: (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => void;
   onClose?: () => void;
 }
+
+const cities = [
+  "Asunción",
+  "Central",
+  "Itapúa",
+  "Alto Paraná",
+  "Canindeyú",
+  "Cordillera",
+  "Paraguarí",
+  "Caaguazú",
+  "Misiones",
+  "Ñeembucú",
+];
 
 export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+595 "); // ✅ Predefined prefix
   const [address, setAddress] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationCoords, setLocationCoords] = useState<{ lat?: number; long?: number }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; city?: string; address?: string }>({});
   const [loading, setLoading] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,6 +43,12 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setName("");
       setPhone("+595 ");
       setAddress("");
+      setSelectedCity("");
+      setDetectedLocation(null);
+      setShowManualLocation(false);
+      setLocationError(null);
+      setIsLoadingLocation(false);
+      setLocationCoords({});
       setErrors({});
       setLoading(false);
     }
@@ -77,8 +102,51 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     }
   };
 
+  const handleUseLocation = () => {
+    setIsLoadingLocation(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError("Tu navegador no soporta geolocalización");
+      setIsLoadingLocation(false);
+      setShowManualLocation(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          setDetectedLocation("Cargando tu ubicación...");
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // For now, assume Asunción
+          const city = "Asunción, Paraguay";
+          setDetectedLocation(city);
+          setLocationCoords({ lat: latitude, long: longitude });
+        } catch (err) {
+          setLocationError("No pudimos detectar tu ubicación");
+          setDetectedLocation(null);
+          setIsLoadingLocation(false);
+          setShowManualLocation(true);
+        } finally {
+          setIsLoadingLocation(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setLocationError("Permiso denegado para acceder a tu ubicación");
+        setIsLoadingLocation(false);
+        setShowManualLocation(true);
+      }
+    );
+  };
+
   const validateForm = () => {
-    const newErrors: { name?: string; phone?: string } = {};
+    const newErrors: { name?: string; phone?: string; city?: string; address?: string } = {};
 
     // Validate name
     if (!name || name.trim().length < 3) {
@@ -94,6 +162,16 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     const phoneDigits = afterPrefix.replace(/\D/g, "");
     if (phoneDigits.length < 8 || phoneDigits.length > 10) {
       newErrors.phone = "Teléfono inválido (ej: +595 971 234567)";
+    }
+
+    // Validate location (either detected or manual)
+    if (!detectedLocation && !selectedCity) {
+      newErrors.city = "Debes seleccionar una ciudad o usar tu ubicación";
+    }
+
+    // Validate address (only if manual location)
+    if (showManualLocation && selectedCity && address.trim().length < 10) {
+      newErrors.address = "La dirección debe tener al menos 10 caracteres";
     }
 
     setErrors(newErrors);
@@ -113,15 +191,19 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     onSubmit({
       name: name.trim(),
       phone: phone.trim(),
-      address: address.trim() || undefined,
+      location: detectedLocation || selectedCity,
+      address: address.trim() || "",
+      lat: locationCoords.lat,
+      long: locationCoords.long,
     });
 
     setLoading(false);
   };
 
-  // Validate button state - only digits after "+595 "
+  // Validate button state
   const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
-  const isValid = name.trim().length >= 3 && phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10;
+  const hasValidLocation = detectedLocation || (selectedCity && address.trim().length >= 10);
+  const isValid = name.trim().length >= 3 && phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && hasValidLocation;
 
   return (
     <AnimatePresence>
@@ -153,7 +235,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
 
             <div className="space-y-6">
               {/* Progress Bar */}
-              <CheckoutProgressBar currentStep={2} />
+              <CheckoutProgressBar currentStep={1} />
 
               {/* Headline */}
               <div className="text-center space-y-3">
@@ -230,22 +312,177 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   )}
                 </div>
 
-                {/* FIELD 3 - REFERENCIA (OPCIONAL) */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground">
-                    Referencia para encontrar (opcional)
-                  </label>
-                  <div className="relative">
-                    <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Ej: Cerca del supermercado, edificio azul"
-                      maxLength={150}
-                      className="w-full pl-11 pr-4 py-3 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    />
+                {/* LOCATION SECTION */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/30">
+                    <MapPinIcon className="w-5 h-5 text-primary" />
+                    <label className="block text-sm font-semibold text-foreground">
+                      Ubicación de entrega
+                    </label>
                   </div>
+
+                  {/* Detected Location Display */}
+                  {detectedLocation && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-primary/10 border border-primary/30 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckIcon className="w-5 h-5 text-primary" />
+                          <p className="text-sm font-semibold text-foreground">
+                            {detectedLocation}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDetectedLocation(null);
+                            setLocationCoords({});
+                            setShowManualLocation(true);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Error Display */}
+                  {locationError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+                    >
+                      <p className="text-xs text-red-400">{locationError}</p>
+                    </motion.div>
+                  )}
+
+                  {/* Use Location Button */}
+                  {!detectedLocation && !showManualLocation && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        onClick={handleUseLocation}
+                        disabled={isLoadingLocation}
+                        variant="outline"
+                        size="lg"
+                        className="w-full bg-transparent border-border/50 hover:bg-secondary/50"
+                      >
+                        {isLoadingLocation ? (
+                          <span className="flex items-center gap-2">
+                            <div className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Detectando ubicación...
+                          </span>
+                        ) : (
+                          <>
+                            <MapPinIcon className="w-4 h-4 mr-2" />
+                            Usar mi ubicación actual
+                          </>
+                        )}
+                      </Button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowManualLocation(true)}
+                        className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        O ingresar manualmente
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Manual Location Entry */}
+                  {showManualLocation && !detectedLocation && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3"
+                    >
+                      {/* City Selector */}
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-muted-foreground">
+                          Selecciona tu ciudad
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {cities.map((city) => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCity(city);
+                                setErrors((prev) => ({ ...prev, city: undefined }));
+                              }}
+                              className={`p-2 rounded-lg border text-xs font-medium transition-all ${
+                                selectedCity === city
+                                  ? "bg-primary/10 border-primary text-foreground"
+                                  : "bg-secondary/30 border-border/30 text-muted-foreground hover:border-border hover:bg-secondary/50"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span>{city}</span>
+                                {selectedCity === city && (
+                                  <CheckIcon className="w-3 h-3 text-primary" />
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        {errors.city && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-red-400"
+                          >
+                            {errors.city}
+                          </motion.p>
+                        )}
+                      </div>
+
+                      {/* Address Field */}
+                      {selectedCity && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="space-y-2"
+                        >
+                          <label className="block text-xs font-medium text-muted-foreground">
+                            Dirección completa
+                          </label>
+                          <div className="relative">
+                            <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <input
+                              type="text"
+                              value={address}
+                              onChange={(e) => {
+                                setAddress(e.target.value);
+                                setErrors((prev) => ({ ...prev, address: undefined }));
+                              }}
+                              placeholder="Ej: Av. Mariscal López 1234, entre Brasilia y Sacramento"
+                              className={`w-full pl-10 pr-4 py-2.5 bg-secondary border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${
+                                errors.address ? "border-red-500" : "border-border focus:border-primary"
+                              }`}
+                            />
+                          </div>
+                          {errors.address && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="text-xs text-red-400"
+                            >
+                              {errors.address}
+                            </motion.p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Mínimo 10 caracteres
+                          </p>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  )}
                 </div>
 
                 {/* Submit Button */}
@@ -262,7 +499,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       Guardando...
                     </span>
                   ) : (
-                    "Confirmar y completar compra"
+                    "Confirmar y continuar al pago"
                   )}
                 </Button>
               </form>

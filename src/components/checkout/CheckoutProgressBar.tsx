@@ -1,13 +1,12 @@
 import { motion } from 'framer-motion';
 
 interface CheckoutProgressBarProps {
-  currentStep: 1 | 2 | 3;
+  currentStep: 1 | 2;
 }
 
 const steps = [
-  { id: 1, name: 'Ubicación' },
-  { id: 2, name: 'Datos' },
-  { id: 3, name: 'Pago' },
+  { id: 1, name: 'Datos de entrega' },
+  { id: 2, name: 'Pago' },
 ];
 
 export const CheckoutProgressBar = ({ currentStep }: CheckoutProgressBarProps) => {

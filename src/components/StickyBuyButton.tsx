@@ -64,7 +64,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
                 <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                   <TruckIcon className="w-4 h-4 text-gold/90" />
                   <p className="text-xs text-gold/90 font-medium">
-                    Pedí hoy y recibí como máximo en 2 días
+                    Pedí hoy y recibí como máximo en 48 horas
                   </p>
                 </div>
               </div>
