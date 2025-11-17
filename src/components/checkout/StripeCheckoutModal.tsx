@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X } from 'lucide-react';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,6 @@ const CheckoutForm = ({
 }: Omit<StripeCheckoutModalProps, 'isOpen'>) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { createPaymentIntent } = useStripePayment();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -45,49 +44,29 @@ const CheckoutForm = ({
       return;
     }
 
-    const cardNumberElement = elements.getElement(CardNumberElement);
-    if (!cardNumberElement) {
-      setErrorMessage('Error al cargar el formulario de pago');
-      return;
-    }
-
     setIsProcessing(true);
     setErrorMessage(null);
 
     try {
-      // Create payment intent with customer data
-
-      const response = await createPaymentIntent({
-        amount,
-        currency,
-        paymentMethodId: 'pending',
-        email: `${customerData.phone}@nocte.com.py`, // Generate email from phone
-        metadata: {
-          orderNumber: customerData.orderNumber,
-          customerName: customerData.name,
-          customerPhone: customerData.phone,
-          deliveryLocation: customerData.location,
-          deliveryAddress: customerData.address,
-          quantity: customerData.quantity.toString(),
-          product: customerData.quantity === 2
-            ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
-            : 'NOCTE® Red Light Blocking Glasses',
-        },
-      });
-
-      // Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        response.clientSecret,
-        {
-          payment_method: {
-            card: cardNumberElement,
+      // Confirm payment using PaymentElement
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+          payment_method_data: {
             billing_details: {
               name: customerData.name,
               phone: customerData.phone,
+              address: {
+                line1: customerData.address,
+                city: customerData.location,
+                country: 'PY',
+              },
             },
           },
-        }
-      );
+        },
+        redirect: 'if_required',
+      });
 
       if (error) {
         setErrorMessage(error.message || 'Error al procesar el pago');
@@ -120,95 +99,38 @@ const CheckoutForm = ({
           <span className="font-semibold text-foreground">Ciudad:</span> {customerData.location}
         </p>
         <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Dirección:</span> {customerData.address}
+          <span className="font-semibold text-foreground">Referencia:</span> {customerData.address}
         </p>
       </div>
 
-      {/* Card Element */}
-      <div className="p-5 bg-secondary/20 rounded-lg border border-border/30 space-y-4">
+      {/* Payment Element - Supports cards, Apple Pay, Google Pay, Link, etc. */}
+      <div className="p-5 bg-secondary/20 rounded-lg border border-border/30">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide border-b border-border/30 pb-2 mb-4">
-          Información de pago
+          Método de pago
         </h3>
 
-        {/* Card Number */}
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-2">
-            Número de tarjeta
-          </label>
-          <div className="p-3 bg-background/50 rounded-md border border-border/50">
-            <CardNumberElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: '16px',
-                    color: '#F9FAFB',
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                    '::placeholder': {
-                      color: '#6B7280',
-                    },
-                  },
-                  invalid: {
-                    color: '#DC2626',
-                  },
-                },
-                showIcon: true,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Expiry and CVC */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-2">
-              Fecha de expiración
-            </label>
-            <div className="p-3 bg-background/50 rounded-md border border-border/50">
-              <CardExpiryElement
-                options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#F9FAFB',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      '::placeholder': {
-                        color: '#6B7280',
-                      },
-                    },
-                    invalid: {
-                      color: '#DC2626',
-                    },
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-2">
-              CVC
-            </label>
-            <div className="p-3 bg-background/50 rounded-md border border-border/50">
-              <CardCvcElement
-                options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#F9FAFB',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      '::placeholder': {
-                        color: '#6B7280',
-                      },
-                    },
-                    invalid: {
-                      color: '#DC2626',
-                    },
-                  },
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        <PaymentElement
+          options={{
+            layout: {
+              type: 'tabs',
+              defaultCollapsed: false,
+            },
+            fields: {
+              billingDetails: {
+                name: 'never',
+                phone: 'never',
+                address: 'never',
+              },
+            },
+            wallets: {
+              applePay: 'auto',
+              googlePay: 'auto',
+            },
+            terms: {
+              card: 'never',
+            },
+          }}
+        />
       </div>
 
       {/* Error Message */}
@@ -319,18 +241,59 @@ export const StripeCheckoutModal = ({
   customerData,
 }: StripeCheckoutModalProps) => {
   const [stripePromise] = useState(() => getStripe());
+  const { createPaymentIntent } = useStripePayment();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
-  // Track AddPaymentInfo when modal opens
+  // Create PaymentIntent when modal opens
   useEffect(() => {
-    if (isOpen) {
-      trackAddPaymentInfo({
-        value: amount,
-        currency: currency.toUpperCase(),
-        num_items: customerData.quantity,
-      });
+    if (isOpen && !clientSecret) {
+      setIsInitializing(true);
+      setInitError(null);
+
+      createPaymentIntent({
+        amount,
+        currency,
+        paymentMethodId: 'pending',
+        email: `${customerData.phone}@nocte.com.py`,
+        metadata: {
+          orderNumber: customerData.orderNumber,
+          customerName: customerData.name,
+          customerPhone: customerData.phone,
+          deliveryLocation: customerData.location,
+          deliveryAddress: customerData.address,
+          quantity: customerData.quantity.toString(),
+          product: customerData.quantity === 2
+            ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
+            : 'NOCTE® Red Light Blocking Glasses',
+        },
+      })
+        .then((response) => {
+          setClientSecret(response.clientSecret);
+          setIsInitializing(false);
+
+          // Track AddPaymentInfo
+          trackAddPaymentInfo({
+            value: amount,
+            currency: currency.toUpperCase(),
+            num_items: customerData.quantity,
+          });
+        })
+        .catch((error) => {
+          setInitError(error.message || 'Error al inicializar el pago');
+          setIsInitializing(false);
+        });
     }
-  }, [isOpen, amount, currency, customerData.quantity]);
+  }, [isOpen, clientSecret, amount, currency, customerData, createPaymentIntent]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setClientSecret(null);
+      setInitError(null);
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -387,35 +350,63 @@ export const StripeCheckoutModal = ({
               </div>
             </div>
 
+            {/* Loading or Error State */}
+            {isInitializing && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <p className="text-sm text-muted-foreground">
+                  Preparando método de pago...
+                </p>
+              </div>
+            )}
+
+            {initError && (
+              <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p className="text-sm text-red-400 text-center">{initError}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full mt-4 bg-transparent border-border/50 hover:bg-secondary/50"
+                  onClick={onClose}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            )}
+
             {/* Stripe Elements */}
-            <Elements
-              stripe={stripePromise}
-              options={{
-                locale: 'es',
-                loader: 'never',
-                appearance: {
-                  theme: 'night',
-                  variables: {
-                    colorPrimary: '#EF4444',
-                    colorBackground: '#1F2937',
-                    colorText: '#F9FAFB',
-                    colorDanger: '#DC2626',
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                    fontSizeBase: '16px',
-                    borderRadius: '8px',
+            {!isInitializing && !initError && clientSecret && (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  locale: 'es',
+                  loader: 'never',
+                  appearance: {
+                    theme: 'night',
+                    variables: {
+                      colorPrimary: '#EF4444',
+                      colorBackground: '#1F2937',
+                      colorText: '#F9FAFB',
+                      colorDanger: '#DC2626',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      fontSizeBase: '16px',
+                      borderRadius: '8px',
+                    },
                   },
-                },
-              }}
-            >
-              <CheckoutForm
-                onSuccess={onSuccess}
-                onClose={onClose}
-                onBack={onBack}
-                amount={amount}
-                currency={currency}
-                customerData={customerData}
-              />
-            </Elements>
+                }}
+              >
+                <CheckoutForm
+                  onSuccess={onSuccess}
+                  onClose={onClose}
+                  onBack={onBack}
+                  amount={amount}
+                  currency={currency}
+                  customerData={customerData}
+                />
+              </Elements>
+            )}
           </motion.div>
         </motion.div>
       )}
