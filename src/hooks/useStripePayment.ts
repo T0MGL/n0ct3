@@ -33,7 +33,10 @@ export const useStripePayment = (): UseStripePaymentReturn => {
       }
 
       // Call backend to create payment intent
-      const response = await fetch(`${API_CONFIG.baseUrl}/api/create-payment-intent`, {
+      const url = `${API_CONFIG.baseUrl}/api/create-payment-intent`;
+      console.log('🔵 Creating payment intent:', { url, data });
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,6 +46,12 @@ export const useStripePayment = (): UseStripePaymentReturn => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('🔴 Payment intent creation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          requestData: data,
+        });
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
