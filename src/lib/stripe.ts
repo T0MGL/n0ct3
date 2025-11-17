@@ -20,10 +20,7 @@ export const getStripe = (): Promise<Stripe | null> => {
   }
 
   if (!stripePromise) {
-    stripePromise = loadStripe(stripePublishableKey, {
-      advancedFraudSignals: false, // Disable dev tools widget
-      betas: [], // Disable all beta features
-    } as any); // Type assertion to allow disabling all dev features
+    stripePromise = loadStripe(stripePublishableKey);
   }
 
   return stripePromise;
