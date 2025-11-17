@@ -219,11 +219,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
 
               {/* Headline */}
               <div className="text-center space-y-3">
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-                  📞 Datos de contacto
-                </h2>
                 <p className="text-base text-muted-foreground">
-                  Para completar tu pedido y comunicarte con nosotros
+                  Para comunicarnos contigo para la entrega
                 </p>
               </div>
 

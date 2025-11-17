@@ -119,10 +119,7 @@ const CheckoutForm = ({
           <span className="font-semibold text-foreground">Teléfono:</span> {customerData.phone}
         </p>
         <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Ciudad:</span> {customerData.location}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Referencia:</span> {customerData.address}
+          <span className="font-semibold text-foreground">Dirección:</span> {customerData.location}
         </p>
       </div>
 
@@ -249,18 +246,6 @@ const CheckoutForm = ({
         >
           Cancelar
         </Button>
-      </div>
-
-      {/* Security Info */}
-      <div className="flex items-center justify-center gap-2 pt-2">
-        <img
-          src="https://cdn.brandfolder.io/KGT2DTA4/at/8vbr8k4mr5xjwk4hxq4t9vs/Stripe_wordmark_-_blurple.svg"
-          alt="Powered by Stripe"
-          className="h-4 opacity-70"
-        />
-        <p className="text-xs text-muted-foreground">
-          Pago seguro y encriptado
-        </p>
       </div>
     </form>
   );
