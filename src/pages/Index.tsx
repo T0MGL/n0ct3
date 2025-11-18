@@ -11,6 +11,7 @@ import {
   trackAddPaymentInfo,
   trackPurchase,
 } from "@/lib/meta-pixel";
+import { useExitIntent } from "@/hooks/useExitIntent";
 
 // Lazy load heavy sections that are below the fold
 const ProductGallery = lazy(() => import("@/components/ProductGallery"));
@@ -29,6 +30,7 @@ const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
 const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
 const PaymentFallbackModal = lazy(() => import("@/components/checkout/PaymentFallbackModal"));
 const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
+const ExitIntentModal = lazy(() => import("@/components/checkout/ExitIntentModal"));
 
 const Index = () => {
   // UI state
@@ -41,6 +43,8 @@ const Index = () => {
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkoutInProgress, setCheckoutInProgress] = useState(false);
+  const [showExitIntent, setShowExitIntent] = useState(false);
+  const [exitIntentShown, setExitIntentShown] = useState(false);
 
   const [checkoutData, setCheckoutData] = useState({
     quantity: 1,
@@ -54,6 +58,17 @@ const Index = () => {
     paymentMethod: "digital" as "digital" | "cash",
     orderNumber: "",
     paymentIntentId: "",
+  });
+
+  // Detect exit intent during checkout
+  useExitIntent({
+    onExitIntent: () => {
+      if (checkoutInProgress && !showSuccess && !exitIntentShown) {
+        setShowExitIntent(true);
+        setExitIntentShown(true);
+      }
+    },
+    enabled: checkoutInProgress && !showSuccess && !exitIntentShown,
   });
 
   // Prevent page close/reload during checkout
@@ -236,6 +251,23 @@ const Index = () => {
     });
   };
 
+  const handleExitIntentClose = () => {
+    setShowExitIntent(false);
+    setCheckoutInProgress(false);
+    // Reset checkout state
+    setCheckoutData({
+      quantity: 1,
+      colors: null,
+      location: "",
+      name: "",
+      phone: "",
+      address: "",
+      paymentMethod: "digital",
+      orderNumber: generateOrderNumber(),
+      paymentIntentId: "",
+    });
+  };
+
   const orderData = useMemo(() => {
     // Calculate total
     const totalAmount = 279000 * checkoutData.quantity;
@@ -383,6 +415,15 @@ const Index = () => {
             isOpen={showSuccess}
             orderData={orderData}
             onClose={handleSuccessClose}
+          />
+        </Suspense>
+      )}
+
+      {showExitIntent && (
+        <Suspense fallback={null}>
+          <ExitIntentModal
+            isOpen={showExitIntent}
+            onClose={handleExitIntentClose}
           />
         </Suspense>
       )}

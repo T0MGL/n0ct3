@@ -66,6 +66,9 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   {" "}
                   <span className="text-2xl md:text-3xl font-bold text-primary ml-2">279,000 Gs</span>
                 </p>
+                <p className="text-xs text-foreground/50 italic">
+                  *Precio promocional hasta agotar stock
+                </p>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-primary/80 font-medium">
                   <ExclamationTriangleIcon className="w-4 h-4" />
                   <span>Solo quedan 17 unidades</span>

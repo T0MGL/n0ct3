@@ -9,8 +9,10 @@ interface QuantitySelectorProps {
   onContinue: (quantity: number) => void;
 }
 
+const ORIGINAL_PRICE = 320000;
 const UNIT_PRICE = 279000;
 const UPSELL_PRICE = 418500; // 2 units with 50% OFF on second
+const DISCOUNT_PERCENTAGE = Math.round(((ORIGINAL_PRICE - UNIT_PRICE) / ORIGINAL_PRICE) * 100);
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
   const [quantity, setQuantity] = useState(1);
@@ -35,6 +37,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   };
 
   const totalPrice = UNIT_PRICE * quantity;
+  const originalTotalPrice = ORIGINAL_PRICE * quantity;
 
   const handleContinue = () => {
     onContinue(quantity);
@@ -108,13 +111,23 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Precio unitario</span>
-                    <span className="text-foreground font-medium">
-                      {UNIT_PRICE.toLocaleString('es-PY')} Gs
-                    </span>
+                    <div className="text-right">
+                      <span className="text-muted-foreground/50 line-through text-xs mr-2">
+                        {ORIGINAL_PRICE.toLocaleString('es-PY')} Gs
+                      </span>
+                      <span className="text-foreground font-medium">
+                        {UNIT_PRICE.toLocaleString('es-PY')} Gs
+                      </span>
+                    </div>
                   </div>
 
                   <div className="border-t border-border/30 pt-3 flex justify-between items-center">
-                    <span className="text-lg font-semibold text-foreground">Total</span>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-semibold text-foreground">Total</span>
+                      <span className="text-xs text-muted-foreground/50 line-through">
+                        {originalTotalPrice.toLocaleString('es-PY')} Gs
+                      </span>
+                    </div>
                     <span className="text-2xl font-bold text-primary">
                       {totalPrice.toLocaleString('es-PY')} Gs
                     </span>
