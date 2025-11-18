@@ -39,9 +39,9 @@ export const fadeInUp = {
 export const fadeInUpView = {
   initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.3, margin: "0px 0px -100px 0px" },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.normal,
+    duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,
   },
 };
@@ -51,7 +51,7 @@ export const staggerContainer = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   transition: {
-    staggerChildren: REDUCED_MOTION ? 0 : 0.08,
+    staggerChildren: REDUCED_MOTION ? 0 : 0.05,
   },
 };
 
@@ -60,7 +60,7 @@ export const staggerItem = {
   initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
   animate: { opacity: 1, y: 0 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.normal,
+    duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,
   },
 };
@@ -78,9 +78,9 @@ export const scaleOnHover = {
 export const fadeInLeft = {
   initial: { opacity: 0, x: REDUCED_MOTION ? 0 : -20 },
   whileInView: { opacity: 1, x: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.3 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.normal,
+    duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,
   },
 };
@@ -89,9 +89,9 @@ export const fadeInLeft = {
 export const fadeInRight = {
   initial: { opacity: 0, x: REDUCED_MOTION ? 0 : 20 },
   whileInView: { opacity: 1, x: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.3 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.normal,
+    duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,
   },
 };

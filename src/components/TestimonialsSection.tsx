@@ -33,7 +33,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
+      staggerChildren: 0.05,
     },
   },
 };
@@ -44,7 +44,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.4,
+      duration: 0.3,
       ease: [0.25, 0.1, 0.25, 1],
     },
   },
@@ -56,29 +56,17 @@ export const TestimonialsSection = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(239,68,68,0.08),transparent_50%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4"
-        >
+        <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4">
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-4">
             Trabajan de noche. Duermen profundo.
           </h2>
           <p className="text-base md:text-xl text-muted-foreground px-4">
             Emprendedores paraguayos que no sacrifican su sueño
           </p>
-        </motion.div>
+        </div>
 
         {/* Rating Summary Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-          className="max-w-3xl mx-auto mb-12 md:mb-16"
-        >
+        <div className="max-w-3xl mx-auto mb-12 md:mb-16">
           <div className="bg-gradient-to-b from-secondary/40 to-secondary/20 backdrop-blur-sm border border-accent/30 rounded-lg p-8 md:p-10 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
               {/* Star Rating Display */}
@@ -109,20 +97,20 @@ export const TestimonialsSection = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
         >
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
-              className="group p-6 md:p-8 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/30 transition-all duration-300"
+              className="group p-6 md:p-8 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/30 transition-all duration-300 will-change-transform"
             >
               <div className="space-y-5 md:space-y-6">
                 <div className="flex gap-0.5">

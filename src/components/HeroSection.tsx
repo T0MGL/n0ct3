@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import heroImage from "@/assets/nocte-hero-lifestyle.jpg";
+import tarjetasImage from "@/assets/tarjetas.webp";
 import { StripePaymentButton } from "@/components/StripePaymentButton";
 import { PaymentSuccessModal } from "@/components/PaymentSuccessModal";
 import { trackViewContent } from "@/lib/meta-pixel";
@@ -30,7 +31,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black pointer-events-none" />
 
-      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 py-16 md:py-32">
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-8 pb-16 md:pt-16 md:pb-32">
         {/* Mobile-First Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 md:gap-16 lg:gap-24 items-center">
           {/* Text Content - Order 2 on mobile, Order 1 on desktop */}
@@ -58,25 +59,20 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             </p>
 
             <div className="space-y-6 pt-2 md:pt-4">
-              {/* Star Rating */}
-              <div className="flex flex-col items-center lg:items-start gap-3">
-                <div className="flex items-center gap-1">
-                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
-                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
-                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
-                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
-                  <div className="relative w-5 h-5 md:w-6 md:h-6">
-                    <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground/30 absolute" />
-                    <div className="overflow-hidden absolute inset-0" style={{ width: '70%' }}>
-                      <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm md:text-base text-muted-foreground font-light">
-                  <span className="font-semibold text-foreground">4.7 de 5</span> por 1,174 clientes satisfechos
+              {/* Price */}
+              <div className="flex flex-col items-center lg:items-start gap-2">
+                <p className="text-sm md:text-base text-foreground/60">
+                  <span className="line-through text-foreground/40">320,000 Gs</span>
+                  {" "}
+                  <span className="text-2xl md:text-3xl font-bold text-primary ml-2">279,000 Gs</span>
                 </p>
+                <div className="flex items-center gap-2 text-xs md:text-sm text-primary/80 font-medium">
+                  <ExclamationTriangleIcon className="w-4 h-4" />
+                  <span>Solo quedan 17 unidades</span>
+                </div>
               </div>
 
+              {/* Buy Button */}
               {useStripe ? (
                 <StripePaymentButton
                   onSuccess={() => setShowStripeSuccess(true)}
@@ -101,23 +97,37 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                 </Button>
               )}
 
-              <div className="space-y-3 md:space-y-4">
-                <div className="flex flex-col items-center lg:items-start gap-2">
-                  <p className="text-sm md:text-base text-foreground/60">
-                    <span className="line-through text-foreground/40">320,000 Gs</span>
-                    {" "}
-                    <span className="text-2xl md:text-3xl font-bold text-primary ml-2">279,000 Gs</span>
-                  </p>
-                  <div className="flex items-center gap-2 text-xs md:text-sm text-primary/80 font-medium">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    <span>Solo quedan 17 unidades</span>
+              {/* Payment Methods */}
+              <div className="flex justify-center lg:justify-start">
+                <img
+                  src={tarjetasImage}
+                  alt="Visa, Mastercard, Apple Pay, Google Pay"
+                  className="h-8 md:h-10 w-auto opacity-80"
+                />
+              </div>
+
+              {/* Star Rating */}
+              <div className="flex flex-col items-center lg:items-start gap-3">
+                <div className="flex items-center gap-1">
+                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                  <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                  <div className="relative w-5 h-5 md:w-6 md:h-6">
+                    <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground/30 absolute" />
+                    <div className="overflow-hidden absolute inset-0" style={{ width: '70%' }}>
+                      <StarIcon className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                    </div>
                   </div>
                 </div>
+                <p className="text-sm md:text-base text-muted-foreground font-light">
+                  <span className="font-semibold text-foreground">4.7 de 5</span> por 1,174 clientes satisfechos
+                </p>
+              </div>
 
-                {/* Countdown Timer */}
-                <div className="flex justify-center lg:justify-start">
-                  <CountdownTimer />
-                </div>
+              {/* Countdown Timer */}
+              <div className="flex justify-center lg:justify-start">
+                <CountdownTimer />
               </div>
             </div>
           </motion.div>

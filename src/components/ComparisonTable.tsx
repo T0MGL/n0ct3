@@ -100,13 +100,7 @@ export const ComparisonTable = () => {
   return (
     <section className="py-16 md:py-32 px-4 md:px-6 bg-gradient-to-b from-black via-card/20 to-black">
       <div className="container max-w-[1200px] mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-12 md:mb-16 space-y-4 md:space-y-6"
-        >
+        <div className="text-center mb-12 md:mb-16 space-y-4 md:space-y-6">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
             ¿Por qué NOCTE es diferente?
           </h2>
@@ -116,7 +110,7 @@ export const ComparisonTable = () => {
           <p className="text-sm md:text-base text-primary/80 font-medium">
             Arrastra para comparar →
           </p>
-        </motion.div>
+        </div>
 
         <div className="relative">
           {/* Left Arrow */}
@@ -154,12 +148,8 @@ export const ComparisonTable = () => {
           >
             <div className="flex gap-6 md:gap-8 pb-4 min-w-max">
               {comparisons.map((option, index) => (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.4, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
                   className={`p-8 md:p-10 border-2 w-[280px] md:w-[340px] flex-shrink-0 ${
                     option.isNocte
                       ? "border-primary/50 bg-primary/5 md:scale-105"
@@ -201,7 +191,7 @@ export const ComparisonTable = () => {
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>

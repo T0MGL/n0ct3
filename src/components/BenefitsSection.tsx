@@ -42,7 +42,7 @@ export const BenefitsSection = () => {
           {...staggerContainer}
           initial="initial"
           whileInView="animate"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-12"
         >
           {benefits.map((benefit, index) => {
@@ -51,7 +51,7 @@ export const BenefitsSection = () => {
               <motion.div
                 key={index}
                 variants={staggerItem}
-                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/50 transition-all duration-300"
+                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/50 transition-all duration-300 will-change-transform"
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
