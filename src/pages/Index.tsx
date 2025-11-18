@@ -14,6 +14,7 @@ import {
 
 // Lazy load heavy sections that are below the fold
 const ProductGallery = lazy(() => import("@/components/ProductGallery"));
+const ProductVideo = lazy(() => import("@/components/ProductVideo"));
 const ScienceSection = lazy(() => import("@/components/ScienceSection"));
 const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
 const LifestyleSection = lazy(() => import("@/components/LifestyleSection"));
@@ -273,6 +274,10 @@ const Index = () => {
 
         <Suspense fallback={<div className="h-96" />}>
           <ProductGallery />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-96" />}>
+          <ProductVideo />
         </Suspense>
 
         <Suspense fallback={<div className="h-96" />}>

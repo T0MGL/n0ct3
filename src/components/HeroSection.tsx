@@ -27,11 +27,11 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
     trackViewContent();
   }, []);
   return (
-    <section className="relative min-h-[90vh] md:min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[90vh] md:min-h-screen flex items-start overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black pointer-events-none" />
 
-      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-8 pb-16 md:pt-16 md:pb-32">
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-4 pb-16 md:pt-8 md:pb-32">
         {/* Mobile-First Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 md:gap-16 lg:gap-24 items-center">
           {/* Text Content - Order 2 on mobile, Order 1 on desktop */}

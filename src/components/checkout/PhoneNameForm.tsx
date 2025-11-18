@@ -217,13 +217,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
               {/* Progress Bar */}
               <CheckoutProgressBar currentStep={1} />
 
-              {/* Headline */}
-              <div className="text-center space-y-3">
-                <p className="text-base text-muted-foreground">
-                  Para comunicarnos contigo para la entrega
-                </p>
-              </div>
-
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* FIELD 1 - NOMBRE COMPLETO */}
