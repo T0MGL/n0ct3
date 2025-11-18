@@ -4,7 +4,7 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
-import heroImage from "@/assets/nocte-hero-lifestyle.jpg";
+import heroImage from "@/assets/nocte-hero-lifestyle.webp";
 import tarjetasImage from "@/assets/tarjetas.webp";
 import { StripePaymentButton } from "@/components/StripePaymentButton";
 import { PaymentSuccessModal } from "@/components/PaymentSuccessModal";

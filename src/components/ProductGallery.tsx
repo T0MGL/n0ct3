@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { fadeInUpView } from "@/lib/animations";
 import heroImage from "@/assets/nocte-product-hero.jpg";
-import sideView from "@/assets/nocte-side-view.jpg";
+import sideView from "@/assets/nocte-side-view.webp";
 import caseImage from "@/assets/nocte-case.jpg";
 import lifestyle from "@/assets/nocte-lifestyle-2.jpg";
 
