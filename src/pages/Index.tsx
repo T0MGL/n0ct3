@@ -48,6 +48,7 @@ const Index = () => {
 
   const [checkoutData, setCheckoutData] = useState({
     quantity: 1,
+    totalPrice: 279000, // Default to single unit price
     colors: null as [string, string] | null,
     location: "",
     name: "",
@@ -60,30 +61,39 @@ const Index = () => {
     paymentIntentId: "",
   });
 
-  // Detect exit intent during checkout
+  // Check if user is in any checkout step
+  const isInCheckout = checkoutInProgress || showQuantitySelector || showPhoneForm || showStripeCheckout;
+
+  // Detect exit intent during any checkout step
   useExitIntent({
     onExitIntent: () => {
-      if (checkoutInProgress && !showSuccess && !exitIntentShown) {
+      if (isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent) {
+        // Close any open modals first
+        setShowQuantitySelector(false);
+        setShowPhoneForm(false);
+        setShowStripeCheckout(false);
+
+        // Show exit intent modal
         setShowExitIntent(true);
         setExitIntentShown(true);
       }
     },
-    enabled: checkoutInProgress && !showSuccess && !exitIntentShown,
+    enabled: isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent,
   });
 
   // Prevent page close/reload during checkout
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (checkoutInProgress && !showSuccess) {
+      if (isInCheckout && !showSuccess && !showExitIntent) {
         e.preventDefault();
-        e.returnValue = "Tienes un pedido en proceso. Si sales ahora, perderás tu pedido.";
+        e.returnValue = "Tienes un pedido en proceso. Si sales ahora, perderás tu progreso.";
         return e.returnValue;
       }
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [checkoutInProgress, showSuccess]);
+  }, [isInCheckout, showSuccess, showExitIntent]);
 
   // Generate order number on component mount
   useEffect(() => {
@@ -95,18 +105,33 @@ const Index = () => {
     }
   }, [checkoutData.orderNumber]);
 
+  // Track InitiateCheckout when phone form opens
+  useEffect(() => {
+    if (showPhoneForm && checkoutData.quantity > 0) {
+      trackInitiateCheckout({
+        content_name: checkoutData.quantity === 1
+          ? 'NOCTE® Red Light Blocking Glasses'
+          : `NOCTE® Red Light Blocking Glasses - Pack x${checkoutData.quantity}`,
+        content_ids: checkoutData.quantity === 1
+          ? ['nocte-red-glasses']
+          : [`nocte-red-glasses-${checkoutData.quantity}pack`],
+        num_items: checkoutData.quantity,
+        value: checkoutData.totalPrice,
+        currency: 'PYG',
+      });
+    }
+  }, [showPhoneForm, checkoutData.quantity, checkoutData.totalPrice]);
+
   const handleBuyClick = () => {
-    // Track InitiateCheckout when user clicks buy button
-    trackInitiateCheckout();
+    setCheckoutInProgress(true); // Start checkout progress tracking
     setShowQuantitySelector(true);
   };
 
-  const handleQuantitySelected = (quantity: number) => {
-    setCheckoutData((prev) => ({ ...prev, quantity }));
+  const handleQuantitySelected = (quantity: number, totalPrice: number) => {
+    setCheckoutData((prev) => ({ ...prev, quantity, totalPrice }));
     setShowQuantitySelector(false);
 
-    // Track AddToCart
-    const value = 279000 * quantity;
+    // Track AddToCart when user selects quantity
     trackAddToCart({
       content_name: quantity === 1
         ? 'NOCTE® Red Light Blocking Glasses'
@@ -115,21 +140,21 @@ const Index = () => {
         ? ['nocte-red-glasses']
         : [`nocte-red-glasses-${quantity}pack`],
       num_items: quantity,
-      value,
+      value: totalPrice,
       currency: 'PYG',
     });
 
-    setCheckoutInProgress(true);
-    setShowPhoneForm(true); // Go directly to phone/location form
+    // Open phone form after a small delay
+    // InitiateCheckout will be tracked when the form opens
+    setTimeout(() => {
+      setShowPhoneForm(true);
+    }, 100);
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     // STEP 4: Payment successful - now send order to n8n and show success
     setShowStripeCheckout(false);
     setCheckoutData((prev) => ({ ...prev, paymentIntentId }));
-
-    // Calculate total
-    const totalAmount = 279000 * checkoutData.quantity;
 
     // Send order to n8n webhook with all collected data
     try {
@@ -143,7 +168,7 @@ const Index = () => {
         lat: checkoutData.lat,
         long: checkoutData.long,
         quantity: checkoutData.quantity,
-        total: totalAmount,
+        total: checkoutData.totalPrice,
         orderNumber: checkoutData.orderNumber,
         paymentIntentId: paymentIntentId,
         email: undefined,
@@ -164,7 +189,7 @@ const Index = () => {
 
     // Track Purchase conversion event
     trackPurchase({
-      value: totalAmount,
+      value: checkoutData.totalPrice,
       currency: 'PYG',
       content_name: checkoutData.quantity === 1
         ? 'NOCTE® Red Light Blocking Glasses'
@@ -184,21 +209,54 @@ const Index = () => {
     setShowPhoneForm(true);
   };
 
+  const handleQuantitySelectorClose = () => {
+    // Show exit intent modal instead of just closing
+    if (!exitIntentShown) {
+      setShowQuantitySelector(false);
+      setShowExitIntent(true);
+      setExitIntentShown(true);
+    } else {
+      // If already shown, just close and reset
+      setShowQuantitySelector(false);
+      setCheckoutInProgress(false);
+      setCheckoutData({
+        quantity: 1,
+        totalPrice: 279000,
+        colors: null,
+        location: "",
+        name: "",
+        phone: "",
+        address: "",
+        paymentMethod: "digital",
+        orderNumber: generateOrderNumber(),
+        paymentIntentId: "",
+      });
+    }
+  };
+
   const handleStripeCheckoutClose = () => {
-    setShowStripeCheckout(false);
-    setCheckoutInProgress(false);
-    // Reset checkout state when user cancels
-    setCheckoutData({
-      quantity: 1,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-    });
+    // Show exit intent modal instead of just closing
+    if (!exitIntentShown) {
+      setShowStripeCheckout(false);
+      setShowExitIntent(true);
+      setExitIntentShown(true);
+    } else {
+      // If already shown, just close and reset
+      setShowStripeCheckout(false);
+      setCheckoutInProgress(false);
+      setCheckoutData({
+        quantity: 1,
+        totalPrice: 279000,
+        colors: null,
+        location: "",
+        name: "",
+        phone: "",
+        address: "",
+        paymentMethod: "digital",
+        orderNumber: generateOrderNumber(),
+        paymentIntentId: "",
+      });
+    }
   };
 
   const handlePhoneSubmit = (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => {
@@ -218,20 +276,28 @@ const Index = () => {
   };
 
   const handlePhoneFormClose = () => {
-    setShowPhoneForm(false);
-    setCheckoutInProgress(false);
-    // Reset checkout state when user cancels
-    setCheckoutData({
-      quantity: 1,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-    });
+    // Show exit intent modal instead of just closing
+    if (!exitIntentShown) {
+      setShowPhoneForm(false);
+      setShowExitIntent(true);
+      setExitIntentShown(true);
+    } else {
+      // If already shown, just close and reset
+      setShowPhoneForm(false);
+      setCheckoutInProgress(false);
+      setCheckoutData({
+        quantity: 1,
+        totalPrice: 279000,
+        colors: null,
+        location: "",
+        name: "",
+        phone: "",
+        address: "",
+        paymentMethod: "digital",
+        orderNumber: generateOrderNumber(),
+        paymentIntentId: "",
+      });
+    }
   };
 
   const handleSuccessClose = () => {
@@ -240,6 +306,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
+      totalPrice: 279000,
       colors: null,
       location: "",
       name: "",
@@ -257,6 +324,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
+      totalPrice: 279000,
       colors: null,
       location: "",
       name: "",
@@ -269,13 +337,10 @@ const Index = () => {
   };
 
   const orderData = useMemo(() => {
-    // Calculate total
-    const totalAmount = 279000 * checkoutData.quantity;
-
     return {
       orderNumber: checkoutData.orderNumber,
       products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
-      total: `${totalAmount.toLocaleString('es-PY')} Gs`,
+      total: `${checkoutData.totalPrice.toLocaleString('es-PY')} Gs`,
       location: checkoutData.location,
       phone: checkoutData.phone,
       name: checkoutData.name,
@@ -361,7 +426,7 @@ const Index = () => {
         <Suspense fallback={null}>
           <QuantitySelector
             isOpen={showQuantitySelector}
-            onClose={() => setShowQuantitySelector(false)}
+            onClose={handleQuantitySelectorClose}
             onContinue={handleQuantitySelected}
           />
         </Suspense>
@@ -384,7 +449,7 @@ const Index = () => {
             onClose={handleStripeCheckoutClose}
             onBack={handleBackToPhoneForm}
             onSuccess={handlePaymentSuccess}
-            amount={279000 * checkoutData.quantity}
+            amount={checkoutData.totalPrice}
             currency="pyg"
             customerData={{
               name: checkoutData.name,

@@ -103,8 +103,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
         const { latitude, longitude } = position.coords;
 
         try {
-          setDetectedLocation("Cargando tu ubicación...");
-
           // Simulate API delay
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -112,18 +110,19 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
           const city = "Asunción, Paraguay";
           setDetectedLocation(city);
           setLocationCoords({ lat: latitude, long: longitude });
+          setIsLoadingLocation(false);
         } catch (err) {
+          console.error("Location processing error:", err);
           setLocationError("No pudimos detectar tu ubicación");
           setDetectedLocation(null);
           setIsLoadingLocation(false);
           setShowManualLocation(true);
-        } finally {
-          setIsLoadingLocation(false);
         }
       },
       (err) => {
         console.error("Geolocation error:", err);
         setLocationError("Permiso denegado para acceder a tu ubicación");
+        setDetectedLocation(null);
         setIsLoadingLocation(false);
         setShowManualLocation(true);
       }

@@ -1,46 +1,57 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { XMarkIcon, MinusIcon, PlusIcon, TruckIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, TruckIcon, FireIcon } from "@heroicons/react/24/outline";
+import { FireIcon as FireIconSolid } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onContinue: (quantity: number) => void;
+  onContinue: (quantity: number, totalPrice: number) => void;
 }
 
-const ORIGINAL_PRICE = 320000;
-const UNIT_PRICE = 279000;
-const UPSELL_PRICE = 418500; // 2 units with 50% OFF on second
-const DISCOUNT_PERCENTAGE = Math.round(((ORIGINAL_PRICE - UNIT_PRICE) / ORIGINAL_PRICE) * 100);
+// Fixed bundle pricing strategy
+const BUNDLES = [
+  {
+    quantity: 1,
+    price: 279000,
+    label: "Personal",
+    badge: null,
+    highlighted: false,
+  },
+  {
+    quantity: 2,
+    price: 419000,
+    label: "Pack Pareja",
+    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 139.000",
+    highlighted: true,
+    savings: 139000, // 558.000 - 419.000
+  },
+  {
+    quantity: 3,
+    price: 599000,
+    label: "Pack Oficina",
+    badge: "Super Ahorro",
+    highlighted: false,
+    savings: 238000, // 837.000 - 599.000
+  },
+] as const;
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
-  const [quantity, setQuantity] = useState(1);
+  // Default to the highlighted bundle (Pack Pareja - 2 units)
+  const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
 
-  // Reset state when modal opens
+  // Reset state when modal opens - default to Pack Pareja
   useEffect(() => {
     if (isOpen) {
-      setQuantity(1);
+      setSelectedBundleIndex(1);
     }
   }, [isOpen]);
 
-  const handleDecrease = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
-
-  const handleIncrease = () => {
-    if (quantity < 10) {
-      setQuantity(quantity + 1);
-    }
-  };
-
-  const totalPrice = UNIT_PRICE * quantity;
-  const originalTotalPrice = ORIGINAL_PRICE * quantity;
+  const selectedBundle = BUNDLES[selectedBundleIndex];
 
   const handleContinue = () => {
-    onContinue(quantity);
+    onContinue(selectedBundle.quantity, selectedBundle.price);
   };
 
   return (
@@ -75,72 +86,112 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
               {/* Headline */}
               <div className="space-y-4 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                  ¿Cuántos NOCTE<sup className="text-[0.3em]">®</sup> quieres?
+                  Elige tu Pack NOCTE<sup className="text-[0.3em]">®</sup>
                 </h2>
 
                 <p className="text-base text-muted-foreground leading-relaxed">
-                  Selecciona la cantidad que deseas adquirir
+                  Aprovecha nuestras ofertas especiales
                 </p>
               </div>
 
-              {/* Quantity Selector */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-center gap-6">
-                  <button
-                    onClick={handleDecrease}
-                    disabled={quantity <= 1}
-                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-                  >
-                    <MinusIcon className="w-5 h-5" />
-                  </button>
+              {/* Bundle Options */}
+              <div className="space-y-4">
+                {BUNDLES.map((bundle, index) => {
+                  const isSelected = selectedBundleIndex === index;
+                  const unitPrice = bundle.quantity === 1 ? bundle.price : Math.floor(bundle.price / bundle.quantity);
 
-                  <div className="w-24 text-center">
-                    <p className="text-5xl font-bold text-foreground">{quantity}</p>
-                  </div>
+                  return (
+                    <motion.button
+                      key={index}
+                      onClick={() => setSelectedBundleIndex(index)}
+                      className={`
+                        relative w-full p-5 rounded-lg border-2 transition-all duration-300
+                        ${isSelected
+                          ? bundle.highlighted
+                            ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                            : 'border-primary bg-primary/5'
+                          : bundle.highlighted
+                            ? 'border-primary/40 bg-secondary/20 hover:border-primary/60'
+                            : 'border-border/30 bg-secondary/10 hover:border-border/50'
+                        }
+                        ${bundle.highlighted ? 'ring-2 ring-primary/30' : ''}
+                      `}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {/* Badge */}
+                      {bundle.badge && (
+                        <div className={`
+                          absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap
+                          ${bundle.highlighted
+                            ? 'bg-gradient-to-r from-primary to-[#DC2626] text-white shadow-lg'
+                            : 'bg-gold text-black'
+                          }
+                        `}>
+                          {bundle.badge}
+                        </div>
+                      )}
 
-                  <button
-                    onClick={handleIncrease}
-                    disabled={quantity >= 10}
-                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-                  >
-                    <PlusIcon className="w-5 h-5" />
-                  </button>
-                </div>
+                      <div className="flex items-center justify-between">
+                        {/* Left: Quantity & Label */}
+                        <div className="flex items-center gap-4">
+                          {/* Radio Circle */}
+                          <div className={`
+                            w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+                            ${isSelected ? 'border-primary' : 'border-border/50'}
+                          `}>
+                            {isSelected && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-3 h-3 rounded-full bg-primary"
+                              />
+                            )}
+                          </div>
 
-                {/* Price Summary */}
-                <div className="p-5 bg-secondary/30 border border-border/30 rounded-lg space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Precio unitario</span>
-                    <div className="text-right">
-                      <span className="text-muted-foreground/50 line-through text-xs mr-2">
-                        {ORIGINAL_PRICE.toLocaleString('es-PY')} Gs
-                      </span>
-                      <span className="text-foreground font-medium">
-                        {UNIT_PRICE.toLocaleString('es-PY')} Gs
-                      </span>
-                    </div>
-                  </div>
+                          <div className="text-left">
+                            <p className={`
+                              text-lg font-bold
+                              ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
+                            `}>
+                              {bundle.quantity} {bundle.quantity === 1 ? 'Unidad' : 'Unidades'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{bundle.label}</p>
+                            {bundle.quantity > 1 && (
+                              <p className="text-xs text-muted-foreground/70 mt-1">
+                                {unitPrice.toLocaleString('es-PY')} Gs c/u
+                              </p>
+                            )}
+                          </div>
+                        </div>
 
-                  <div className="border-t border-border/30 pt-3 flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-semibold text-foreground">Total</span>
-                      <span className="text-xs text-muted-foreground/50 line-through">
-                        {originalTotalPrice.toLocaleString('es-PY')} Gs
-                      </span>
-                    </div>
-                    <span className="text-2xl font-bold text-primary">
-                      {totalPrice.toLocaleString('es-PY')} Gs
-                    </span>
-                  </div>
-                </div>
+                        {/* Right: Price */}
+                        <div className="text-right">
+                          <p className={`
+                            text-2xl font-bold
+                            ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
+                          `}>
+                            {bundle.price.toLocaleString('es-PY')} Gs
+                          </p>
+                          {bundle.savings && (
+                            <p className="text-xs text-gold font-medium mt-1">
+                              Ahorrás {bundle.savings.toLocaleString('es-PY')} Gs
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
 
-                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-center justify-center gap-2">
-                    <TruckIcon className="w-5 h-5 text-primary" />
-                    <p className="text-sm text-primary font-medium">
-                      Envío gratis a todo el Paraguay 🇵🇾
-                    </p>
-                  </div>
+              {/* Free Shipping Banner */}
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <div className="flex items-center justify-center gap-2">
+                  <TruckIcon className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-primary font-medium">
+                    Envío gratis a todo el Paraguay 🇵🇾
+                  </p>
                 </div>
               </div>
 
@@ -151,7 +202,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 size="xl"
                 className="w-full h-14 text-base font-semibold"
               >
-                Continuar con {quantity} {quantity === 1 ? 'unidad' : 'unidades'}
+                Continuar con {selectedBundle.label} ({selectedBundle.quantity} {selectedBundle.quantity === 1 ? 'unidad' : 'unidades'})
               </Button>
             </div>
           </motion.div>

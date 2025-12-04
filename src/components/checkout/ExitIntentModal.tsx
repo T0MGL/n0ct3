@@ -95,15 +95,16 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                 {/* Headline */}
                 <div className="space-y-3 text-center">
                   <h2 className="text-2xl md:text-3xl font-bold text-primary leading-tight">
-                    ¡Espera! 🎁
+                    ¡Espera! No pierdas tu progreso 🎁
                   </h2>
                   <p className="text-lg md:text-xl font-semibold text-foreground">
-                    Obtén 10% adicional de descuento
+                    Te regalamos 10% adicional de descuento
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Déjanos tu email y te enviaremos un cupón especial con{" "}
                     <span className="text-primary font-semibold">10% de descuento adicional</span>{" "}
-                    sobre el precio promocional de 279.000 Gs
+                    sobre el precio promocional de 279.000 Gs.{" "}
+                    <span className="text-foreground font-medium">Podrás volver cuando quieras para completar tu compra.</span>
                   </p>
                 </div>
 

@@ -38,7 +38,7 @@ const CheckoutForm = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
 
   useEffect(() => {
     console.log('🔵 [CheckoutForm] Component mounted, stripe:', !!stripe, 'elements:', !!elements);
@@ -159,42 +159,7 @@ const CheckoutForm = ({
         </h3>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* Card / Digital Wallets Option */}
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('card')}
-            className={`
-              relative p-4 rounded-lg border-2 transition-all duration-300
-              ${paymentMethod === 'card'
-                ? 'border-primary bg-primary/10 shadow-lg'
-                : 'border-border/50 bg-secondary/30 hover:border-border hover:bg-secondary/50'
-              }
-            `}
-          >
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex items-center gap-2">
-                <CreditCardIcon className="w-5 h-5 text-primary" />
-                <DevicePhoneMobileIcon className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-primary' : 'text-foreground'}`}>
-                  Tarjeta / Wallets
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Apple Pay, Google Pay
-                </p>
-              </div>
-            </div>
-            {paymentMethod === 'card' && (
-              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-            )}
-          </button>
-
-          {/* Cash on Delivery Option */}
+          {/* Cash on Delivery Option - NOW FIRST */}
           <button
             type="button"
             onClick={() => setPaymentMethod('cash_on_delivery')}
@@ -213,11 +178,46 @@ const CheckoutForm = ({
                   Pagar al Recibir
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Efectivo en entrega
+                  Efectivo / QR / Transferencia
                 </p>
               </div>
             </div>
             {paymentMethod === 'cash_on_delivery' && (
+              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </button>
+
+          {/* Card / Digital Wallets Option - NOW SECOND */}
+          <button
+            type="button"
+            onClick={() => setPaymentMethod('card')}
+            className={`
+              relative p-4 rounded-lg border-2 transition-all duration-300
+              ${paymentMethod === 'card'
+                ? 'border-primary bg-primary/10 shadow-lg'
+                : 'border-border/50 bg-secondary/30 hover:border-border hover:bg-secondary/50'
+              }
+            `}
+          >
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="flex items-center gap-2">
+                <CreditCardIcon className="w-5 h-5 text-primary" />
+                <DevicePhoneMobileIcon className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-primary' : 'text-foreground'}`}>
+                  Tarjeta de Crédito / Débito
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Apple Pay, Google Pay
+                </p>
+              </div>
+            </div>
+            {paymentMethod === 'card' && (
               <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -279,10 +279,10 @@ const CheckoutForm = ({
             <BanknotesIcon className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Pago en efectivo al recibir
+                Pagas recién cuando tienes el producto en mano
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Pagarás en efectivo cuando recibas tu pedido. Asegúrate de tener el monto exacto: {formatPrice(amount, currency)}
+                Aceptamos efectivo, QR o transferencia al momento de la entrega. Total: {formatPrice(amount, currency)}
               </p>
             </div>
           </div>
@@ -353,12 +353,10 @@ const CheckoutForm = ({
           {isProcessing ? (
             <>
               <div className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-              {paymentMethod === 'cash_on_delivery' ? 'Procesando pedido...' : 'Procesando pago...'}
+              Procesando pedido...
             </>
-          ) : paymentMethod === 'cash_on_delivery' ? (
-            `Confirmar Pedido ${formatPrice(amount, currency)}`
           ) : (
-            `Pagar ${formatPrice(amount, currency)}`
+            `Confirmar Pedido - ${formatPrice(amount, currency)}`
           )}
         </Button>
 
