@@ -48,7 +48,7 @@ const Index = () => {
 
   const [checkoutData, setCheckoutData] = useState({
     quantity: 1,
-    totalPrice: 279000, // Default to single unit price
+    totalPrice: 249000, // Default to single unit price
     colors: null as [string, string] | null,
     location: "",
     name: "",
@@ -221,7 +221,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 279000,
+        totalPrice: 249000,
         colors: null,
         location: "",
         name: "",
@@ -246,7 +246,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 279000,
+        totalPrice: 249000,
         colors: null,
         location: "",
         name: "",
@@ -287,7 +287,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 279000,
+        totalPrice: 249000,
         colors: null,
         location: "",
         name: "",
@@ -306,7 +306,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
-      totalPrice: 279000,
+      totalPrice: 249000,
       colors: null,
       location: "",
       name: "",
@@ -324,7 +324,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
-      totalPrice: 279000,
+      totalPrice: 249000,
       colors: null,
       location: "",
       name: "",
@@ -419,7 +419,7 @@ const Index = () => {
       <StickyBuyButton onBuyClick={handleBuyClick} />
 
       {/* WhatsApp Button */}
-      <WhatsAppButton phoneNumber="+595983912902" />
+      <WhatsAppButton />
 
       {/* Checkout Modals - Lazy loaded */}
       {showQuantitySelector && (
@@ -498,7 +498,7 @@ const Index = () => {
         <div className="container max-w-[1400px] mx-auto text-center space-y-5 md:space-y-6">
           <p className="text-2xl font-bold tracking-tighter opacity-70">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></p>
           <p className="text-muted-foreground font-light text-xs md:text-sm">
-            Úsalos antes de dormir. Duerme profundo.
+            Úsalos antes de dormir. Dormí profundo.
           </p>
 
           <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light">

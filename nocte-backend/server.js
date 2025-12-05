@@ -347,7 +347,7 @@ app.post('/api/send-order', async (req, res) => {
       order: {
         quantity: quantity || 1,
         product: 'NOCTE® Red Light Blocking Glasses',
-        total: total || (quantity === 2 ? 420000 : 280000),
+        total: total || (quantity === 2 ? 369000 : 249000),
         currency: 'PYG'
       },
       payment: {

@@ -14,26 +14,26 @@ interface QuantitySelectorProps {
 const BUNDLES = [
   {
     quantity: 1,
-    price: 279000,
+    price: 249000,
     label: "Personal",
     badge: null,
     highlighted: false,
   },
   {
     quantity: 2,
-    price: 419000,
+    price: 369000,
     label: "Pack Pareja",
-    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 139.000",
+    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 129.000",
     highlighted: true,
-    savings: 139000, // 558.000 - 419.000
+    savings: 129000, // 498.000 - 369.000
   },
   {
     quantity: 3,
-    price: 599000,
+    price: 529000,
     label: "Pack Oficina",
     badge: "Super Ahorro",
     highlighted: false,
-    savings: 238000, // 837.000 - 599.000
+    savings: 218000, // 747.000 - 529.000
   },
 ] as const;
 

@@ -15,8 +15,8 @@ const benefits = [
   },
   {
     icon: MoonIcon,
-    title: "Duerme profundo (el beneficio real)",
-    description: "Úsalos mientras trabajas o scrolleas de noche. Tu cerebro producirá melatonina naturalmente como si fuera de noche. Resultado: te duermes más rápido y despiertas descansado. No magic pills, solo ciencia.",
+    title: "Dormí profundo (el beneficio real)",
+    description: "Úsalos mientras trabajas o scrolleas de noche. Tu cerebro producirá melatonina naturalmente como si fuera de noche. Resultado: te dormís más rápido y despiertas descansado. No magic pills, solo ciencia.",
   },
 ];
 

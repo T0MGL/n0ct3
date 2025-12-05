@@ -48,7 +48,7 @@ ORDER_RESPONSE=$(curl -s -X POST http://localhost:3000/api/send-order \
     "address": "Av. Test 123, barrio Test",
     "googleMapsLink": "https://www.google.com/maps?q=-25.2968294,-57.6311821",
     "quantity": 2,
-    "total": 420000,
+    "total": 369000,
     "orderNumber": "#NOCTE-TEST-001",
     "paymentIntentId": "pi_test_123456"
   }')

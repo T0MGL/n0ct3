@@ -35,8 +35,8 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
           email,
           timestamp: new Date().toISOString(),
           discountOffered: "10%",
-          originalPrice: 279000,
-          discountedPrice: Math.round(279000 * 0.9), // 10% discount
+          originalPrice: 249000,
+          discountedPrice: Math.round(249000 * 0.9), // 10% discount
         }),
       });
 
@@ -103,7 +103,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Déjanos tu email y te enviaremos un cupón especial con{" "}
                     <span className="text-primary font-semibold">10% de descuento adicional</span>{" "}
-                    sobre el precio promocional de 279.000 Gs.{" "}
+                    sobre el precio promocional de 249.000 Gs.{" "}
                     <span className="text-foreground font-medium">Podrás volver cuando quieras para completar tu compra.</span>
                   </p>
                 </div>
@@ -113,17 +113,17 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Precio actual</span>
                     <span className="text-foreground font-medium line-through">
-                      279.000 Gs
+                      249.000 Gs
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-foreground font-semibold">Con cupón del 10%</span>
                     <span className="text-2xl font-bold text-primary">
-                      {Math.round(279000 * 0.9).toLocaleString('es-PY')} Gs
+                      {Math.round(249000 * 0.9).toLocaleString('es-PY')} Gs
                     </span>
                   </div>
                   <p className="text-xs text-center text-primary/80 pt-2">
-                    ¡Ahorras {Math.round(279000 * 0.1).toLocaleString('es-PY')} Gs adicionales!
+                    ¡Ahorras {Math.round(249000 * 0.1).toLocaleString('es-PY')} Gs adicionales!
                   </p>
                 </div>
 

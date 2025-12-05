@@ -9,11 +9,11 @@ import { motion } from "framer-motion";
 const faqs = [
   {
     question: "¿Los uso para dormir o para trabajar?",
-    answer: "Para trabajar/usar pantallas de noche. No son lentes para ponerte a dormir. Los usas mientras trabajas, estudias o scrolleas de noche (2-3 horas antes de dormir). Bloquean la luz azul que le dice a tu cerebro 'despierta', permitiendo que tu cuerpo produzca melatonina naturalmente. Resultado: cuando terminas tu sesión y vas a dormir, te duermes rápido y profundo.",
+    answer: "Para trabajar/usar pantallas de noche. No son lentes para ponerte a dormir. Los usas mientras trabajas, estudias o scrolleas de noche (2-3 horas antes de dormir). Bloquean la luz azul que le dice a tu cerebro 'despierta', permitiendo que tu cuerpo produzca melatonina naturalmente. Resultado: cuando terminas tu sesión y vas a dormir, te dormís rápido y profundo.",
   },
   {
     question: "¿Cuál es la garantía de NOCTE?",
-    answer: "30 días completos. Si después de usar NOCTE durante tus sesiones nocturnas no duermes mejor en 30 días, devolvemos 100% de tu dinero. Sin preguntas, sin sorpresas. Garantía clara y honesta.",
+    answer: "30 días completos. Si después de usar NOCTE durante tus sesiones nocturnas no dormís mejor en 30 días, devolvemos 100% de tu dinero. Sin preguntas, sin sorpresas. Garantía clara y honesta.",
   },
   {
     question: "¿Cuánto tarda en llegar NOCTE?",

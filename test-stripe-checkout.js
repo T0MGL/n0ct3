@@ -81,7 +81,7 @@ async function testHealthCheck() {
   }
 }
 
-async function testCreatePaymentIntent(amount = 280000, currency = 'pyg') {
+async function testCreatePaymentIntent(amount = 249000, currency = 'pyg') {
   logSection(`💳 Test 2: Crear Payment Intent (${amount} ${currency.toUpperCase()})`);
 
   try {
@@ -176,8 +176,8 @@ async function testAllScenarios() {
   // Test 2: Payment Intent básico
   await testCreatePaymentIntent();
 
-  // Test 3: Payment Intent con doble cantidad
-  await testCreatePaymentIntent(420000, 'pyg');
+  // Test 3: Payment Intent con doble cantidad (Pack Pareja)
+  await testCreatePaymentIntent(369000, 'pyg');
 
   // Test 4: Diferentes escenarios de tarjetas
   log('\n\n' + '🃏 '.repeat(30), 'magenta');

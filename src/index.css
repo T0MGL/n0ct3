@@ -93,6 +93,16 @@ All colors MUST be HSL.
       box-shadow: 0 0 40px hsl(0 91% 59% / 0.6);
     }
   }
+
+  /* Hide scrollbar for carousel */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Hide Stripe Dev Tools widget in development */

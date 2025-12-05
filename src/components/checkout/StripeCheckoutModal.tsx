@@ -307,8 +307,8 @@ const CheckoutForm = ({
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">
               {customerData.quantity === 2
-                ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
-                : 'NOCTE® Red Light Blocking Glasses'}
+                ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
+                : 'Lentes Rojos Premium Anti-Luz Azul'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Cantidad: {customerData.quantity}
@@ -328,16 +328,23 @@ const CheckoutForm = ({
             </span>
           </div>
           <p className="text-sm font-semibold text-muted-foreground line-through">
-            {formatPrice(0, currency)}
+            Gs. 30.000
           </p>
         </div>
 
         {/* Total */}
         <div className="flex justify-between items-center pt-3 border-t border-border/50">
-          <span className="text-base font-bold text-foreground">Total a pagar</span>
+          <span className="text-lg font-bold text-foreground">Total a pagar</span>
           <span className="text-2xl font-bold text-primary">
             {formatPrice(amount, currency)}
           </span>
+        </div>
+
+        {/* Trust Microcopy */}
+        <div className="flex justify-center pt-2">
+          <p className="text-xs text-gray-400">
+            Envío seguro a todo Paraguay 🇵🇾
+          </p>
         </div>
       </div>
 
@@ -415,8 +422,8 @@ export const StripeCheckoutModal = ({
           deliveryAddress: customerData.address,
           quantity: customerData.quantity.toString(),
           product: customerData.quantity === 2
-            ? 'NOCTE® Red Light Blocking Glasses - Pack x2'
-            : 'NOCTE® Red Light Blocking Glasses',
+            ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
+            : 'Lentes Rojos Premium Anti-Luz Azul',
         },
       })
         .then((response) => {
