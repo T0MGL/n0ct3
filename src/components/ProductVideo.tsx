@@ -13,15 +13,15 @@ export const ProductVideo = () => {
   };
 
   return (
-    <section data-section="product-video" className="py-16 md:py-24 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
+    <section data-section="product-video" className="py-12 md:py-16 lg:py-24 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
       <div className="container max-w-[900px] mx-auto">
         <motion.div
           {...fadeInUpView}
-          className="space-y-6 md:space-y-8"
+          className="space-y-4 md:space-y-6 lg:space-y-8"
         >
           {/* Heading */}
           <div className="text-center space-y-3">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight">
               NOCTE <sup className="text-[0.5em] ml-0.5">®</sup>
             </h2>
           </div>
@@ -30,7 +30,7 @@ export const ProductVideo = () => {
           <motion.div
             {...fadeInUpView}
             transition={{ ...fadeInUpView.transition, delay: 0.2 }}
-            className="relative w-full max-w-[800px] mx-auto overflow-hidden bg-gradient-to-b from-black via-card/20 to-black border border-gold/30 shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
+            className="relative w-full max-w-[90vw] sm:max-w-[500px] md:max-w-[600px] lg:max-w-[700px] mx-auto overflow-hidden rounded-lg bg-gradient-to-b from-black via-card/20 to-black border border-gold/30 shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
             onMouseEnter={handleMouseEnter}
           >
             {/* Ambient glow effect */}
@@ -46,6 +46,7 @@ export const ProductVideo = () => {
               playsInline
               className="w-full h-auto relative z-10"
               preload="metadata"
+              style={{ maxHeight: '70vh' }}
             >
               Tu navegador no soporta el elemento de video.
             </video>

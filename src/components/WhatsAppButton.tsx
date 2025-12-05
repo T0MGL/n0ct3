@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 export const WhatsAppButton = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [stickyButtonVisible, setStickyButtonVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +15,24 @@ export const WhatsAppButton = () => {
 
       // Show button when user scrolls past the ProductGallery
       setIsVisible(galleryBottom < 0);
+
+      // Check if sticky button is visible (same logic as StickyBuyButton)
+      const heroButton = document.querySelector('[data-hero-cta]');
+      const guaranteeButton = document.querySelector('[data-guarantee-cta]');
+
+      if (heroButton) {
+        const heroRect = heroButton.getBoundingClientRect();
+        const heroOutOfView = heroRect.bottom < 0 || heroRect.top > window.innerHeight;
+        const hasScrolledDown = window.scrollY > 300;
+
+        let guaranteeInView = false;
+        if (guaranteeButton) {
+          const guaranteeRect = guaranteeButton.getBoundingClientRect();
+          guaranteeInView = guaranteeRect.top < window.innerHeight && guaranteeRect.bottom > 0;
+        }
+
+        setStickyButtonVisible(hasScrolledDown && heroOutOfView && !guaranteeInView);
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -30,7 +49,9 @@ export const WhatsAppButton = () => {
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className={`fixed bottom-24 right-4 z-[100] bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 ${
+      className={`fixed right-4 z-[100] bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 ${
+        stickyButtonVisible ? "bottom-32 md:bottom-36" : "bottom-6 md:bottom-8"
+      } ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       }`}
       aria-label="Contactar por WhatsApp"
