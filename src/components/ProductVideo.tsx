@@ -1,16 +1,42 @@
 import { motion } from "framer-motion";
 import { fadeInUpView } from "@/lib/animations";
 import productVideo from "@/assets/nocteglasses.mp4";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 export const ProductVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleMouseEnter = () => {
-    if (videoRef.current) {
-      videoRef.current.play();
-    }
-  };
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    // Intenta reproducir el video cuando el componente se monta
+    const playVideo = async () => {
+      try {
+        await videoElement.play();
+      } catch (error) {
+        console.log("Autoplay bloqueado por el navegador:", error);
+      }
+    };
+
+    // Usa Intersection Observer para reproducir cuando esté visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            playVideo();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(videoElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <section data-section="product-video" className="py-12 md:py-16 lg:py-24 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
@@ -26,27 +52,26 @@ export const ProductVideo = () => {
             </h2>
           </div>
 
-          {/* Video Container */}
+          {/* Video Container - Integrado en la página */}
           <motion.div
             {...fadeInUpView}
             transition={{ ...fadeInUpView.transition, delay: 0.2 }}
-            className="relative w-full max-w-[90vw] sm:max-w-[500px] md:max-w-[600px] lg:max-w-[700px] mx-auto overflow-hidden rounded-lg bg-gradient-to-b from-black via-card/20 to-black border border-gold/30 shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
-            onMouseEnter={handleMouseEnter}
+            className="relative w-full mx-auto overflow-hidden rounded-lg"
           >
-            {/* Ambient glow effect */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.15),transparent_60%)] pointer-events-none" />
+            {/* Ambient glow effect - más sutil */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.1),transparent_70%)] pointer-events-none" />
 
             {/* Video element */}
             <video
               ref={videoRef}
               src={productVideo}
+              autoPlay
               controls
               loop
               muted
               playsInline
-              className="w-full h-auto relative z-10"
-              preload="metadata"
-              style={{ maxHeight: '70vh' }}
+              className="w-full h-auto relative z-10 rounded-lg"
+              preload="auto"
             >
               Tu navegador no soporta el elemento de video.
             </video>
