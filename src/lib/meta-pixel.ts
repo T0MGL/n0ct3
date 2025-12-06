@@ -172,6 +172,7 @@ export const trackAddPaymentInfo = (params: {
   num_items?: number;
   value: number;
   currency: string;
+  payment_type?: string; // e.g., 'Pago contra entrega', 'Tarjeta'
 }): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 

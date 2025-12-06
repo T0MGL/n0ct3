@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon } from '@heroicons/react/24/outline';
@@ -40,9 +40,43 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
 
+  // Refs to track AddPaymentInfo events and prevent duplicates
+  const initialTrackDoneRef = useRef(false);
+  const previousPaymentMethodRef = useRef<PaymentMethod | null>(null);
+
   useEffect(() => {
     console.log('🔵 [CheckoutForm] Component mounted, stripe:', !!stripe, 'elements:', !!elements);
   }, [stripe, elements]);
+
+  // Track AddPaymentInfo when user sees form and when they change payment method
+  useEffect(() => {
+    // First render: Track the default payment method ("Pago contra entrega")
+    if (!initialTrackDoneRef.current) {
+      console.log('📊 [Meta Pixel] Tracking AddPaymentInfo - Default: Pago contra entrega');
+      trackAddPaymentInfo({
+        value: amount,
+        currency: currency.toUpperCase(),
+        num_items: customerData.quantity,
+        payment_type: 'Pago contra entrega',
+      });
+      initialTrackDoneRef.current = true;
+      previousPaymentMethodRef.current = paymentMethod;
+      return;
+    }
+
+    // Subsequent renders: Track only when user manually changes payment method
+    if (previousPaymentMethodRef.current !== paymentMethod) {
+      const paymentType = paymentMethod === 'cash_on_delivery' ? 'Pago contra entrega' : 'Tarjeta';
+      console.log(`📊 [Meta Pixel] Tracking AddPaymentInfo - User changed to: ${paymentType}`);
+      trackAddPaymentInfo({
+        value: amount,
+        currency: currency.toUpperCase(),
+        num_items: customerData.quantity,
+        payment_type: paymentType,
+      });
+      previousPaymentMethodRef.current = paymentMethod;
+    }
+  }, [paymentMethod, amount, currency, customerData.quantity]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +95,6 @@ const CheckoutForm = ({
         const codOrderId = `COD-${customerData.orderNumber}-${Date.now()}`;
 
         console.log('✅ [Payment] Cash on Delivery order created:', codOrderId);
-
-        // Track AddPaymentInfo for COD
-        trackAddPaymentInfo({
-          value: amount,
-          currency: currency.toUpperCase(),
-          num_items: customerData.quantity,
-        });
 
         // Simulate async processing
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -434,13 +461,6 @@ export const StripeCheckoutModal = ({
 
           setClientSecret(response.clientSecret);
           setIsInitializing(false);
-
-          // Track AddPaymentInfo
-          trackAddPaymentInfo({
-            value: amount,
-            currency: currency.toUpperCase(),
-            num_items: customerData.quantity,
-          });
         })
         .catch((error) => {
           console.error('❌ [Init] Failed to create payment intent:', error);
