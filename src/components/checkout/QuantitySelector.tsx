@@ -14,26 +14,26 @@ interface QuantitySelectorProps {
 const BUNDLES = [
   {
     quantity: 1,
-    price: 249000,
+    price: 199000,
     label: "Personal",
     badge: null,
     highlighted: false,
   },
   {
     quantity: 2,
-    price: 369000,
+    price: 299000,
     label: "Pack Pareja",
-    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 129.000",
+    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 99.000",
     highlighted: true,
-    savings: 129000, // 498.000 - 369.000
+    savings: 99000, // 398.000 - 299.000
   },
   {
     quantity: 3,
-    price: 529000,
+    price: 429000,
     label: "Pack Oficina",
     badge: "Super Ahorro",
     highlighted: false,
-    savings: 218000, // 747.000 - 529.000
+    savings: 168000, // 597.000 - 429.000
   },
 ] as const;
 
@@ -71,7 +71,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]"
+            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto"
           >
             {/* Close Button */}
             <button
@@ -173,7 +173,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                           `}>
                             {bundle.price.toLocaleString('es-PY')} Gs
                           </p>
-                          {bundle.savings && (
+                          {'savings' in bundle && bundle.savings && (
                             <p className="text-xs text-gold font-medium mt-1">
                               Ahorrás {bundle.savings.toLocaleString('es-PY')} Gs
                             </p>

@@ -13,7 +13,7 @@ export const OfferCTA = ({ onBuyClick, variant = "default" }: OfferCTAProps) => 
     return (
       <motion.section
         {...fadeInUpView}
-        className="py-12 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-primary/5 to-black"
+        className="py-6 md:py-8 px-4 md:px-6 bg-gradient-to-b from-black via-primary/5 to-black"
       >
         <div className="container max-w-[800px] mx-auto text-center">
           <Button

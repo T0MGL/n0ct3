@@ -27,7 +27,7 @@ const comparisons = [
       { label: "Bloqueo de luz azul", value: "99%", isGood: true },
       { label: "Mejora el sueño", value: "Máximo", isGood: true },
       { label: "Garantía", value: "30 días", isGood: true },
-      { label: "Precio", value: "279k Gs", isGood: true },
+      { label: "Precio", value: "199k Gs", isGood: true },
     ],
     isNocte: true,
   },
@@ -98,7 +98,7 @@ export const ComparisonTable = () => {
   };
 
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-gradient-to-b from-black via-card/20 to-black">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-card/20 to-black">
       <div className="container max-w-[1200px] mx-auto">
         <div className="text-center mb-12 md:mb-16 space-y-4 md:space-y-6">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
@@ -143,18 +143,17 @@ export const ComparisonTable = () => {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
-            className="overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+            className="overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing will-change-transform"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             <div className="flex gap-6 md:gap-8 pb-4 min-w-max">
               {comparisons.map((option, index) => (
                 <div
                   key={index}
-                  className={`p-8 md:p-10 border-2 w-[280px] md:w-[340px] flex-shrink-0 ${
-                    option.isNocte
-                      ? "border-primary/50 bg-primary/5 md:scale-105"
-                      : "border-border/50 bg-card/30"
-                  } relative select-none`}
+                  className={`p-8 md:p-10 border-2 w-[280px] md:w-[340px] flex-shrink-0 ${option.isNocte
+                    ? "border-primary/50 bg-primary/5 md:scale-105"
+                    : "border-border/50 bg-card/30"
+                    } relative select-none will-change-transform`}
                 >
                   {option.isNocte && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary px-6 py-2 text-sm font-bold shadow-lg">
@@ -162,9 +161,8 @@ export const ComparisonTable = () => {
                     </div>
                   )}
 
-                  <h3 className={`text-2xl md:text-3xl font-bold mb-8 text-center ${
-                    option.isNocte ? "text-primary" : "text-foreground/80"
-                  }`}>
+                  <h3 className={`text-2xl md:text-3xl font-bold mb-8 text-center ${option.isNocte ? "text-primary" : "text-foreground/80"
+                    }`}>
                     {option.title}
                   </h3>
 
@@ -182,9 +180,8 @@ export const ComparisonTable = () => {
                               <XMarkIcon className="w-6 h-6 text-muted-foreground/40 flex-shrink-0" strokeWidth={2.5} />
                             )
                           )}
-                          <span className={`text-base font-bold ${
-                            option.isNocte && spec.isGood ? "text-primary" : "text-foreground"
-                          }`}>
+                          <span className={`text-base font-bold ${option.isNocte && spec.isGood ? "text-primary" : "text-foreground"
+                            }`}>
                             {spec.value}
                           </span>
                         </div>

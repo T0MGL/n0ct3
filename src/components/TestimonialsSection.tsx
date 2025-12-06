@@ -10,9 +10,9 @@ const testimonials = [
   },
   {
     name: "María Fernández",
-    role: "Desarrolladora, Remote",
+    role: "Desarrolladora, Remoto",
     rating: 5,
-    quote: "Los uso mientras coneo de 8PM a 1AM. Termino mi día y me duermo en 15 minutos. Antes tardaba 2 horas dando vueltas. Es real.",
+    quote: "Los uso mientras trabajo de 8PM a 1AM. Termino mi día y me duermo en 15 minutos. Antes tardaba 2 horas dando vueltas. Es real.",
   },
   {
     name: "Carlos Gómez",
@@ -52,7 +52,7 @@ const itemVariants = {
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-black relative">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-black relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(239,68,68,0.08),transparent_50%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">

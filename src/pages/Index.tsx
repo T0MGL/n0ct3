@@ -48,7 +48,7 @@ const Index = () => {
 
   const [checkoutData, setCheckoutData] = useState({
     quantity: 1,
-    totalPrice: 249000, // Default to single unit price
+    totalPrice: 199000, // Default to single unit price
     colors: null as [string, string] | null,
     location: "",
     name: "",
@@ -221,7 +221,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 249000,
+        totalPrice: 199000,
         colors: null,
         location: "",
         name: "",
@@ -230,6 +230,8 @@ const Index = () => {
         paymentMethod: "digital",
         orderNumber: generateOrderNumber(),
         paymentIntentId: "",
+        lat: undefined,
+        long: undefined,
       });
     }
   };
@@ -246,7 +248,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 249000,
+        totalPrice: 199000,
         colors: null,
         location: "",
         name: "",
@@ -255,6 +257,8 @@ const Index = () => {
         paymentMethod: "digital",
         orderNumber: generateOrderNumber(),
         paymentIntentId: "",
+        lat: undefined,
+        long: undefined,
       });
     }
   };
@@ -287,7 +291,7 @@ const Index = () => {
       setCheckoutInProgress(false);
       setCheckoutData({
         quantity: 1,
-        totalPrice: 249000,
+        totalPrice: 199000,
         colors: null,
         location: "",
         name: "",
@@ -296,6 +300,8 @@ const Index = () => {
         paymentMethod: "digital",
         orderNumber: generateOrderNumber(),
         paymentIntentId: "",
+        lat: undefined,
+        long: undefined,
       });
     }
   };
@@ -306,7 +312,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
-      totalPrice: 249000,
+      totalPrice: 199000,
       colors: null,
       location: "",
       name: "",
@@ -315,6 +321,8 @@ const Index = () => {
       paymentMethod: "digital",
       orderNumber: generateOrderNumber(),
       paymentIntentId: "",
+      lat: undefined,
+      long: undefined,
     });
   };
 
@@ -324,7 +332,7 @@ const Index = () => {
     // Reset checkout state
     setCheckoutData({
       quantity: 1,
-      totalPrice: 249000,
+      totalPrice: 199000,
       colors: null,
       location: "",
       name: "",
@@ -333,6 +341,8 @@ const Index = () => {
       paymentMethod: "digital",
       orderNumber: generateOrderNumber(),
       paymentIntentId: "",
+      lat: undefined,
+      long: undefined,
     });
   };
 
@@ -347,26 +357,60 @@ const Index = () => {
     };
   }, [checkoutData]);
 
+  // Scroll detection for header
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [showHeader, setShowHeader] = useState(true);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      if (typeof window !== 'undefined') {
+        const currentScrollY = window.scrollY;
+
+        // Hide on scroll down, show on scroll up
+        // Always show if very close to top to avoid flickering or getting stuck hidden at top
+        if (currentScrollY > lastScrollY && currentScrollY > 50) {
+          setShowHeader(false);
+        } else {
+          setShowHeader(true);
+        }
+
+        setLastScrollY(currentScrollY);
+      }
+    };
+
+    window.addEventListener('scroll', controlNavbar);
+
+    return () => {
+      window.removeEventListener('scroll', controlNavbar);
+    };
+  }, [lastScrollY]);
+
   return (
     <div className="min-h-screen bg-black text-foreground">
       {/* Delivery Banner */}
-      <DeliveryBanner onVisibilityChange={setIsBannerVisible} />
+      <DeliveryBanner />
 
       {/* Header */}
-      <header className={`fixed ${isBannerVisible ? 'top-[36px] md:top-[40px]' : 'top-0'} w-full bg-black/60 backdrop-blur-xl border-b border-border/30 z-50 transition-all duration-300`}>
-        <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-4 md:py-5 flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tighter">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
-          <button
-            onClick={handleBuyClick}
-            className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight"
-          >
-            Comprar Ahora
-          </button>
+      <header
+        className={`fixed left-0 w-full z-50 transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-[150%]'
+          } top-[36px] md:top-[40px]`}
+      >
+        {/* We want the header to be transparent. bg-transparent. */}
+        <div className="w-full">
+          <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
+            <button
+              onClick={handleBuyClick}
+              className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight mix-blend-difference"
+            >
+              Comprar Ahora
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className={`${isBannerVisible ? 'pt-[100px] md:pt-[108px]' : 'pt-16 md:pt-20'} transition-all duration-300`}>
+      <main className="pt-0 pb-0 transition-all duration-300">
         <HeroSection onBuyClick={handleBuyClick} />
 
         <Suspense fallback={<div className="h-96" />}>
@@ -467,8 +511,8 @@ const Index = () => {
         <Suspense fallback={null}>
           <PaymentFallbackModal
             isOpen={showPaymentFallback}
-            onPayOnDelivery={() => {}}
-            onRetryPayment={() => {}}
+            onPayOnDelivery={() => { }}
+            onRetryPayment={() => { }}
             onCancel={() => setShowPaymentFallback(false)}
           />
         </Suspense>

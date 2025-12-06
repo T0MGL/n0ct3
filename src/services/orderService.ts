@@ -17,7 +17,7 @@ export interface OrderData {
   orderNumber: string;
   paymentIntentId?: string;
   email?: string;
-  paymentType: 'COD' | 'Cash';
+  paymentType: 'COD' | 'Cash' | 'Card';
   deliveryType: 'común' | 'premium';
 }
 

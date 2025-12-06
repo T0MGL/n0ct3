@@ -22,7 +22,7 @@ const benefits = [
 
 export const BenefitsSection = () => {
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-black relative">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-black relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(239,68,68,0.08),transparent_50%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">

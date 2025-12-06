@@ -22,7 +22,7 @@ const useCases = [
 
 export const LifestyleSection = () => {
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/20 to-black relative overflow-hidden">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/20 to-black relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
@@ -31,7 +31,7 @@ export const LifestyleSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6"
+          className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6 will-change-transform"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
             ¿Cuándo usar NOCTE?
@@ -48,7 +48,7 @@ export const LifestyleSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6 }}
-            className="relative order-2 lg:order-1"
+            className="relative order-2 lg:order-1 will-change-transform"
           >
             <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px] scale-75" />
             <div className="relative">
@@ -73,7 +73,7 @@ export const LifestyleSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-8 order-1 lg:order-2"
+            className="space-y-8 order-1 lg:order-2 will-change-transform"
           >
             {useCases.map((useCase, index) => {
               const Icon = useCase.icon;
@@ -111,7 +111,7 @@ export const LifestyleSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="mt-16 md:mt-20 text-center"
+          className="mt-16 md:mt-20 text-center will-change-transform"
         >
           <div className="inline-block bg-secondary/50 backdrop-blur-sm border border-primary/30 rounded-lg px-8 py-6 md:px-12 md:py-8">
             <p className="text-lg md:text-xl lg:text-2xl font-light text-foreground/90 leading-relaxed">

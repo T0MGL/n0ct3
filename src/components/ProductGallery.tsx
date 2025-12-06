@@ -17,13 +17,13 @@ export const ProductGallery = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
-    <section data-section="product-gallery" className="py-16 md:py-24 px-4 bg-black">
+    <section data-section="product-gallery" className="py-8 md:py-12 px-4 bg-black">
       <div className="container max-w-[1200px] mx-auto">
         <div className="space-y-8">
           {/* Main Image */}
           <motion.div
             {...fadeInUpView}
-            className="relative aspect-[4/3] md:aspect-video w-full overflow-hidden bg-gradient-to-b from-black via-card/20 to-black"
+            className="relative aspect-[4/3] md:aspect-video w-full overflow-hidden bg-gradient-to-b from-black via-card/20 to-black will-change-transform"
           >
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.15),transparent_60%)]" />
             <img
@@ -45,11 +45,10 @@ export const ProductGallery = () => {
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
-                className={`relative aspect-square overflow-hidden bg-card border-2 transition-all duration-300 ${
-                  selectedImage === index
-                    ? "border-primary shadow-[0_0_20px_rgba(239,68,68,0.4)]"
-                    : "border-border/30 hover:border-primary/50"
-                }`}
+                className={`relative aspect-square overflow-hidden bg-card border-2 transition-all duration-300 ${selectedImage === index
+                  ? "border-primary shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+                  : "border-border/30 hover:border-primary/50"
+                  }`}
               >
                 <img
                   src={image.src}

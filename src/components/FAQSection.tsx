@@ -31,7 +31,7 @@ const faqs = [
 
 export const FAQSection = () => {
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-gradient-to-b from-black via-card/20 to-black">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-card/20 to-black">
       <div className="container max-w-[900px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 15 }}

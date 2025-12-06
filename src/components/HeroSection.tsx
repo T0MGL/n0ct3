@@ -43,12 +43,12 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
     trackViewContent();
   }, []);
   return (
-    <section className="relative min-h-[90vh] flex items-start overflow-hidden bg-black">
+    <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
 
-      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-4 pb-12 md:pb-16">
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-4 pb-6 md:pb-12">
         {/* Mobile-First Layout */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-12 items-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 md:gap-8 items-start">
 
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
@@ -58,7 +58,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             className="relative order-1 w-full"
           >
             {/* Authority Badge */}
-            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20 bg-gradient-to-r from-primary to-red-600 px-3 py-1.5 rounded-md shadow-lg">
+            <div className="absolute top-4 left-2 md:top-2 md:left-4 z-20 bg-gradient-to-r from-primary to-red-600 px-3 py-1.5 rounded-md shadow-lg">
               <p className="text-white text-xs md:text-sm font-semibold">
                 #1 Lentes Anti-Luz Azul en Paraguay 🇵🇾
               </p>
@@ -108,11 +108,10 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                         });
                       }
                     }}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      currentSlide === index
-                        ? 'bg-primary w-6'
-                        : 'bg-white/30'
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === index
+                      ? 'bg-primary w-6'
+                      : 'bg-white/30'
+                      }`}
                     aria-label={`Ir a imagen ${index + 1}`}
                   />
                 ))}
@@ -125,7 +124,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-            className="space-y-5 md:space-y-6 order-2 w-full"
+            className="space-y-4 md:space-y-6 order-2 w-full"
           >
             {/* Main Title */}
             <div className="space-y-3">
@@ -183,8 +182,8 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
             {/* Price */}
             <div className="flex items-center gap-3 py-2">
-              <span className="text-base text-foreground/40 line-through">Gs. 320.000</span>
-              <span className="text-4xl md:text-5xl font-bold text-white">Gs. 249.000</span>
+              <span className="text-base text-foreground/40 line-through">Gs. 239.000</span>
+              <span className="text-4xl md:text-5xl font-bold text-white">Gs. 199.000</span>
             </div>
 
             {/* CTA Button */}
@@ -198,7 +197,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   }}
                   className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
                 >
-                  COMPRAR AHORA - Gs. 249.000
+                  COMPRAR AHORA - Gs. 199.000
                 </StripePaymentButton>
               ) : (
                 <Button
@@ -208,7 +207,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
                   onClick={onBuyClick}
                 >
-                  COMPRAR AHORA - Gs. 249.000
+                  COMPRAR AHORA - Gs. 199.000
                 </Button>
               )}
 

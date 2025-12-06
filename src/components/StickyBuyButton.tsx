@@ -13,11 +13,25 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
   const deliveryDates = useMemo(() => getDeliveryDates(), []);
 
   useEffect(() => {
-    const heroButton = document.querySelector('[data-hero-cta]');
-    const guaranteeButton = document.querySelector('[data-guarantee-cta]');
+    let ticking = false;
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
 
     const handleScroll = () => {
-      if (!heroButton) return;
+      if (!heroButton) {
+        // Try to find buttons again if they weren't found initially (lazy loading support)
+        heroButton = document.querySelector('[data-hero-cta]');
+        guaranteeButton = document.querySelector('[data-guarantee-cta]');
+        if (!heroButton) return;
+      }
 
       const heroRect = heroButton.getBoundingClientRect();
       const heroOutOfView = heroRect.bottom < 0 || heroRect.top > window.innerHeight;
@@ -36,9 +50,17 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
       setIsVisible(hasScrolledDown && heroOutOfView && !guaranteeInView);
     };
 
+    // Initialize references
+    let heroButton = document.querySelector('[data-hero-cta]');
+    let guaranteeButton = document.querySelector('[data-guarantee-cta]');
+
     // Don't check initial state - wait for user to scroll
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Initial check in case we reload mid-page
+    onScroll();
+
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
@@ -61,9 +83,9 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
               <div>
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  <span className="line-through text-foreground/40">Gs. 320.000</span>
+                  <span className="line-through text-foreground/40">Gs. 239.000</span>
                   {" "}
-                  <span className="text-xl md:text-2xl font-bold text-white ml-2">Gs. 249.000</span>
+                  <span className="text-xl md:text-2xl font-bold text-white ml-2">Gs. 199.000</span>
                 </p>
                 <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                   <TruckIcon className="w-4 h-4 text-gold/90" />

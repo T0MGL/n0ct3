@@ -30,7 +30,7 @@ export const initMetaPixel = (pixelId: string): void => {
   }
 
   // Initialize the fbq function
-  window.fbq = function(...args: [string, string, Record<string, unknown>?]) {
+  window.fbq = function (...args: [string, string, Record<string, unknown>?]) {
     interface FbqExtended {
       callMethod?: (...methodArgs: unknown[]) => void;
       queue: unknown[];
@@ -101,7 +101,7 @@ export const trackViewContent = (params?: {
     content_category: 'Sleep & Wellness',
     content_ids: ['nocte-red-glasses'],
     content_type: 'product',
-    value: 249000,
+    value: 199000,
     currency: 'PYG',
   };
 
@@ -128,7 +128,7 @@ export const trackInitiateCheckout = (params?: {
     content_category: 'Sleep & Wellness',
     content_ids: ['nocte-red-glasses'],
     num_items: 1,
-    value: 249000,
+    value: 199000,
     currency: 'PYG',
   };
 

@@ -220,7 +220,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)]"
+            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto"
           >
             {/* Close Button */}
             {onClose && (
@@ -255,9 +255,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       }}
                       placeholder="Ej: Juan López"
                       maxLength={60}
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${
-                        errors.name ? "border-red-500" : "border-border focus:border-primary"
-                      }`}
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-primary"
+                        }`}
                     />
                   </div>
                   {errors.name && (
@@ -286,9 +285,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       onFocus={handlePhoneFocus}
                       onClick={handlePhoneClick}
                       placeholder="Ej: +595 971 234567"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${
-                        errors.phone ? "border-red-500" : "border-border focus:border-primary"
-                      }`}
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-primary"
+                        }`}
                     />
                   </div>
                   {errors.phone && (
@@ -412,9 +410,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             }
                           }}
                           placeholder="Ej: Asunción, Av. Mariscal López 1234"
-                          className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${
-                            errors.address ? "border-red-500" : "border-border focus:border-primary"
-                          }`}
+                          className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-primary"
+                            }`}
                         />
                       </div>
                       {errors.address && (

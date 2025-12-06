@@ -39,7 +39,7 @@ export const ProductVideo = () => {
   }, []);
 
   return (
-    <section data-section="product-video" className="py-12 md:py-16 lg:py-24 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
+    <section data-section="product-video" className="py-6 md:py-8 lg:py-12 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
       <div className="container max-w-[900px] mx-auto">
         <motion.div
           {...fadeInUpView}
@@ -56,7 +56,7 @@ export const ProductVideo = () => {
           <motion.div
             {...fadeInUpView}
             transition={{ ...fadeInUpView.transition, delay: 0.2 }}
-            className="relative w-full mx-auto overflow-hidden rounded-lg"
+            className="relative w-full mx-auto overflow-hidden rounded-lg will-change-transform"
           >
             {/* Ambient glow effect - más sutil */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.1),transparent_70%)] pointer-events-none" />

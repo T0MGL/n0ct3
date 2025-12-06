@@ -14,6 +14,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  assetsInclude: ["**/*.MP4"],
   build: {
     // Output directory
     outDir: 'dist',

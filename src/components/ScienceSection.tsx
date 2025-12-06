@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 export const ScienceSection = () => {
   return (
-    <section className="py-16 md:py-32 px-4 md:px-6 bg-gradient-to-b from-black to-black relative overflow-hidden">
+    <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black to-black relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
@@ -11,7 +11,7 @@ export const ScienceSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-16 md:mb-20 space-y-6 md:space-y-8"
+          className="text-center mb-16 md:mb-20 space-y-6 md:space-y-8 will-change-transform"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4 leading-tight">
             Por qué los lentes rojos, no transparentes.
@@ -26,7 +26,7 @@ export const ScienceSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-          className="relative"
+          className="relative will-change-transform"
         >
           {/* Desktop/Tablet: Side by side comparison */}
           <div className="hidden md:grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -38,11 +38,11 @@ export const ScienceSection = () => {
                   {/* Blue light wave - Full spectrum */}
                   <svg viewBox="0 0 400 300" className="w-full h-full">
                     {/* Grid background */}
-                    <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="200" x2="400" y2="200" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="140" x2="400" y2="140" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                    <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="140" x2="400" y2="140" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
 
                     {/* Blue light curve (400-500nm) - HIGH */}
                     <defs>
@@ -96,11 +96,11 @@ export const ScienceSection = () => {
                 <div className="relative h-64 lg:h-80">
                   <svg viewBox="0 0 400 300" className="w-full h-full">
                     {/* Grid background */}
-                    <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="200" x2="400" y2="200" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="140" x2="400" y2="140" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                    <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                    <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="140" x2="400" y2="140" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
 
                     {/* Blue light curve - BLOCKED (minimal) */}
                     <path
@@ -120,7 +120,7 @@ export const ScienceSection = () => {
                     />
 
                     {/* Block indicator */}
-                    <line x1="50" y1="240" x2="150" y2="240" stroke="rgb(239, 68, 68)" strokeWidth="3"/>
+                    <line x1="50" y1="240" x2="150" y2="240" stroke="rgb(239, 68, 68)" strokeWidth="3" />
                     <text x="100" y="235" fill="rgb(239, 68, 68)" fontSize="12" textAnchor="middle" fontWeight="bold">BLOQUEADO 99%</text>
 
                     {/* Wavelength labels */}
@@ -147,8 +147,8 @@ export const ScienceSection = () => {
               <div className="relative h-72">
                 <svg viewBox="0 0 400 300" className="w-full h-full">
                   {/* Grid */}
-                  <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="2"/>
-                  <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="2"/>
+                  <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+                  <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
 
                   {/* Blue light - HIGH */}
                   <path
@@ -172,7 +172,7 @@ export const ScienceSection = () => {
                 </svg>
               </div>
               <p className="text-base text-center text-primary font-bold mt-6 leading-relaxed">
-                Luz azul 100%<br/>
+                Luz azul 100%<br />
                 <span className="text-sm text-muted-foreground font-normal">Tu cerebro piensa que es de día</span>
               </p>
             </div>
@@ -182,8 +182,8 @@ export const ScienceSection = () => {
               <div className="relative h-72">
                 <svg viewBox="0 0 400 300" className="w-full h-full">
                   {/* Grid */}
-                  <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="2"/>
-                  <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="2"/>
+                  <line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+                  <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
 
                   {/* Blue light - BLOCKED */}
                   <path
@@ -199,7 +199,7 @@ export const ScienceSection = () => {
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="3"
                   />
-                  <line x1="50" y1="230" x2="150" y2="230" stroke="rgb(239, 68, 68)" strokeWidth="4"/>
+                  <line x1="50" y1="230" x2="150" y2="230" stroke="rgb(239, 68, 68)" strokeWidth="4" />
                   <text x="100" y="220" fill="rgb(239, 68, 68)" fontSize="14" textAnchor="middle" fontWeight="bold">99% BLOQUEADO</text>
                   <text x="100" y="290" fill="rgba(255,255,255,0.7)" fontSize="14" textAnchor="middle" fontWeight="bold">400nm</text>
                   <text x="300" y="290" fill="rgba(255,255,255,0.7)" fontSize="14" textAnchor="middle" fontWeight="bold">600nm</text>
@@ -210,7 +210,7 @@ export const ScienceSection = () => {
                 </svg>
               </div>
               <p className="text-base text-center text-primary font-bold mt-6 leading-relaxed">
-                99% bloqueado<br/>
+                99% bloqueado<br />
                 <span className="text-sm text-foreground/80 font-normal">Tu cerebro puede prepararse para dormir</span>
               </p>
             </div>
@@ -223,7 +223,7 @@ export const ScienceSection = () => {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.4, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-          className="mt-12 md:mt-16 text-center"
+          className="mt-12 md:mt-16 text-center will-change-transform"
         >
           <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto px-4 leading-relaxed">
             Longitud de onda (nm) - La luz azul entre 400-500nm es la que más afecta tu sueño.

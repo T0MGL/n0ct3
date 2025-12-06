@@ -32,6 +32,7 @@ export interface ShippingAddress {
  */
 export interface PaymentIntentResponse {
   clientSecret: string;
+  paymentIntentId?: string;
   status: string;
   error?: string;
 }
