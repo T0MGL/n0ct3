@@ -372,35 +372,43 @@ const CheckoutForm = ({
         <div
           onClick={() => setIsPriorityShipping(!isPriorityShipping)}
           className={`
-            relative flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-300
+            relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all duration-300 group
             ${isPriorityShipping
-              ? 'bg-primary/5 border-primary/30 shadow-md'
-              : 'bg-secondary/30 border-border/30 hover:bg-secondary/50'
+              ? 'bg-primary/5 border-primary/40 shadow-[0_0_20px_-10px_rgba(239,68,68,0.3)]'
+              : 'bg-secondary/30 border-border/40 hover:bg-secondary/50 hover:border-border/60'
             }
           `}
         >
-          <div className="flex items-center gap-3">
-            <div className={`
-              w-5 h-5 rounded border flex items-center justify-center transition-colors
-              ${isPriorityShipping ? 'bg-primary border-primary' : 'border-muted-foreground/50'}
-            `}>
-              {isPriorityShipping && <CheckIcon className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <RocketLaunchIcon className={`w-4 h-4 ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground'}`} />
-                <p className={`text-sm font-semibold ${isPriorityShipping ? 'text-primary' : 'text-foreground'}`}>
-                  Envío Prioritario VIP
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Despacho inmediato en 24hs
-              </p>
-            </div>
+          {/* Checkbox */}
+          <div className={`
+            w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0
+            ${isPriorityShipping
+              ? 'bg-primary border-primary scale-110'
+              : 'border-muted-foreground/40 group-hover:border-primary/50'
+            }
+          `}>
+            {isPriorityShipping && <CheckIcon className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
           </div>
-          <p className={`text-sm font-semibold ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground'}`}>
-            +Gs. 10.000
-          </p>
+
+          {/* Text Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <p className={`text-sm font-bold truncate ${isPriorityShipping ? 'text-primary' : 'text-foreground'}`}>
+                Envío Prioritario VIP
+              </p>
+              <RocketLaunchIcon className={`w-4 h-4 ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground/70'}`} />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Despacho inmediato en 24hs
+            </p>
+          </div>
+
+          {/* Price */}
+          <div className="text-right flex-shrink-0">
+            <p className={`text-sm font-bold ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground'}`}>
+              +Gs. 10.000
+            </p>
+          </div>
         </div>
 
         {/* Total */}
