@@ -17,7 +17,7 @@ interface SuccessPageProps {
 
 export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) => {
   const handleWhatsApp = () => {
-    const adminPhoneNumber = "595983912902";
+    const adminPhoneNumber = "595991893587";
     const message = encodeURIComponent(
       `Hola! Acabo de completar mi orden ${orderData.orderNumber} por ${orderData.products}. Total: ${orderData.total}. Mi número de contacto es ${orderData.phone}.`
     );

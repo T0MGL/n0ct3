@@ -42,7 +42,7 @@ export const WhatsAppButton = () => {
   }, []);
 
   const message = encodeURIComponent("Hola Nocte, vi los lentes en la web y tengo una consulta...");
-  const whatsappUrl = `https://wa.me/595983912902?text=${message}`;
+  const whatsappUrl = `https://wa.me/595991893587?text=${message}`;
 
   return (
     <a
