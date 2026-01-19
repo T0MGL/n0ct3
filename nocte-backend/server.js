@@ -523,9 +523,8 @@ async function sendToOrdefy(orderData) {
     }),
     items: [
       {
-        name: (quantity || 1) === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses (Pack x${quantity})`,
+        sku: 'NOCTE-GLASSES-001',
+        name: 'NOCTE® Red Light Blocking Glasses',
         quantity: quantity || 1,
         price: unitPrice,
       },
