@@ -68,25 +68,21 @@ export const CelebritiesMarquee = () => {
                             <motion.div
                                 key={setIndex}
                                 className="flex flex-shrink-0 gap-8 md:gap-16 lg:gap-24"
-                                animate={{
-                                    x: ["0%", "-100%"],
-                                }}
+                                initial={{ x: "0%" }}
+                                animate={{ x: "-100%" }}
                                 transition={{
                                     x: {
                                         repeat: Infinity,
                                         repeatType: "loop",
-                                        duration: 50, // Very slow for credibility
+                                        duration: 50,
                                         ease: "linear",
                                     },
                                 }}
+                                style={{ willChange: "transform" }}
                             >
                                 {celebrities.map((celebrity, index) => (
-                                    <motion.div
+                                    <div
                                         key={`${setIndex}-${index}`}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.5, delay: index * 0.1 }}
                                         className="flex flex-col items-center gap-3 min-w-[120px] md:min-w-[140px]"
                                     >
                                         {/* Avatar with verified badge */}
@@ -114,7 +110,7 @@ export const CelebritiesMarquee = () => {
                                                 {celebrity.role}
                                             </p>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 ))}
                             </motion.div>
                         ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 
 interface TimeLeft {
   hours: number;
@@ -6,8 +6,17 @@ interface TimeLeft {
   seconds: number;
 }
 
-export const CountdownTimer = () => {
+// Memoized digit component to prevent unnecessary re-renders
+const TimerDigit = memo(({ value }: { value: string }) => (
+  <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary tabular-nums">
+    {value}
+  </span>
+));
+TimerDigit.displayName = 'TimerDigit';
+
+export const CountdownTimer = memo(() => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
+  const targetDateRef = useRef<Date | null>(null);
 
   useEffect(() => {
     const STORAGE_KEY = 'nocte-countdown-target';
@@ -31,25 +40,38 @@ export const CountdownTimer = () => {
       return newTarget;
     };
 
-    let targetDate = getTargetDate();
+    targetDateRef.current = getTargetDate();
 
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
+    const updateTimer = () => {
+      if (!targetDateRef.current) return;
+
+      const now = Date.now();
+      const distance = targetDateRef.current.getTime() - now;
 
       if (distance < 0) {
         // Reset to 24 hours when countdown ends
-        targetDate = new Date();
-        targetDate.setHours(targetDate.getHours() + 24);
-        sessionStorage.setItem(STORAGE_KEY, targetDate.toISOString());
+        targetDateRef.current = new Date();
+        targetDateRef.current.setHours(targetDateRef.current.getHours() + 24);
+        sessionStorage.setItem(STORAGE_KEY, targetDateRef.current.toISOString());
       }
 
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-      setTimeLeft({ hours, minutes, seconds });
-    }, 1000);
+      setTimeLeft(prev => {
+        // Only update if values changed to prevent unnecessary re-renders
+        if (prev.hours === hours && prev.minutes === minutes && prev.seconds === seconds) {
+          return prev;
+        }
+        return { hours, minutes, seconds };
+      });
+    };
+
+    // Initial update
+    updateTimer();
+
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
   }, []);
@@ -63,23 +85,19 @@ export const CountdownTimer = () => {
       </span>
       <div className="flex items-center gap-1">
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
-          <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary tabular-nums">
-            {formatNumber(timeLeft.hours)}
-          </span>
+          <TimerDigit value={formatNumber(timeLeft.hours)} />
         </div>
         <span className="text-primary/50 font-bold text-base sm:text-lg">:</span>
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
-          <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary tabular-nums">
-            {formatNumber(timeLeft.minutes)}
-          </span>
+          <TimerDigit value={formatNumber(timeLeft.minutes)} />
         </div>
         <span className="text-primary/50 font-bold text-base sm:text-lg">:</span>
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
-          <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary tabular-nums">
-            {formatNumber(timeLeft.seconds)}
-          </span>
+          <TimerDigit value={formatNumber(timeLeft.seconds)} />
         </div>
       </div>
     </div>
   );
-};
+});
+
+CountdownTimer.displayName = 'CountdownTimer';

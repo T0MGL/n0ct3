@@ -12,11 +12,19 @@ type PaymentMethod = 'card' | 'cash_on_delivery';
 
 const PRIORITY_SHIPPING_COST = 10000;
 
+export interface PaymentResult {
+  paymentIntentId: string;
+  paymentType: 'Card' | 'COD';
+  isPaid: boolean;
+  deliveryType: 'común' | 'premium';
+  finalTotal: number;
+}
+
 interface StripeCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBack: () => void;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (result: PaymentResult) => void;
   amount: number;
   currency: string;
   customerData: {
@@ -108,7 +116,13 @@ const CheckoutForm = ({
         // Simulate async processing
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        onSuccess(codOrderId);
+        onSuccess({
+          paymentIntentId: codOrderId,
+          paymentType: 'COD',
+          isPaid: false,
+          deliveryType: isPriorityShipping ? 'premium' : 'común',
+          finalTotal,
+        });
         return;
       }
 
@@ -156,7 +170,13 @@ const CheckoutForm = ({
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Payment succeeded
         console.log('✅ [Payment] Payment succeeded:', paymentIntent.id);
-        onSuccess(paymentIntent.id);
+        onSuccess({
+          paymentIntentId: paymentIntent.id,
+          paymentType: 'Card',
+          isPaid: true,
+          deliveryType: isPriorityShipping ? 'premium' : 'común',
+          finalTotal,
+        });
       } else {
         console.warn('⚠️ [Payment] Unexpected payment status:', paymentIntent?.status);
         setErrorMessage(`Estado de pago inesperado: ${paymentIntent?.status}`);

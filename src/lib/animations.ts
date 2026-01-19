@@ -36,10 +36,11 @@ export const fadeInUp = {
 };
 
 // For viewport-triggered animations (whileInView)
+// Note: Removed negative margin to prevent animations starting off-screen (causes abrupt pop-in)
 export const fadeInUpView = {
   initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.3, margin: "0px 0px -100px 0px" },
+  viewport: { once: true, amount: 0.2 },
   transition: {
     duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,

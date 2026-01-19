@@ -414,13 +414,165 @@ app.post('/api/reverse-geocode', async (req, res) => {
   }
 });
 
+// ==================== ORDEFY HELPER FUNCTIONS ====================
+
+/**
+ * Generate a unique idempotency key for Ordefy
+ */
+function generateOrdefyIdempotencyKey() {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 10);
+  return `nocte-order-${timestamp}-${random}`;
+}
+
+/**
+ * Build Ordefy shipping address from order data
+ * Prefers Google Maps URL if coordinates are available
+ */
+function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, reference }) {
+  // If we have coordinates or Google Maps link, use that (most accurate)
+  if (lat && long) {
+    return {
+      google_maps_url: `https://www.google.com/maps?q=${lat},${long}`,
+      notes: reference || address || undefined,
+    };
+  }
+
+  if (googleMapsLink) {
+    return {
+      google_maps_url: googleMapsLink,
+      notes: reference || address || undefined,
+    };
+  }
+
+  // Otherwise, use manual address
+  return {
+    address: address || city,
+    city: city,
+    reference: reference || undefined,
+  };
+}
+
+/**
+ * Calculate unit price based on quantity
+ */
+function getUnitPrice(quantity, total) {
+  // Known pricing structure
+  const prices = {
+    1: 199000,
+    2: 299000,
+    3: 429000,
+  };
+
+  // If total matches known price, calculate unit price
+  if (prices[quantity] === total) {
+    return Math.round(total / quantity);
+  }
+
+  // Otherwise, calculate from total
+  return Math.round(total / quantity);
+}
+
+/**
+ * Send order to Ordefy webhook
+ */
+async function sendToOrdefy(orderData) {
+  const {
+    name,
+    phone,
+    email,
+    location,
+    address,
+    lat,
+    long,
+    googleMapsLink,
+    quantity,
+    total,
+    paymentType,
+    isPaid,
+    deliveryType,
+  } = orderData;
+
+  // Check if Ordefy is configured
+  if (!process.env.ORDEFY_WEBHOOK_URL || !process.env.ORDEFY_API_KEY) {
+    console.warn('⚠️ Ordefy not configured (ORDEFY_WEBHOOK_URL or ORDEFY_API_KEY missing)');
+    return { success: false, error: 'Ordefy not configured' };
+  }
+
+  const unitPrice = getUnitPrice(quantity || 1, total);
+  const shippingCost = deliveryType === 'premium' ? 10000 : 0;
+
+  // Determine payment status
+  // Card payments are always paid, COD is pending payment
+  const paymentStatus = isPaid === true || paymentType === 'Card' ? 'paid' : 'pending';
+
+  // Build Ordefy payload
+  const ordefyPayload = {
+    idempotency_key: generateOrdefyIdempotencyKey(),
+    customer: {
+      name,
+      phone: phone || undefined,
+      email: email || undefined,
+    },
+    shipping_address: buildOrdefyShippingAddress({
+      lat,
+      long,
+      address,
+      city: location,
+      googleMapsLink,
+    }),
+    items: [
+      {
+        name: (quantity || 1) === 1
+          ? 'NOCTE® Red Light Blocking Glasses'
+          : `NOCTE® Red Light Blocking Glasses (Pack x${quantity})`,
+        quantity: quantity || 1,
+        price: unitPrice,
+      },
+    ],
+    totals: {
+      subtotal: unitPrice * (quantity || 1),
+      shipping: shippingCost,
+      total: total,
+    },
+    payment_method: paymentType === 'Card' ? 'online' : 'cash_on_delivery',
+    payment_status: paymentStatus,
+  };
+
+  console.log('📤 Sending to Ordefy:', JSON.stringify(ordefyPayload, null, 2));
+
+  try {
+    const response = await fetch(process.env.ORDEFY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': process.env.ORDEFY_API_KEY,
+      },
+      body: JSON.stringify(ordefyPayload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Ordefy API error:', response.status, errorText);
+      return { success: false, error: `Ordefy API error: ${response.status}` };
+    }
+
+    const result = await response.json();
+    console.log('✅ Ordefy response:', result);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('❌ Ordefy request failed:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * POST /api/send-order
- * Send order data to n8n webhook
+ * Send order data to n8n webhook AND Ordefy
  */
 app.post('/api/send-order', async (req, res) => {
   try {
-    console.log('📦 Sending order to n8n...');
+    console.log('📦 Sending order to n8n and Ordefy...');
     console.log('Order data:', JSON.stringify(req.body, null, 2));
 
     const {
@@ -428,25 +580,23 @@ app.post('/api/send-order', async (req, res) => {
       phone,
       location,
       address,
+      lat,
+      long,
       googleMapsLink,
       quantity,
       total,
       orderNumber,
       paymentIntentId,
-      email
+      email,
+      paymentType,
+      isPaid,
+      deliveryType
     } = req.body;
 
     // Validation
     if (!name || !phone || !location) {
       return res.status(400).json({
         error: 'Name, phone, and location are required'
-      });
-    }
-
-    if (!process.env.N8N_WEBHOOK_URL) {
-      console.error('❌ N8N_WEBHOOK_URL not configured');
-      return res.status(500).json({
-        error: 'Webhook URL not configured'
       });
     }
 
@@ -471,44 +621,98 @@ app.post('/api/send-order', async (req, res) => {
         currency: 'PYG'
       },
       payment: {
-        method: 'stripe',
-        status: 'succeeded',
+        method: paymentType || 'stripe',
+        status: isPaid === true || paymentType === 'Card' ? 'paid' : 'pending',
+        isPaid: isPaid === true || paymentType === 'Card',
         paymentIntentId: paymentIntentId || null
       },
       source: 'nocte-landing-page'
     };
 
-    // Send to n8n
-    const n8nResponse = await fetch(process.env.N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookPayload)
-    });
+    // Send to both n8n and Ordefy in parallel
+    const results = await Promise.allSettled([
+      // Send to n8n (if configured)
+      process.env.N8N_WEBHOOK_URL
+        ? fetch(process.env.N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookPayload)
+          }).then(async (response) => {
+            if (!response.ok) {
+              throw new Error(`n8n webhook failed: ${response.status}`);
+            }
+            return response.json().catch(() => ({}));
+          })
+        : Promise.resolve({ skipped: true, reason: 'N8N_WEBHOOK_URL not configured' }),
 
-    if (!n8nResponse.ok) {
-      throw new Error(`n8n webhook failed: ${n8nResponse.status} ${n8nResponse.statusText}`);
+      // Send to Ordefy
+      sendToOrdefy({
+        name,
+        phone,
+        email,
+        location,
+        address,
+        lat,
+        long,
+        googleMapsLink,
+        quantity,
+        total,
+        paymentType,
+        isPaid,
+        deliveryType,
+      }),
+    ]);
+
+    const [n8nResult, ordefyResult] = results;
+
+    // Process results
+    let n8nSuccess = false;
+    let n8nData = null;
+    if (n8nResult.status === 'fulfilled') {
+      n8nData = n8nResult.value;
+      n8nSuccess = !n8nData.skipped;
+      if (n8nSuccess) {
+        console.log('✅ Order sent to n8n successfully');
+      } else {
+        console.log('⚠️ n8n skipped:', n8nData.reason);
+      }
+    } else {
+      console.error('❌ n8n failed:', n8nResult.reason);
     }
 
-    const n8nData = await n8nResponse.json().catch(() => ({}));
+    let ordefySuccess = false;
+    let ordefyData = null;
+    if (ordefyResult.status === 'fulfilled') {
+      ordefyData = ordefyResult.value;
+      ordefySuccess = ordefyData.success;
+      if (ordefySuccess) {
+        console.log('✅ Order sent to Ordefy successfully');
+      } else {
+        console.log('⚠️ Ordefy error:', ordefyData.error);
+      }
+    } else {
+      console.error('❌ Ordefy failed:', ordefyResult.reason);
+    }
 
-    console.log('✅ Order sent to n8n successfully');
-    console.log('n8n response:', n8nData);
+    // Return success if at least one succeeded
+    const overallSuccess = n8nSuccess || ordefySuccess;
 
     res.json({
-      success: true,
-      message: 'Order sent to n8n successfully',
+      success: overallSuccess,
+      message: overallSuccess
+        ? 'Order processed successfully'
+        : 'Failed to send order to any service',
       orderNumber: webhookPayload.orderNumber,
-      n8nResponse: n8nData
+      n8nResponse: n8nData,
+      ordefyResponse: ordefyData,
     });
 
   } catch (error) {
-    console.error('❌ Error sending order to n8n:', error.message);
+    console.error('❌ Error sending order:', error.message);
     console.error('Full error:', error);
 
     res.status(500).json({
-      error: error.message || 'Failed to send order to n8n',
+      error: error.message || 'Failed to send order',
       success: false
     });
   }
@@ -602,6 +806,8 @@ const server = app.listen(PORT, () => {
   console.log(`  ✓ Health Check:  http://localhost:${PORT}/api/health`);
   console.log(`  ✓ Environment:   ${process.env.NODE_ENV || 'development'}`);
   console.log(`  ✓ Stripe Key:    ${process.env.STRIPE_SECRET_KEY ? '✓ Configured' : '✗ Missing'}`);
+  console.log(`  ✓ n8n Webhook:   ${process.env.N8N_WEBHOOK_URL ? '✓ Configured' : '✗ Missing'}`);
+  console.log(`  ✓ Ordefy:        ${process.env.ORDEFY_WEBHOOK_URL && process.env.ORDEFY_API_KEY ? '✓ Configured' : '✗ Missing'}`);
   console.log('═══════════════════════════════════════════');
   console.log('');
   console.log('📝 Endpoints:');

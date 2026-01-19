@@ -104,22 +104,8 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
               </div>
             </div>
 
-            {/* Botón de compra */}
-            <motion.div
-              animate={{
-                boxShadow: [
-                  "0 0 30px rgba(239, 68, 68, 0.3)",
-                  "0 0 40px rgba(239, 68, 68, 0.5)",
-                  "0 0 30px rgba(239, 68, 68, 0.3)",
-                ],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="rounded-lg"
-            >
+            {/* Botón de compra - Using CSS animation instead of JS for GPU acceleration */}
+            <div className="rounded-lg animate-glow-pulse">
               <Button
                 variant="hero"
                 size="lg"
@@ -128,7 +114,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
               >
                 Comprar Ahora
               </Button>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

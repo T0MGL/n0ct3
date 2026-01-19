@@ -94,6 +94,21 @@ All colors MUST be HSL.
     }
   }
 
+  /* GPU-accelerated glow pulse for sticky button */
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+    will-change: box-shadow;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 30px hsl(0 86% 54% / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(0 86% 54% / 0.5);
+    }
+  }
+
   /* Hide scrollbar for carousel */
   .scrollbar-hide {
     -ms-overflow-style: none;

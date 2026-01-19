@@ -55,8 +55,9 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
             className="relative order-1 w-full"
           >
             {/* Authority Badge */}
@@ -149,8 +150,9 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
           {/* Content - Order 2 on mobile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
             className="space-y-4 md:space-y-6 order-2 w-full"
           >
             {/* Main Title */}

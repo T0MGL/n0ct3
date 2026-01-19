@@ -1,6 +1,7 @@
 /**
  * Order Service
- * Handles order data submission to backend and n8n webhook
+ * Handles order data submission to backend
+ * The backend handles routing to n8n and Ordefy
  */
 
 import { API_CONFIG } from '@/lib/stripe';
@@ -18,6 +19,7 @@ export interface OrderData {
   paymentIntentId?: string;
   email?: string;
   paymentType: 'COD' | 'Cash' | 'Card';
+  isPaid?: boolean;
   deliveryType: 'común' | 'premium';
 }
 
@@ -35,6 +37,7 @@ export interface SendOrderResponse {
   message: string;
   orderNumber: string;
   n8nResponse?: unknown;
+  ordefyResponse?: unknown;
   error?: string;
 }
 
@@ -81,7 +84,8 @@ export async function getGoogleMapsLink(
 }
 
 /**
- * Send order data to n8n webhook via backend
+ * Send order data to backend
+ * Backend handles routing to n8n webhook and Ordefy
  * This is called after user completes all checkout steps
  */
 export async function sendOrderToN8N(
@@ -117,7 +121,7 @@ export async function sendOrderToN8N(
       console.log('📍 Google Maps link from location only:', googleMapsLink);
     }
 
-    // Send complete order data to backend
+    // Send to backend (which handles n8n and Ordefy)
     const response = await fetch(`${API_CONFIG.baseUrl}/api/send-order`, {
       method: 'POST',
       headers: {

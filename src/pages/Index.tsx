@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense, memo } from "react";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { HeroSection } from "@/components/HeroSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
@@ -32,6 +32,20 @@ const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
 const PaymentFallbackModal = lazy(() => import("@/components/checkout/PaymentFallbackModal"));
 const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
 const ExitIntentModal = lazy(() => import("@/components/checkout/ExitIntentModal"));
+
+// Skeleton loader for lazy-loaded sections - prevents layout shift
+const SectionSkeleton = memo(({ height }: { height: string }) => (
+  <div className={`${height} bg-black animate-pulse`}>
+    <div className="container max-w-[1400px] mx-auto px-4 py-12 md:py-20">
+      <div className="h-8 md:h-10 w-48 md:w-64 bg-secondary/30 rounded mx-auto mb-8" />
+      <div className="space-y-4">
+        <div className="h-4 bg-secondary/20 rounded w-3/4 mx-auto" />
+        <div className="h-4 bg-secondary/20 rounded w-1/2 mx-auto" />
+      </div>
+    </div>
+  </div>
+));
+SectionSkeleton.displayName = 'SectionSkeleton';
 
 const Index = () => {
   // UI state
@@ -152,14 +166,24 @@ const Index = () => {
     }, 100);
   };
 
-  const handlePaymentSuccess = async (paymentIntentId: string) => {
-    // STEP 4: Payment successful - now send order to n8n and show success
+  const handlePaymentSuccess = async (result: {
+    paymentIntentId: string;
+    paymentType: 'Card' | 'COD';
+    isPaid: boolean;
+    deliveryType: 'común' | 'premium';
+    finalTotal: number;
+  }) => {
+    // STEP 4: Payment successful - now send order to n8n/Ordefy and show success
     setShowStripeCheckout(false);
-    setCheckoutData((prev) => ({ ...prev, paymentIntentId }));
+    setCheckoutData((prev) => ({ ...prev, paymentIntentId: result.paymentIntentId }));
 
-    // Send order to n8n webhook with all collected data
+    // Send order to backend (which handles n8n and Ordefy)
     try {
-      console.log('📦 Sending completed order to n8n...');
+      console.log('📦 Sending completed order...', {
+        paymentType: result.paymentType,
+        isPaid: result.isPaid,
+        deliveryType: result.deliveryType,
+      });
 
       const orderData = {
         name: checkoutData.name,
@@ -169,28 +193,29 @@ const Index = () => {
         lat: checkoutData.lat,
         long: checkoutData.long,
         quantity: checkoutData.quantity,
-        total: checkoutData.totalPrice,
+        total: result.finalTotal,
         orderNumber: checkoutData.orderNumber,
-        paymentIntentId: paymentIntentId,
+        paymentIntentId: result.paymentIntentId,
         email: undefined,
-        paymentType: 'Card' as const,
-        deliveryType: 'común' as const,
+        paymentType: result.paymentType,
+        isPaid: result.isPaid,
+        deliveryType: result.deliveryType,
       };
 
-      const result = await sendOrderToN8N(orderData);
+      const sendResult = await sendOrderToN8N(orderData);
 
-      if (!result.success) {
-        console.error('❌ Failed to send order to n8n:', result.error);
+      if (!sendResult.success) {
+        console.error('❌ Failed to send order:', sendResult.error);
       } else {
-        console.log('✅ Order sent to n8n successfully:', result);
+        console.log('✅ Order sent successfully:', sendResult);
       }
     } catch (error) {
-      console.error('❌ Error sending order to n8n:', error);
+      console.error('❌ Error sending order:', error);
     }
 
     // Track Purchase conversion event
     trackPurchase({
-      value: checkoutData.totalPrice,
+      value: result.finalTotal,
       currency: 'PYG',
       content_name: checkoutData.quantity === 1
         ? 'NOCTE® Red Light Blocking Glasses'
@@ -414,52 +439,52 @@ const Index = () => {
       <main className="pt-0 pb-0 transition-all duration-300">
         <HeroSection onBuyClick={handleBuyClick} />
 
-        <Suspense fallback={<div className="h-64" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[300px] md:h-[340px]" />}>
           <CelebritiesMarquee />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
           <ProductGallery />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[400px] md:h-[500px]" />}>
           <ProductVideo />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[600px] md:h-[700px]" />}>
           <ScienceSection />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
           <BenefitsSection />
         </Suspense>
 
         {/* CTA 1: After Benefits */}
         <OfferCTA onBuyClick={handleBuyClick} />
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
           <LifestyleSection />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[600px] md:h-[700px]" />}>
           <ComparisonTable />
         </Suspense>
 
         {/* CTA 2: After Comparison */}
         <OfferCTA onBuyClick={handleBuyClick} />
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
           <TestimonialsSection />
         </Suspense>
 
         {/* CTA 3: After Testimonials (minimal) */}
         <OfferCTA onBuyClick={handleBuyClick} variant="minimal" />
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
           <FAQSection />
         </Suspense>
 
-        <Suspense fallback={<div className="h-96" />}>
+        <Suspense fallback={<SectionSkeleton height="h-[400px] md:h-[500px]" />}>
           <GuaranteeSection onBuyClick={handleBuyClick} />
         </Suspense>
       </main>
