@@ -474,6 +474,27 @@ function getUnitPrice(quantity, total) {
 }
 
 /**
+ * Get SKU based on pack type
+ * - 1 unit: Personal pack
+ * - 2 units: Couple pack
+ * - 3+ units: Office pack (bulk pricing)
+ */
+function getSku(quantity) {
+  if (quantity === 1) return 'NOCTE-GLASSES-PERSONAL';
+  if (quantity === 2) return 'NOCTE-GLASSES-PAREJA';
+  return 'NOCTE-GLASSES-OFICINA'; // 3+ units
+}
+
+/**
+ * Get product name based on quantity
+ */
+function getProductName(quantity) {
+  if (quantity === 1) return 'NOCTE® Glasses - Personal';
+  if (quantity === 2) return 'NOCTE® Glasses - Pack Pareja';
+  return `NOCTE® Glasses - Pack Oficina (x${quantity})`;
+}
+
+/**
  * Send order to Ordefy webhook
  */
 async function sendToOrdefy(orderData) {
@@ -523,8 +544,8 @@ async function sendToOrdefy(orderData) {
     }),
     items: [
       {
-        sku: 'NOCTE-GLASSES-001',
-        name: 'NOCTE® Red Light Blocking Glasses',
+        sku: getSku(quantity || 1),
+        name: getProductName(quantity || 1),
         quantity: quantity || 1,
         price: unitPrice,
       },
