@@ -108,17 +108,22 @@ export async function sendOrderToN8N(
           orderData.location,
           orderData.address
         );
-        googleMapsLink = geocodeResult.googleMapsLink;
-        console.log('📍 Google Maps link from geocoding:', googleMapsLink);
+        
+        // ONLY use the link if it's NOT a fallback (precise location found)
+        if (!geocodeResult.usesFallback) {
+          googleMapsLink = geocodeResult.googleMapsLink;
+          console.log('📍 Google Maps link from geocoding:', googleMapsLink);
+        } else {
+          console.log('⚠️ Geocoding returned fallback link, ignoring for Ordefy to avoid fake location links.');
+        }
       } catch (error) {
         console.warn('⚠️ Could not generate Google Maps link:', error);
         // Continue without link
       }
     } else if (orderData.location) {
-      // Fallback: just use location/city
-      const encodedLocation = encodeURIComponent(orderData.location);
-      googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-      console.log('📍 Google Maps link from location only:', googleMapsLink);
+      // Fallback: just use location/city - DO NOT generate a map link here
+      // This ensures we send text address to Ordefy instead of a search link
+      console.log('ℹ️ Location only provided, skipping Google Maps search link generation.');
     }
 
     // Send to backend (which handles n8n and Ordefy)
