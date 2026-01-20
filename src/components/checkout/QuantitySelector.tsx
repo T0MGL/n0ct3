@@ -102,7 +102,10 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                   return (
                     <motion.button
                       key={index}
-                      onClick={() => setSelectedBundleIndex(index)}
+                      onClick={() => {
+                        setSelectedBundleIndex(index);
+                        onContinue(bundle.quantity, bundle.price);
+                      }}
                       className={`
                         relative w-full p-5 rounded-lg border-2 transition-all duration-300
                         ${isSelected

@@ -37,13 +37,13 @@ interface StripeCheckoutModalProps {
   };
 }
 
-const CheckoutForm = ({
-  onSuccess,
+onSuccess,
   onClose,
   amount,
   currency,
   customerData,
-}: Omit<StripeCheckoutModalProps, 'isOpen'>) => {
+  onCloseAttempt,
+}: Omit<StripeCheckoutModalProps, 'isOpen'> & { onCloseAttempt: () => void }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -471,7 +471,7 @@ const CheckoutForm = ({
           variant="outline"
           size="lg"
           className="w-full bg-transparent border-border/50 hover:bg-secondary/50"
-          onClick={onClose}
+          onClick={onCloseAttempt}
           disabled={isProcessing}
         >
           Cancelar
@@ -495,6 +495,21 @@ export const StripeCheckoutModal = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Intercept close attempt
+  const handleCloseAttempt = () => {
+    setShowExitConfirm(true);
+  };
+
+  const handleKeepCheckout = () => {
+    setShowExitConfirm(false);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    onClose();
+  };
 
   // Create PaymentIntent when modal opens
   useEffect(() => {
@@ -571,7 +586,7 @@ export const StripeCheckoutModal = ({
           >
             {/* Close Button */}
             <button
-              onClick={onClose}
+              onClick={handleCloseAttempt}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
             >
               <XMarkIcon className="w-5 h-5" />
@@ -661,10 +676,52 @@ export const StripeCheckoutModal = ({
                     amount={amount}
                     currency={currency}
                     customerData={customerData}
+                    onCloseAttempt={handleCloseAttempt}
                   />
                 </Elements>
               </>
             )}
+
+            {/* Internal Exit Confirmation Overlay */}
+            <AnimatePresence>
+              {showExitConfirm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 p-6 rounded-xl backdrop-blur-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="text-center space-y-4 max-w-sm w-full">
+                    <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <XMarkIcon className="w-6 h-6 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">¿Estás seguro?</h3>
+                    <p className="text-sm text-gray-400">
+                      Estás a un paso de completar tu pedido. Si sales ahora, podrías perder la reserva de tu producto.
+                    </p>
+                    <div className="pt-4 space-y-3">
+                      <Button
+                        type="button"
+                        variant="hero"
+                        size="lg"
+                        className="w-full h-12 text-base"
+                        onClick={handleKeepCheckout}
+                      >
+                        Continuar con mi compra
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={handleConfirmExit}
+                        className="text-sm text-gray-500 hover:text-white transition-colors py-2"
+                      >
+                        Sí, quiero salir y perder mi oferta
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       )}

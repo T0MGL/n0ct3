@@ -140,6 +140,9 @@ const Index = () => {
   const handleBuyClick = () => {
     setCheckoutInProgress(true); // Start checkout progress tracking
     setShowQuantitySelector(true);
+
+    // Preload ExitIntentModal to prevent black screen on exit
+    import("@/components/checkout/ExitIntentModal");
   };
 
   const handleQuantitySelected = (quantity: number, totalPrice: number) => {
