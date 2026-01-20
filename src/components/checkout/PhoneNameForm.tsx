@@ -222,20 +222,22 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto"
           >
-            {/* Close Button */}
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50"
-                aria-label="Cerrar"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </button>
-            )}
-
             <div className="space-y-6">
-              {/* Progress Bar */}
-              <CheckoutProgressBar currentStep={1} />
+              {/* Header with Progress Bar and Close Button */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <CheckoutProgressBar currentStep={1} />
+                </div>
+                {onClose && (
+                  <button
+                    onClick={onClose}
+                    className="shrink-0 p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50 -mt-1"
+                    aria-label="Cerrar"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
 
               {/* Trust Block */}
               <div className="text-center space-y-2">

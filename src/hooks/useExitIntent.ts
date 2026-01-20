@@ -4,6 +4,7 @@ interface UseExitIntentOptions {
   onExitIntent: () => void;
   enabled?: boolean;
   sensitivity?: number;
+  delay?: number;
 }
 
 /**
@@ -16,23 +17,32 @@ interface UseExitIntentOptions {
 export const useExitIntent = ({
   onExitIntent,
   enabled = true,
-  sensitivity = 50,
+  sensitivity = 20,
+  delay = 2000,
 }: UseExitIntentOptions) => {
   const hasTriggeredRef = useRef(false);
+  const enabledTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (!enabled) {
       hasTriggeredRef.current = false;
+      enabledTimeRef.current = 0;
       return;
     }
+
+    // Track when the hook was enabled to add delay before triggering
+    enabledTimeRef.current = Date.now();
 
     const handleMouseLeave = (e: MouseEvent) => {
       // Only trigger if mouse is leaving from the top of the page
       // (typical behavior when going to browser controls)
+      // Also require minimum time elapsed to prevent accidental triggers
+      const timeElapsed = Date.now() - enabledTimeRef.current;
       if (
         !hasTriggeredRef.current &&
         e.clientY <= sensitivity &&
-        e.relatedTarget === null
+        e.relatedTarget === null &&
+        timeElapsed >= delay
       ) {
         hasTriggeredRef.current = true;
         onExitIntent();
