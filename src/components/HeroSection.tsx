@@ -45,8 +45,8 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       }
     }
 
-    // Generate random stock between 3-8 for the day
-    const newStock = Math.floor(Math.random() * 6) + 3;
+    // Static stock of 17 units
+    const newStock = 17;
     localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
     return newStock;
   });
@@ -61,6 +61,16 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
   // Track ViewContent when hero section is viewed
   useEffect(() => {
     trackViewContent();
+
+    // Preload checkout modals after a short delay (for mobile users)
+    // This ensures instant response when user clicks CTA
+    const preloadTimer = setTimeout(() => {
+      import("@/components/checkout/QuantitySelector");
+      import("@/components/checkout/PhoneNameForm");
+      import("@/components/checkout/StripeCheckoutModal");
+    }, 2000); // Wait 2 seconds after page load
+
+    return () => clearTimeout(preloadTimer);
   }, []);
   return (
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
@@ -252,26 +262,50 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             {/* CTA Button */}
             <div className="space-y-3">
               {useStripe ? (
-                <StripePaymentButton
-                  onSuccess={() => setShowStripeSuccess(true)}
-                  onError={(error) => {
-                    setStripeError(error);
-                    onBuyClick();
+                <motion.div
+                  animate={{
+                    scale: [1, 1.02, 1],
                   }}
-                  className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    ease: "easeInOut"
+                  }}
                 >
-                  COMPRAR AHORA - Gs. 199.000
-                </StripePaymentButton>
+                  <StripePaymentButton
+                    onSuccess={() => setShowStripeSuccess(true)}
+                    onError={(error) => {
+                      setStripeError(error);
+                      onBuyClick();
+                    }}
+                    className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+                  >
+                    COMPRAR AHORA - Gs. 199.000
+                  </StripePaymentButton>
+                </motion.div>
               ) : (
-                <Button
-                  data-hero-cta
-                  variant="hero"
-                  size="xl"
-                  className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
-                  onClick={onBuyClick}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.02, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    ease: "easeInOut"
+                  }}
                 >
-                  COMPRAR AHORA - Gs. 199.000
-                </Button>
+                  <Button
+                    data-hero-cta
+                    variant="hero"
+                    size="xl"
+                    className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+                    onClick={onBuyClick}
+                  >
+                    COMPRAR AHORA - Gs. 199.000
+                  </Button>
+                </motion.div>
               )}
 
               {/* Dynamic Delivery Date */}

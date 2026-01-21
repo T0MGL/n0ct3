@@ -118,8 +118,9 @@ const Index = () => {
     setCheckoutInProgress(true); // Start checkout progress tracking
     setShowQuantitySelector(true);
 
-    // Preload PhoneNameForm for seamless transition
+    // Preload next modals for seamless transition
     import("@/components/checkout/PhoneNameForm");
+    import("@/components/checkout/StripeCheckoutModal");
   };
 
   const handleQuantitySelected = (quantity: number, totalPrice: number) => {

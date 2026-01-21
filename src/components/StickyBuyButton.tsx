@@ -105,14 +105,26 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
             </div>
 
             {/* Botón de compra - Using CSS animation instead of JS for GPU acceleration */}
-            <Button
-              variant="hero"
-              size="lg"
-              className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
-              onClick={onBuyClick}
+            <motion.div
+              animate={{
+                scale: [1, 1.02, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "loop",
+                ease: "easeInOut"
+              }}
             >
-              Comprar Ahora
-            </Button>
+              <Button
+                variant="hero"
+                size="lg"
+                className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
+                onClick={onBuyClick}
+              >
+                Comprar Ahora
+              </Button>
+            </motion.div>
           </div>
         </div>
       </div>
