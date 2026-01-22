@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
+import { WhatsAppHelpModal } from "./WhatsAppHelpModal";
 import { API_CONFIG } from "@/lib/stripe";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
   onSubmit: (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => void;
   onClose?: () => void;
+  orderNumber: string;
 }
 
-export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps) => {
+export const PhoneNameForm = ({ isOpen, onSubmit, onClose, orderNumber }: PhoneNameFormProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+595 "); // ✅ Predefined prefix
   const [address, setAddress] = useState("");
@@ -22,6 +24,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [locationCoords, setLocationCoords] = useState<{ lat?: number; long?: number }>({});
   const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [showWhatsAppHelp, setShowWhatsAppHelp] = useState(false);
+  const [hasShownWhatsAppHelp, setHasShownWhatsAppHelp] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const isMountedRef = useRef(true);
 
@@ -46,6 +50,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setLocationCoords({});
       setErrors({});
       setLoading(false);
+      setShowWhatsAppHelp(false);
+      setHasShownWhatsAppHelp(false);
     }
   }, [isOpen]);
 
@@ -273,6 +279,17 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     setLoading(false);
   };
 
+  const handleCloseAttempt = () => {
+    if (!onClose) return;
+
+    if (!hasShownWhatsAppHelp) {
+      setShowWhatsAppHelp(true);
+      setHasShownWhatsAppHelp(true);
+    } else {
+      onClose();
+    }
+  };
+
   // Validate button state
   const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
   const hasValidLocation = detectedLocation || address.trim().length >= 10;
@@ -304,7 +321,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 </div>
                 {onClose && (
                   <button
-                    onClick={onClose}
+                    onClick={handleCloseAttempt}
                     className="shrink-0 p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50 -mt-1"
                     aria-label="Cerrar"
                   >
@@ -537,6 +554,15 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 </Button>
               </form>
             </div>
+
+            {/* WhatsApp Help Overlay */}
+            <WhatsAppHelpModal
+              isOpen={showWhatsAppHelp}
+              onClose={() => setShowWhatsAppHelp(false)}
+              onContinue={() => setShowWhatsAppHelp(false)}
+              onExit={onClose || (() => { })}
+              orderNumber={orderNumber}
+            />
           </motion.div>
         </motion.div>
       )}

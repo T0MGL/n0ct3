@@ -1,11 +1,16 @@
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 
+// Import testimonial images correctly for Vite
+import girlTestimonial2 from "../assets/girl-testimonial (2).webp";
+import boyTestimonial1 from "../assets/boy-testimonial (1).webp";
+import girlTestimonial1 from "../assets/girl-testimonial (1).webp";
+
 const testimonials = [
   {
     name: "Dahiana A.",
     location: "Asunción",
-    image: "/src/assets/girl-testimonial (2).webp",
+    image: girlTestimonial2,
     rating: 5,
     title: "Valen 100% la pena",
     quote: "Literalmente me salvaron el sueño. Trabajo mucho con la compu de noche y me costaba demasiado 'apagar' el cerebro al terminar. Ahora me los pongo un rato antes y noto la diferencia enseguida.",
@@ -13,7 +18,7 @@ const testimonials = [
   {
     name: "Santi M.",
     location: "Ciudad del Este",
-    image: "/src/assets/boy-testimonial (1).webp",
+    image: boyTestimonial1,
     rating: 5,
     title: "Superaron mis expectativas",
     quote: "Al principio pensé que era puro marketing, pero la verdad que funcionan. Los uso para viciar un rato o terminar pendientes antes de dormir y caigo rendido al toque.",
@@ -21,7 +26,7 @@ const testimonials = [
   {
     name: "Lujan R.",
     location: "San Lorenzo",
-    image: "/src/assets/girl-testimonial (1).webp",
+    image: girlTestimonial1,
     rating: 5,
     title: "Productividad nivel hacker",
     quote: "Amo que no solo sirven para dormir mejor, sino que se ven súper bien. Los uso hasta para leer en el kindle y mis ojos ya no se sienten cansados al final del día.",
@@ -118,11 +123,11 @@ export const TestimonialsSection = () => {
               </p>
 
               {/* Author */}
-              <div className="mt-8 pt-6 border-t border-gray-200 w-full text-center">
-                <p className="font-bold text-black uppercase tracking-wider text-sm">
+              <div className="mt-8 pt-6 border-t border-gray-300 w-full text-center">
+                <p className="font-bold text-gray-900 uppercase tracking-wider text-sm">
                   {testimonial.name}
                 </p>
-                <p className="text-xs text-gray-500 font-semibold mt-1">
+                <p className="text-xs text-gray-600 font-bold mt-1">
                   {testimonial.location}
                 </p>
               </div>

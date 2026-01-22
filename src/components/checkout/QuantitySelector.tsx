@@ -145,11 +145,23 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                     <motion.button
                       key={bundle.id}
                       onClick={() => {
-                        setSelectedBundleIndex(index);
-                        setExtraUnits(0); // Reset extra units when changing bundle
+                        // If it's already selected and we're clicking it again,
+                        // OR if it's not the office pack (which needs extra units control),
+                        // then continue immediately.
+                        if (isSelected || bundle.id !== 'oficina') {
+                          onContinue(
+                            bundle.id === 'oficina' ? bundle.quantity + extraUnits : bundle.quantity,
+                            bundle.id === 'oficina' ? bundle.price + (extraUnits * EXTRA_UNIT_PRICE) : bundle.price
+                          );
+                        } else {
+                          // First click on Office Pack: select it to show extra controls
+                          setSelectedBundleIndex(index);
+                          setExtraUnits(0);
+                        }
                       }}
                       className={`
                         relative w-full p-5 rounded-lg border-2 transition-all duration-300
+                        active:scale-[0.98] cursor-pointer group
                         ${isSelected
                           ? bundle.highlighted
                             ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
@@ -160,13 +172,12 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         }
                         ${bundle.highlighted ? 'ring-2 ring-primary/30' : ''}
                       `}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.01 }}
                     >
                       {/* Badge */}
                       {bundle.badge && (
                         <div className={`
-                          absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap
+                          absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap z-10
                           ${bundle.highlighted
                             ? 'bg-gradient-to-r from-primary to-[#DC2626] text-white shadow-lg'
                             : 'bg-gold text-black'
@@ -182,7 +193,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                           {/* Radio Circle */}
                           <div className={`
                             w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
-                            ${isSelected ? 'border-primary' : 'border-border/50'}
+                            ${isSelected ? 'border-primary' : 'border-border/80 group-hover:border-primary/50'}
                           `}>
                             {isSelected && (
                               <motion.div
@@ -210,16 +221,20 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         </div>
 
                         {/* Right: Price */}
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end">
                           <p className={`
                             text-2xl font-bold
                             ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
                           `}>
                             {bundle.price.toLocaleString('es-PY')} Gs
                           </p>
-                          {'savings' in bundle && bundle.savings && (
+                          {'savings' in bundle && bundle.savings ? (
                             <p className="text-xs text-gold font-medium mt-1">
                               Ahorrás {bundle.savings.toLocaleString('es-PY')} Gs
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-wider font-semibold group-hover:text-primary/50 transition-colors">
+                              {isSelected || bundle.id !== 'oficina' ? 'Seleccionar →' : 'Ver Oferta →'}
                             </p>
                           )}
                         </div>

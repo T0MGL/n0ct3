@@ -446,6 +446,7 @@ const Index = () => {
             isOpen={showPhoneForm}
             onSubmit={handlePhoneSubmit}
             onClose={handlePhoneFormClose}
+            orderNumber={checkoutData.orderNumber}
           />
         </Suspense>
       )}
