@@ -29,7 +29,7 @@ export const LifestyleSection = () => {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6"
         >
@@ -46,7 +46,7 @@ export const LifestyleSection = () => {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             className="relative order-2 lg:order-1"
           >
@@ -68,37 +68,16 @@ export const LifestyleSection = () => {
           </motion.div>
 
           {/* Use Cases Side */}
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={{
-              initial: { opacity: 0 },
-              animate: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
-            className="space-y-8 order-1 lg:order-2"
-          >
+          <div className="space-y-8 order-1 lg:order-2">
             {useCases.map((useCase, index) => {
               const Icon = useCase.icon;
               return (
                 <motion.div
                   key={index}
-                  variants={{
-                    initial: { opacity: 0, y: 15 },
-                    animate: {
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        duration: 0.4,
-                        ease: [0.25, 0.1, 0.25, 1],
-                      },
-                    },
-                  }}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ duration: 0.4, delay: index * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
                   className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-primary/50 hover:border-primary transition-all duration-300"
                 >
                   <div className="flex-shrink-0">
@@ -117,14 +96,14 @@ export const LifestyleSection = () => {
                 </motion.div>
               );
             })}
-          </motion.div>
+          </div>
         </div>
 
         {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="mt-16 md:mt-20 text-center"
         >

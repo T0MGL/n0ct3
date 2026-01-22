@@ -39,7 +39,7 @@ export const fadeInUp = {
 export const fadeInUpView = {
   initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.1 },
   transition: {
     duration: REDUCED_MOTION ? 0 : DURATION.fast,
     ease: EASING,
