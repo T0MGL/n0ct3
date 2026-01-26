@@ -336,7 +336,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose, orderNumber }: PhoneN
                   Compra sin riesgo en Paraguay 🇵🇾
                 </p>
                 <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                  <span>✓ +1.000 entregas realizadas</span>
+                  <span>✓ +5.380 entregas realizadas</span>
                   <span>✓ Soporte via WhatsApp</span>
                   <span>✓ Pagás al recibir</span>
                 </div>

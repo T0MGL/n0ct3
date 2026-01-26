@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { XMarkIcon, TruckIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
+import { WhatsAppHelpModal } from "./WhatsAppHelpModal";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
@@ -51,12 +52,17 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
   // Extra units beyond pack of 3 (0 means just the base 3 units)
   const [extraUnits, setExtraUnits] = useState(0);
+  // WhatsApp help modal state
+  const [showWhatsAppHelp, setShowWhatsAppHelp] = useState(false);
+  const [hasShownWhatsAppHelp, setHasShownWhatsAppHelp] = useState(false);
 
   // Reset state when modal opens - default to Pack Pareja
   useEffect(() => {
     if (isOpen) {
       setSelectedBundleIndex(1);
       setExtraUnits(0);
+      setShowWhatsAppHelp(false);
+      setHasShownWhatsAppHelp(false);
     }
   }, [isOpen]);
 
@@ -95,6 +101,15 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
     onContinue(finalQuantity, finalPrice);
   };
 
+  const handleCloseAttempt = () => {
+    if (!hasShownWhatsAppHelp) {
+      setShowWhatsAppHelp(true);
+      setHasShownWhatsAppHelp(true);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -104,7 +119,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4"
-          onClick={onClose}
+          onClick={handleCloseAttempt}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -116,7 +131,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
           >
             {/* Close Button */}
             <button
-              onClick={onClose}
+              onClick={handleCloseAttempt}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <XMarkIcon className="w-5 h-5" />
@@ -336,6 +351,14 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 Soporte real por WhatsApp · Envíos a todo Paraguay · Pago al recibir
               </p>
             </div>
+
+            {/* WhatsApp Help Modal */}
+            <WhatsAppHelpModal
+              isOpen={showWhatsAppHelp}
+              onClose={() => setShowWhatsAppHelp(false)}
+              onContinue={() => setShowWhatsAppHelp(false)}
+              onExit={onClose}
+            />
           </motion.div>
         </motion.div>
       )}

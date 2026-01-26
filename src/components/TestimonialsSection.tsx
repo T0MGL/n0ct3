@@ -66,7 +66,7 @@ export const TestimonialsSection = () => {
             Trabajan de noche. <br className="hidden md:block" /> Duermen profundo.
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light">
-            Más de 1.000 paraguayos ya hackearon su descanso
+            Más de 5.380 paraguayos ya hackearon su descanso
           </p>
         </div>
 

@@ -7,7 +7,7 @@ interface WhatsAppHelpModalProps {
     onClose: () => void;
     onContinue: () => void;
     onExit: () => void;
-    orderNumber: string;
+    orderNumber?: string; // Made optional
 }
 
 export const WhatsAppHelpModal = ({
@@ -19,9 +19,10 @@ export const WhatsAppHelpModal = ({
 }: WhatsAppHelpModalProps) => {
     const handleWhatsAppContact = () => {
         const phone = "595991893587";
-        const message = encodeURIComponent(
-            `Hola! Estaba por comprar NOCTE pero tengo algunas dudas. Mi orden: ${orderNumber}`
-        );
+        // Don't include order number if not provided
+        const message = orderNumber
+            ? encodeURIComponent(`Hola! Estaba por comprar NOCTE pero tengo algunas dudas. Mi orden: ${orderNumber}`)
+            : encodeURIComponent("Hola! Estaba viendo los lentes NOCTE pero tengo algunas dudas antes de comprar.");
         window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
         onClose();
     };

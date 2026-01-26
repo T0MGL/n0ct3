@@ -206,7 +206,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   </div>
                 </div>
                 <p className="text-sm text-foreground/80 font-medium">
-                  4.8/5 (1.174 Clientes en Paraguay)
+                  4.8/5 (5.380 Clientes en Paraguay)
                 </p>
               </div>
             </div>
