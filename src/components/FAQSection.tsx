@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     question: "¿Cuánto tarda en llegar NOCTE?",
-    answer: "Envío GRATIS a Asunción y Departamento Central. 1-2 días hábiles después de comprar. Packaging premium incluido.",
+    answer: "Envío GRATIS a Asunción y Departamento Central. 1-2 días hábiles después de comprar.",
   },
   {
     question: "¿Funcionan si trabajo hasta las 2-3AM?",
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     question: "¿Qué incluye la caja de NOCTE?",
-    answer: "1 par de lentes rojos NOCTE • Estuche premium (negro + dorado) • Paño de limpieza • Tarjeta de garantía (30 días)",
+    answer: "Unos lentes anti luz azul NOCTE.",
   },
 ];
 
