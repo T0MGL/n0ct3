@@ -368,8 +368,8 @@ const CheckoutForm = ({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground leading-tight">
               {customerData.quantity === 2
-                ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
-                : 'Lentes Rojos Premium Anti-Luz Azul'}
+                ? 'Lentes Rojos Anti-Luz Azul - Pack x2'
+                : 'Lentes Rojos Anti-Luz Azul'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Cantidad: {customerData.quantity}
@@ -560,8 +560,8 @@ export const StripeCheckoutModal = ({
           deliveryAddress: customerData.address,
           quantity: customerData.quantity.toString(),
           product: customerData.quantity === 2
-            ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
-            : 'Lentes Rojos Premium Anti-Luz Azul',
+            ? 'Lentes Rojos Anti-Luz Azul - Pack x2'
+            : 'Lentes Rojos Anti-Luz Azul',
         },
       })
         .then((response) => {

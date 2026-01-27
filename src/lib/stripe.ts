@@ -33,7 +33,7 @@ export const PRODUCT_CONFIG = {
   price: parseInt(import.meta.env.VITE_PRODUCT_PRICE || '199000'),
   currency: (import.meta.env.VITE_PRODUCT_CURRENCY || 'usd').toLowerCase(),
   name: import.meta.env.VITE_PRODUCT_NAME || 'NOCTE® Red-Tinted Glasses',
-  description: 'Premium red-tinted blue light blocking glasses for better sleep',
+  description: 'Red-tinted blue light blocking glasses for better sleep',
 };
 
 /**

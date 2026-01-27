@@ -188,7 +188,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             {/* Main Title */}
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                Lentes Rojos Premium Anti-Luz Azul
+                Lentes Rojos Anti-Luz Azul
               </h1>
 
               {/* Star Rating + Social Proof */}
