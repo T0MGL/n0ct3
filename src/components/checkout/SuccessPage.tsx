@@ -13,6 +13,7 @@ interface SuccessPageProps {
     name: string;
     address?: string;
     googleMapsLink?: string;
+    deliveryType?: 'común' | 'premium';
   };
   onClose: () => void;
 }
@@ -34,6 +35,10 @@ export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) =>
       locationLine = `📍 ${orderData.location}`;
     }
 
+    const shippingLine = orderData.deliveryType === 'premium'
+      ? '🚀 Envío Prioritario'
+      : '📦 Envío Común';
+
     const message = encodeURIComponent(
       `Hola *NOCTE®* 👋
 
@@ -42,6 +47,7 @@ Acabo de completar mi pedido!
 Orden: ${orderData.orderNumber}
 🔴 ${orderData.products}
 💰 ${orderData.total}
+${shippingLine}
 
 Mis datos:
 👤 ${orderData.name}
@@ -106,6 +112,13 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
                 <div className="flex justify-between items-center gap-3">
                   <span className="text-xs md:text-sm text-muted-foreground">Total:</span>
                   <span className="text-sm md:text-base font-bold text-primary whitespace-nowrap">{orderData.total}</span>
+                </div>
+
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-xs md:text-sm text-muted-foreground">Envío:</span>
+                  <span className="text-xs md:text-sm font-semibold text-foreground">
+                    {orderData.deliveryType === 'premium' ? '🚀 Prioritario' : '📦 Común (Gratis)'}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center gap-3">

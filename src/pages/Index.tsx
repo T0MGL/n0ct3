@@ -67,6 +67,7 @@ const Index = () => {
     paymentMethod: "digital" as "digital" | "cash",
     orderNumber: "",
     paymentIntentId: "",
+    deliveryType: "común" as "común" | "premium",
   });
 
   // Prevent page close/reload during checkout
@@ -182,7 +183,7 @@ const Index = () => {
         order_id: prev.orderNumber,
       });
 
-      return { ...prev, paymentIntentId: result.paymentIntentId };
+      return { ...prev, paymentIntentId: result.paymentIntentId, deliveryType: result.deliveryType, totalPrice: result.finalTotal };
     });
 
     // INSTANT UI update - show success immediately
@@ -305,6 +306,7 @@ const Index = () => {
       name: checkoutData.name,
       address: checkoutData.address,
       googleMapsLink,
+      deliveryType: checkoutData.deliveryType,
     };
   }, [checkoutData]);
 
