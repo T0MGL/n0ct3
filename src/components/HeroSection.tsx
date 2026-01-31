@@ -63,6 +63,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
   // Animated stock number display
   const [displayStock, setDisplayStock] = useState(stockLeft);
+  const [stockAnimating, setStockAnimating] = useState(false);
 
   const slides = [
     { image: heroImage, alt: "Persona usando lentes NOCTE" },
@@ -97,8 +98,10 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
       // Temporarily disable scroll-snap for smooth peek animation
       carousel.style.scrollSnapType = 'none';
-      carousel.scrollTo({ left: 60, behavior: 'smooth' });
+      // Move further (120px) to make peek more noticeable
+      carousel.scrollTo({ left: 120, behavior: 'smooth' });
 
+      // Hold the peek position longer (1 second) before returning
       setTimeout(() => {
         if (carousel && !hasInteracted) {
           carousel.scrollTo({ left: 0, behavior: 'smooth' });
@@ -108,12 +111,12 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             if (carousel) {
               carousel.style.scrollSnapType = 'x mandatory';
             }
-          }, 400);
+          }, 500);
         }
-      }, 500);
+      }, 1000);
 
       setHasPeeked(true);
-    }, 2500);
+    }, 2000);
 
     return () => clearTimeout(peekTimer);
   }, [hasPeeked, hasInteracted, currentSlide]);
@@ -129,18 +132,26 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       setCurrentBuyer(getRandomBuyer());
       setShowPurchaseNotification(true);
 
-      // Animate stock decrease
-      const newStock = Math.max(stockLeft - 1, 1);
-      setStockLeft(newStock);
-
-      // Update localStorage
-      const today = new Date().toDateString();
-      localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
-
-      // Animate the display number with a slight delay
+      // Animate stock decrease after notification appears
       setTimeout(() => {
-        setDisplayStock(newStock);
-      }, 800);
+        const newStock = Math.max(stockLeft - 1, 1);
+
+        // Trigger pulse animation on stock indicator
+        setStockAnimating(true);
+
+        // Update the display number with dramatic effect
+        setTimeout(() => {
+          setDisplayStock(newStock);
+          setStockLeft(newStock);
+
+          // Update localStorage
+          const today = new Date().toDateString();
+          localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+
+          // Stop animation after a bit
+          setTimeout(() => setStockAnimating(false), 1500);
+        }, 300);
+      }, 1500);
 
       setTimeout(() => setShowPurchaseNotification(false), 4000);
     }, 8000);
@@ -324,9 +335,17 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
             {/* Stock Urgency Indicator */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg"
+              animate={{
+                opacity: 1,
+                scale: stockAnimating ? [1, 1.08, 1] : 1,
+                borderColor: stockAnimating ? ['rgba(239,68,68,0.3)', 'rgba(239,68,68,0.8)', 'rgba(239,68,68,0.3)'] : 'rgba(239,68,68,0.3)',
+              }}
+              transition={{
+                delay: stockAnimating ? 0 : 0.3,
+                duration: stockAnimating ? 0.6 : 0.4,
+                repeat: stockAnimating ? 2 : 0,
+              }}
+              className={`inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg transition-all ${stockAnimating ? 'shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
             >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -337,11 +356,11 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={displayStock}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.3 }}
-                    className="inline-block"
+                    initial={{ opacity: 0, y: -20, scale: 1.5 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.5 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className={`inline-block font-bold ${stockAnimating ? 'text-white' : ''}`}
                   >
                     {displayStock}
                   </motion.span>
