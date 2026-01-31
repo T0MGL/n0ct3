@@ -44,7 +44,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
   const deliveryDates = useMemo(() => getDeliveryDates(), []);
 
   // Dynamic stock counter (resets daily, creates urgency)
-  const [stockLeft] = useState(() => {
+  const [stockLeft, setStockLeft] = useState(() => {
     const today = new Date().toDateString();
     const stored = localStorage.getItem('nocte-stock-data');
 
@@ -60,6 +60,9 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
     localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
     return newStock;
   });
+
+  // Animated stock number display
+  const [displayStock, setDisplayStock] = useState(stockLeft);
 
   const slides = [
     { image: heroImage, alt: "Persona usando lentes NOCTE" },
@@ -91,13 +94,23 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       if (!carouselRef.current || hasInteracted) return;
 
       const carousel = carouselRef.current;
-      carousel.scrollTo({ left: 50, behavior: 'smooth' });
+
+      // Temporarily disable scroll-snap for smooth peek animation
+      carousel.style.scrollSnapType = 'none';
+      carousel.scrollTo({ left: 60, behavior: 'smooth' });
 
       setTimeout(() => {
         if (carousel && !hasInteracted) {
           carousel.scrollTo({ left: 0, behavior: 'smooth' });
+
+          // Re-enable scroll-snap after animation completes
+          setTimeout(() => {
+            if (carousel) {
+              carousel.style.scrollSnapType = 'x mandatory';
+            }
+          }, 400);
         }
-      }, 600);
+      }, 500);
 
       setHasPeeked(true);
     }, 2500);
@@ -116,11 +129,24 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       setCurrentBuyer(getRandomBuyer());
       setShowPurchaseNotification(true);
 
+      // Animate stock decrease
+      const newStock = Math.max(stockLeft - 1, 1);
+      setStockLeft(newStock);
+
+      // Update localStorage
+      const today = new Date().toDateString();
+      localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+
+      // Animate the display number with a slight delay
+      setTimeout(() => {
+        setDisplayStock(newStock);
+      }, 800);
+
       setTimeout(() => setShowPurchaseNotification(false), 4000);
     }, 8000);
 
     return () => clearTimeout(purchaseTimer);
-  }, []);
+  }, [stockLeft]);
 
   return (
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
@@ -307,7 +333,20 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
               </span>
               <span className="text-sm font-semibold text-primary">
-                Solo quedan {stockLeft} unidades en stock
+                Solo quedan{" "}
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={displayStock}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.3 }}
+                    className="inline-block"
+                  >
+                    {displayStock}
+                  </motion.span>
+                </AnimatePresence>
+                {" "}unidades en stock
               </span>
             </motion.div>
 
