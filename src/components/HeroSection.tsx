@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import {
@@ -16,6 +16,7 @@ import nocteProductImage from "@/assets/nocteproduct.webp";
 import tarjetasImage from "@/assets/tarjetas.webp";
 import { StripePaymentButton } from "@/components/StripePaymentButton";
 import { PaymentSuccessModal } from "@/components/PaymentSuccessModal";
+import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 
@@ -31,6 +32,13 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
   });
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [hasPeeked, setHasPeeked] = useState(false);
+
+  // Live purchase notification
+  const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
+  const [currentBuyer, setCurrentBuyer] = useState(() => getRandomBuyer());
+  const hasShownPurchaseRef = useRef(false);
 
   // Memoize delivery dates calculation (doesn't change during session)
   const deliveryDates = useMemo(() => getDeliveryDates(), []);
@@ -74,6 +82,46 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
     return () => clearTimeout(preloadTimer);
   }, []);
+
+  // Carousel peek animation - hints that carousel is scrollable
+  useEffect(() => {
+    if (hasPeeked || hasInteracted || currentSlide !== 0) return;
+
+    const peekTimer = setTimeout(() => {
+      if (!carouselRef.current || hasInteracted) return;
+
+      const carousel = carouselRef.current;
+      carousel.scrollTo({ left: 50, behavior: 'smooth' });
+
+      setTimeout(() => {
+        if (carousel && !hasInteracted) {
+          carousel.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+      }, 600);
+
+      setHasPeeked(true);
+    }, 2500);
+
+    return () => clearTimeout(peekTimer);
+  }, [hasPeeked, hasInteracted, currentSlide]);
+
+  // Live purchase notification - shows once per session after 8 seconds
+  useEffect(() => {
+    if (hasShownPurchaseRef.current) return;
+
+    const purchaseTimer = setTimeout(() => {
+      if (hasShownPurchaseRef.current) return;
+      hasShownPurchaseRef.current = true;
+
+      setCurrentBuyer(getRandomBuyer());
+      setShowPurchaseNotification(true);
+
+      setTimeout(() => setShowPurchaseNotification(false), 4000);
+    }, 8000);
+
+    return () => clearTimeout(purchaseTimer);
+  }, []);
+
   return (
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
@@ -134,6 +182,8 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   const newSlide = Math.round(scrollLeft / slideWidth);
                   setCurrentSlide(newSlide);
                 }}
+                onTouchStart={() => setHasInteracted(true)}
+                onMouseDown={() => setHasInteracted(true)}
               >
                 {slides.map((slide, index) => (
                   <div
@@ -337,6 +387,13 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       <PaymentSuccessModal
         open={showStripeSuccess}
         onClose={() => setShowStripeSuccess(false)}
+      />
+
+      {/* Live Purchase Notification */}
+      <LivePurchaseNotification
+        isVisible={showPurchaseNotification}
+        buyerName={currentBuyer.name}
+        buyerCity={currentBuyer.city}
       />
     </section>
   );
