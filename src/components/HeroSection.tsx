@@ -5,7 +5,7 @@ import {
   MoonIcon,
   ShieldCheckIcon,
   ComputerDesktopIcon,
-  SparklesIcon
+  FaceSmileIcon
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
@@ -314,7 +314,7 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <SparklesIcon className="w-6 h-6 text-primary" />
+                  <FaceSmileIcon className="w-6 h-6 text-primary" />
                 </div>
                 <span className="text-sm md:text-base font-medium text-white">Cero Migrañas</span>
               </div>
