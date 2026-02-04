@@ -20,6 +20,30 @@ const useCases = [
   },
 ];
 
+// Stable variant objects at module scope (not recreated on each render)
+const useCaseContainerVariants = {
+  initial: { opacity: 1 },
+  animate: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const useCaseItemVariants = {
+  initial: { opacity: 0, y: 15 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.1, 0.25, 1] as const,
+    },
+  },
+};
+
 export const LifestyleSection = () => {
   return (
     <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/20 to-black relative overflow-hidden">
@@ -72,15 +96,7 @@ export const LifestyleSection = () => {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
-            variants={{
-              initial: { opacity: 0 },
-              animate: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
+            variants={useCaseContainerVariants}
             className="space-y-8 order-1 lg:order-2"
           >
             {useCases.map((useCase, index) => {
@@ -88,17 +104,7 @@ export const LifestyleSection = () => {
               return (
                 <motion.div
                   key={index}
-                  variants={{
-                    initial: { opacity: 0, y: 15 },
-                    animate: {
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        duration: 0.4,
-                        ease: [0.25, 0.1, 0.25, 1],
-                      },
-                    },
-                  }}
+                  variants={useCaseItemVariants}
                   className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-primary/50 hover:border-primary transition-all duration-300"
                 >
                   <div className="flex-shrink-0">

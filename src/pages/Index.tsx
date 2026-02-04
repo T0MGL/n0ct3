@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo } from "react";
 import { Link } from "react-router-dom";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { HeroSection } from "@/components/HeroSection";
@@ -318,33 +318,41 @@ const Index = () => {
     quantity: checkoutData.quantity,
   }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.orderNumber, checkoutData.quantity]);
 
-  // Scroll detection for header
-  const [lastScrollY, setLastScrollY] = useState(0);
+  // Scroll detection for header - uses ref to avoid re-renders on every scroll
+  const lastScrollYRef = useRef(0);
   const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
+    let ticking = false;
+
     const controlNavbar = () => {
-      if (typeof window !== 'undefined') {
-        const currentScrollY = window.scrollY;
+      const currentScrollY = window.scrollY;
+      const lastY = lastScrollYRef.current;
 
-        // Hide on scroll down, show on scroll up
-        // Always show if very close to top to avoid flickering or getting stuck hidden at top
-        if (currentScrollY > lastScrollY && currentScrollY > 50) {
-          setShowHeader(false);
-        } else {
-          setShowHeader(true);
-        }
+      // Hide on scroll down, show on scroll up
+      if (currentScrollY > lastY && currentScrollY > 50) {
+        setShowHeader(false);
+      } else if (currentScrollY < lastY) {
+        setShowHeader(true);
+      }
 
-        setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(controlNavbar);
+        ticking = true;
       }
     };
 
-    window.addEventListener('scroll', controlNavbar);
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', controlNavbar);
+      window.removeEventListener('scroll', onScroll);
     };
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-foreground">
