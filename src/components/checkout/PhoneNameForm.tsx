@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
 import { API_CONFIG } from "@/lib/stripe";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
@@ -49,30 +50,11 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     }
   }, [isOpen]);
 
-  // Prevent body scroll when modal is open (iOS-safe)
+  // Prevent body scroll when modal is open (iOS-safe, ref-counted)
   useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
-    }
-    return () => {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      if (scrollY) window.scrollTo(0, parseInt(scrollY) * -1);
-    };
+    if (!isOpen) return;
+    lockScroll();
+    return () => { unlockScroll(); };
   }, [isOpen]);
 
   // Detect fake phone numbers with suspicious patterns
@@ -301,14 +283,14 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 touch-none"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto overscroll-y-contain"
+            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto overscroll-contain touch-auto"
           >
             <div className="space-y-6">
               {/* Header with Progress Bar and Close Button */}

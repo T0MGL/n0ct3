@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
@@ -625,30 +626,11 @@ export const StripeCheckoutModal = ({
     }
   }, [isOpen]);
 
-  // Prevent body scroll when modal is open (iOS-safe)
+  // Prevent body scroll when modal is open (iOS-safe, ref-counted)
   useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
-    }
-    return () => {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      if (scrollY) window.scrollTo(0, parseInt(scrollY) * -1);
-    };
+    if (!isOpen) return;
+    lockScroll();
+    return () => { unlockScroll(); };
   }, [isOpen]);
 
   return (
@@ -659,7 +641,7 @@ export const StripeCheckoutModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 touch-none"
           onClick={onClose}
         >
           <motion.div
@@ -668,7 +650,7 @@ export const StripeCheckoutModal = ({
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto overscroll-y-contain"
+            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto overscroll-contain touch-auto"
           >
             {/* Close Button */}
             <button

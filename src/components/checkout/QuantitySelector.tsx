@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { XMarkIcon, TruckIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
@@ -9,7 +9,6 @@ interface QuantitySelectorProps {
   onContinue: (quantity: number, totalPrice: number) => void;
 }
 
-// Fixed bundle pricing strategy
 const BUNDLES = [
   {
     id: 'personal',
@@ -48,30 +47,13 @@ const EXTRA_UNIT_PRICE = 143000;
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
   const [extraUnits, setExtraUnits] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const onContinueRef = useRef(onContinue);
-  onContinueRef.current = onContinue;
 
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  // Reset state and auto-advance when modal opens
+  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setSelectedBundleIndex(1);
       setExtraUnits(0);
-      clearTimer();
-      timerRef.current = setTimeout(() => {
-        onContinueRef.current(BUNDLES[1].quantity, BUNDLES[1].price);
-      }, 600);
-    } else {
-      clearTimer();
     }
-    return () => clearTimer();
   }, [isOpen]);
 
   // Prevent body scroll when modal is open
@@ -96,19 +78,16 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
     : selectedBundle.price;
 
   const handleBundleSelect = (index: number) => {
-    setSelectedBundleIndex(index);
-    setExtraUnits(0);
-    clearTimer();
-
     const bundle = BUNDLES[index];
 
     if (index !== 2) {
-      // Personal o Pack Pareja: avanzar automáticamente en 300ms
-      timerRef.current = setTimeout(() => {
-        onContinueRef.current(bundle.quantity, bundle.price);
-      }, 300);
+      // Personal o Pack Pareja: avanzar inmediatamente al hacer clic
+      onContinue(bundle.quantity, bundle.price);
+    } else {
+      // Pack Oficina: mostrar selector de unidades
+      setSelectedBundleIndex(index);
+      setExtraUnits(0);
     }
-    // Pack Oficina: no auto-avanzar, el usuario ajusta unidades y presiona Continuar
   };
 
   const handleAddUnit = () => {
@@ -120,7 +99,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   };
 
   const handleContinue = () => {
-    clearTimer();
     onContinue(finalQuantity, finalPrice);
   };
 
@@ -202,9 +180,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                       )}
 
                       <div className="flex items-center justify-between">
-                        {/* Left: Quantity & Label */}
                         <div className="flex items-center gap-4">
-                          {/* Radio Circle */}
                           <div className={`
                             w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
                             ${isSelected ? 'border-primary' : 'border-border/50'}
@@ -234,7 +210,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                           </div>
                         </div>
 
-                        {/* Right: Price */}
                         <div className="text-right">
                           <p className={`
                             text-2xl font-bold
@@ -331,7 +306,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 </div>
               </div>
 
-              {/* Continue Button - solo visible para Pack Oficina */}
+              {/* Botón Continuar - solo para Pack Oficina */}
               {isOfficePackSelected && (
                 <Button
                   onClick={handleContinue}
