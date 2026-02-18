@@ -166,6 +166,16 @@ All colors MUST be HSL.
       left: 100%;
     }
   }
+
+  /* Border travel animation for card payment button */
+  .animate-border-travel {
+    animation: border-travel 4s linear infinite;
+  }
+
+  @keyframes border-travel {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -412; }
+  }
 }
 
 /* Hide Stripe Dev Tools widget in development */

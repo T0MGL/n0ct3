@@ -263,25 +263,35 @@ const CheckoutForm = ({
           </button>
 
           {/* Card / Digital Wallets Option - NOW SECOND */}
-          <div className={`relative rounded-lg ${paymentMethod !== 'card' ? 'p-[2px] overflow-hidden' : ''}`}>
+          <div className="relative rounded-lg">
             {paymentMethod !== 'card' && (
-              <motion.div
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] aspect-square"
-                style={{
-                  background: "conic-gradient(from 0deg, transparent 0deg, rgba(239, 68, 68, 0.45) 60deg, transparent 120deg)"
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              />
+              <svg
+                viewBox="0 0 100 78"
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="1" y="1"
+                  width="98" height="76"
+                  rx="5"
+                  fill="none"
+                  stroke="rgba(239, 68, 68, 0.55)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeDasharray="12 400"
+                  className="animate-border-travel"
+                />
+              </svg>
             )}
             <button
               type="button"
               onClick={() => setPaymentMethod('card')}
               className={`
-                relative w-full p-4 transition-all duration-300
+                relative w-full p-4 rounded-lg transition-colors duration-300
                 ${paymentMethod === 'card'
-                  ? 'border-2 border-primary bg-primary/10 shadow-lg rounded-lg'
-                  : 'rounded-[6px] bg-secondary/30 hover:bg-secondary/50'
+                  ? 'border-2 border-primary bg-primary/10 shadow-lg'
+                  : 'border border-border/30 bg-secondary/30 hover:bg-secondary/50'
                 }
               `}
             >
