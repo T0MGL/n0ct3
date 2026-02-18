@@ -333,8 +333,8 @@ const CheckoutForm = ({
                 },
               },
               wallets: {
-                applePay: 'always',
-                googlePay: 'always',
+                applePay: 'auto',
+                googlePay: 'auto',
               },
               terms: {
                 card: 'never',
