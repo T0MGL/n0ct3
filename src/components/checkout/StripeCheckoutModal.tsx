@@ -62,6 +62,16 @@ const CheckoutForm = ({
   // Refs to track AddPaymentInfo events and prevent duplicates
   const initialTrackDoneRef = useRef(false);
   const previousPaymentMethodRef = useRef<PaymentMethod | null>(null);
+  const submitButtonRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to submit button when user selects card payment
+  useEffect(() => {
+    if (paymentMethod === 'card' && submitButtonRef.current) {
+      setTimeout(() => {
+        submitButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 400);
+    }
+  }, [paymentMethod]);
 
   useEffect(() => {
     console.log('🔵 [CheckoutForm] Component mounted, stripe:', !!stripe, 'elements:', !!elements);
@@ -468,7 +478,7 @@ const CheckoutForm = ({
       </div>
 
       {/* Buttons */}
-      <div className="space-y-3">
+      <div ref={submitButtonRef} className="space-y-3">
         <Button
           type="submit"
           variant="hero"
