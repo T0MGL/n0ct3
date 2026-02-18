@@ -298,7 +298,7 @@ const CheckoutForm = ({
           <PaymentElement
             options={{
               layout: {
-                type: 'tabs',
+                type: 'accordion',
                 defaultCollapsed: false,
               },
               fields: {
@@ -321,8 +321,8 @@ const CheckoutForm = ({
                 },
               },
               wallets: {
-                applePay: 'auto',
-                googlePay: 'auto',
+                applePay: 'always',
+                googlePay: 'always',
               },
               terms: {
                 card: 'never',
