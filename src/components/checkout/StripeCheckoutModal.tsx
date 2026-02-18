@@ -298,7 +298,7 @@ const CheckoutForm = ({
           <PaymentElement
             options={{
               layout: {
-                type: 'accordion',
+                type: 'tabs',
                 defaultCollapsed: false,
               },
               fields: {
