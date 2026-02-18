@@ -43,7 +43,7 @@ const TerminosCondiciones = () => {
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li><strong>Nombre comercial:</strong> NOCTE® Paraguay</li>
               <li><strong>Domicilio:</strong> Asunción, Paraguay</li>
-              <li><strong>Contacto:</strong> WhatsApp +595 971 000000 | Instagram @nocte.paraguay</li>
+              <li><strong>Contacto:</strong> WhatsApp +595 991 893587 | Instagram @noctepy</li>
             </ul>
           </section>
 
@@ -252,8 +252,8 @@ const TerminosCondiciones = () => {
               Para consultas, reclamos o ejercer sus derechos como consumidor:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li><strong>WhatsApp:</strong> +595 971 000000</li>
-              <li><strong>Instagram:</strong> @nocte.paraguay</li>
+              <li><strong>WhatsApp:</strong> +595 991 893587</li>
+              <li><strong>Instagram:</strong> @noctepy</li>
               <li><strong>Horario de atención:</strong> Lunes a Viernes de 9:00 a 18:00</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">

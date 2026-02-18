@@ -252,39 +252,51 @@ const CheckoutForm = ({
           </button>
 
           {/* Card / Digital Wallets Option - NOW SECOND */}
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('card')}
-            className={`
-              relative p-4 rounded-lg border-2 transition-all duration-300
-              ${paymentMethod === 'card'
-                ? 'border-primary bg-primary/10 shadow-lg'
-                : 'border-border/50 bg-secondary/30 hover:border-border hover:bg-secondary/50'
-              }
-            `}
-          >
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex items-center gap-2">
-                <CreditCardIcon className="w-5 h-5 text-primary" />
-                <DevicePhoneMobileIcon className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-primary' : 'text-foreground'}`}>
-                  Tarjeta de Crédito / Débito
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Apple Pay, Google Pay
-                </p>
-              </div>
-            </div>
-            {paymentMethod === 'card' && (
-              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
+          <div className={`relative rounded-lg ${paymentMethod !== 'card' ? 'p-[2px] overflow-hidden' : ''}`}>
+            {paymentMethod !== 'card' && (
+              <motion.div
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] aspect-square"
+                style={{
+                  background: "conic-gradient(from 0deg, transparent 0deg, rgba(239, 68, 68, 0.45) 60deg, transparent 120deg)"
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              />
             )}
-          </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('card')}
+              className={`
+                relative w-full p-4 transition-all duration-300
+                ${paymentMethod === 'card'
+                  ? 'border-2 border-primary bg-primary/10 shadow-lg rounded-lg'
+                  : 'rounded-[6px] bg-secondary/30 hover:bg-secondary/50'
+                }
+              `}
+            >
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="flex items-center gap-2">
+                  <CreditCardIcon className="w-5 h-5 text-primary" />
+                  <DevicePhoneMobileIcon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-primary' : 'text-foreground'}`}>
+                    Tarjeta de Crédito / Débito
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Apple Pay, Google Pay
+                  </p>
+                </div>
+              </div>
+              {paymentMethod === 'card' && (
+                <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -613,15 +625,29 @@ export const StripeCheckoutModal = ({
     }
   }, [isOpen]);
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open (iOS-safe)
   useEffect(() => {
     if (isOpen) {
+      const scrollY = window.scrollY;
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
     } else {
+      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
     return () => {
+      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) window.scrollTo(0, parseInt(scrollY) * -1);
     };
   }, [isOpen]);
 
@@ -642,7 +668,7 @@ export const StripeCheckoutModal = ({
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto"
+            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto overscroll-y-contain"
           >
             {/* Close Button */}
             <button

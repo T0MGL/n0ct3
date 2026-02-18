@@ -109,7 +109,21 @@ export const PaymentFallbackModal = ({
                 </div>
 
                 {/* Option 2 - Reintentar pago */}
-                <div className="p-4 bg-secondary/30 border border-border rounded-lg">
+                <motion.div
+                  className="p-4 bg-secondary/30 border border-border rounded-lg"
+                  animate={{
+                    boxShadow: [
+                      "0 0 0px rgba(239, 68, 68, 0)",
+                      "0 0 12px rgba(239, 68, 68, 0.4)",
+                      "0 0 0px rgba(239, 68, 68, 0)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
                   <div className="flex items-start gap-3 mb-3">
                     <CreditCardIcon className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -130,7 +144,7 @@ export const PaymentFallbackModal = ({
                   >
                     Reintentar pago
                   </Button>
-                </div>
+                </motion.div>
               </div>
 
               {/* Info Box */}

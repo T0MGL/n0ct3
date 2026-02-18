@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { XMarkIcon, TruckIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ const BUNDLES = [
     label: "Pack Pareja",
     badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 99.000",
     highlighted: true,
-    savings: 99000, // 398.000 - 299.000
+    savings: 99000,
   },
   {
     id: 'oficina',
@@ -38,26 +38,40 @@ const BUNDLES = [
     label: "Pack Oficina",
     badge: "Super Ahorro",
     highlighted: false,
-    savings: 168000, // 597.000 - 429.000
-    allowExtraUnits: true, // Allow adding more units at this price
+    savings: 168000,
+    allowExtraUnits: true,
   },
 ] as const;
 
-// Price per unit for extra units (same as pack of 3 discount)
 const EXTRA_UNIT_PRICE = 143000;
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
-  // Default to the highlighted bundle (Pack Pareja - 2 units)
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
-  // Extra units beyond pack of 3 (0 means just the base 3 units)
   const [extraUnits, setExtraUnits] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const onContinueRef = useRef(onContinue);
+  onContinueRef.current = onContinue;
 
-  // Reset state when modal opens - default to Pack Pareja
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  // Reset state and auto-advance when modal opens
   useEffect(() => {
     if (isOpen) {
       setSelectedBundleIndex(1);
       setExtraUnits(0);
+      clearTimer();
+      timerRef.current = setTimeout(() => {
+        onContinueRef.current(BUNDLES[1].quantity, BUNDLES[1].price);
+      }, 600);
+    } else {
+      clearTimer();
     }
+    return () => clearTimer();
   }, [isOpen]);
 
   // Prevent body scroll when modal is open
@@ -73,8 +87,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   }, [isOpen]);
 
   const selectedBundle = BUNDLES[selectedBundleIndex];
-
-  // Calculate final quantity and price
   const isOfficePackSelected = selectedBundleIndex === 2;
   const finalQuantity = isOfficePackSelected
     ? selectedBundle.quantity + extraUnits
@@ -83,8 +95,24 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
     ? selectedBundle.price + (extraUnits * EXTRA_UNIT_PRICE)
     : selectedBundle.price;
 
+  const handleBundleSelect = (index: number) => {
+    setSelectedBundleIndex(index);
+    setExtraUnits(0);
+    clearTimer();
+
+    const bundle = BUNDLES[index];
+
+    if (index !== 2) {
+      // Personal o Pack Pareja: avanzar automáticamente en 300ms
+      timerRef.current = setTimeout(() => {
+        onContinueRef.current(bundle.quantity, bundle.price);
+      }, 300);
+    }
+    // Pack Oficina: no auto-avanzar, el usuario ajusta unidades y presiona Continuar
+  };
+
   const handleAddUnit = () => {
-    setExtraUnits(prev => Math.min(prev + 1, 7)); // Max 10 total (3 + 7)
+    setExtraUnits(prev => Math.min(prev + 1, 7));
   };
 
   const handleRemoveUnit = () => {
@@ -92,6 +120,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   };
 
   const handleContinue = () => {
+    clearTimer();
     onContinue(finalQuantity, finalPrice);
   };
 
@@ -129,7 +158,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
                   Elige tu Pack NOCTE<sup className="text-[0.3em]">®</sup>
                 </h2>
-
                 <p className="text-base text-muted-foreground leading-relaxed">
                   Aprovecha nuestras ofertas especiales
                 </p>
@@ -144,10 +172,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                   return (
                     <motion.button
                       key={bundle.id}
-                      onClick={() => {
-                        setSelectedBundleIndex(index);
-                        setExtraUnits(0); // Reset extra units when changing bundle
-                      }}
+                      onClick={() => handleBundleSelect(index)}
                       className={`
                         relative w-full p-5 rounded-lg border-2 transition-all duration-300
                         ${isSelected
@@ -306,15 +331,17 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 </div>
               </div>
 
-              {/* Continue Button */}
-              <Button
-                onClick={handleContinue}
-                variant="hero"
-                size="xl"
-                className="w-full h-14 text-base font-semibold"
-              >
-                Continuar con {finalQuantity} {finalQuantity === 1 ? 'unidad' : 'unidades'} - {finalPrice.toLocaleString('es-PY')} Gs
-              </Button>
+              {/* Continue Button - solo visible para Pack Oficina */}
+              {isOfficePackSelected && (
+                <Button
+                  onClick={handleContinue}
+                  variant="hero"
+                  size="xl"
+                  className="w-full h-14 text-base font-semibold"
+                >
+                  Continuar con {finalQuantity} {finalQuantity === 1 ? 'unidad' : 'unidades'} - {finalPrice.toLocaleString('es-PY')} Gs
+                </Button>
+              )}
 
               {/* Trust Indicators */}
               <p className="text-center text-xs text-muted-foreground/60 leading-relaxed">

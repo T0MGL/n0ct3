@@ -48,8 +48,8 @@ const PoliticaPrivacidad = () => {
               Para cualquier consulta relacionada con el tratamiento de sus datos personales, puede contactarnos a través de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>WhatsApp: +595 971 000000</li>
-              <li>Instagram: @nocte.paraguay</li>
+              <li>WhatsApp: +595 991 893587</li>
+              <li>Instagram: @noctepy</li>
             </ul>
           </section>
 
@@ -210,8 +210,8 @@ const PoliticaPrivacidad = () => {
               puede contactarnos a través de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>WhatsApp: +595 971 000000</li>
-              <li>Instagram: @nocte.paraguay</li>
+              <li>WhatsApp: +595 991 893587</li>
+              <li>Instagram: @noctepy</li>
             </ul>
           </section>
 
