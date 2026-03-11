@@ -467,6 +467,7 @@ export const HeroSection = ({
         isVisible={showPurchaseNotification}
         buyerName={currentBuyer.name}
         buyerCity={currentBuyer.city}
+        onDismiss={() => setShowPurchaseNotification(false)}
       />
     </section>
   );
