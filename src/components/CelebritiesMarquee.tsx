@@ -46,10 +46,10 @@ export const CelebritiesMarquee = () => {
             <div className="container max-w-[1400px] mx-auto px-4">
                 {/* Title */}
                 <motion.h2
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                     className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-12 md:mb-16 text-white"
                 >
                     CUANDO ALGO FUNCIONA, SE NOTA...
@@ -67,7 +67,7 @@ export const CelebritiesMarquee = () => {
                         {[0, 1, 2].map((setIndex) => (
                             <motion.div
                                 key={setIndex}
-                                className="flex flex-shrink-0 gap-8 md:gap-16 lg:gap-24"
+                                className="flex flex-shrink-0 gap-8 md:gap-16 lg:gap-24 pr-8 md:pr-16 lg:pr-24"
                                 initial={{ x: "0%" }}
                                 animate={{ x: "-100%" }}
                                 transition={{
@@ -91,6 +91,8 @@ export const CelebritiesMarquee = () => {
                                                 <img
                                                     src={celebrity.image}
                                                     alt={celebrity.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="w-full h-full object-cover"
                                                     draggable={false}
                                                 />
@@ -122,7 +124,7 @@ export const CelebritiesMarquee = () => {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.4, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                    transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     className="text-center mt-12 md:mt-16 text-sm md:text-base text-white/50 font-light tracking-wide"
                 >
                     Confiado por profesionales y celebridades alrededor del mundo

@@ -23,20 +23,26 @@ export const CountdownTimer = memo(() => {
 
     // Get or create target date
     const getTargetDate = (): Date => {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-
-      if (stored) {
-        const storedDate = new Date(stored);
-        // If stored date is in the future, use it
-        if (storedDate.getTime() > Date.now()) {
-          return storedDate;
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const storedDate = new Date(stored);
+          if (storedDate.getTime() > Date.now()) {
+            return storedDate;
+          }
         }
+      } catch {
+        // localStorage unavailable
       }
 
       // Create new target date 24 hours from now
       const newTarget = new Date();
       newTarget.setHours(newTarget.getHours() + 24);
-      sessionStorage.setItem(STORAGE_KEY, newTarget.toISOString());
+      try {
+        localStorage.setItem(STORAGE_KEY, newTarget.toISOString());
+      } catch {
+        // localStorage unavailable
+      }
       return newTarget;
     };
 
@@ -46,13 +52,18 @@ export const CountdownTimer = memo(() => {
       if (!targetDateRef.current) return;
 
       const now = Date.now();
-      const distance = targetDateRef.current.getTime() - now;
+      let distance = targetDateRef.current.getTime() - now;
 
       if (distance < 0) {
         // Reset to 24 hours when countdown ends
         targetDateRef.current = new Date();
         targetDateRef.current.setHours(targetDateRef.current.getHours() + 24);
-        sessionStorage.setItem(STORAGE_KEY, targetDateRef.current.toISOString());
+        try {
+          localStorage.setItem(STORAGE_KEY, targetDateRef.current.toISOString());
+        } catch {
+          // localStorage unavailable
+        }
+        distance = targetDateRef.current.getTime() - Date.now();
       }
 
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

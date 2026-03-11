@@ -30,8 +30,8 @@ export const getStripe = (): Promise<Stripe | null> => {
  * Product configuration from environment variables
  */
 export const PRODUCT_CONFIG = {
-  price: parseInt(import.meta.env.VITE_PRODUCT_PRICE || '199000'),
-  currency: (import.meta.env.VITE_PRODUCT_CURRENCY || 'usd').toLowerCase(),
+  price: parseInt(import.meta.env.VITE_PRODUCT_PRICE || '229000'),
+  currency: (import.meta.env.VITE_PRODUCT_CURRENCY || 'pyg').toLowerCase(),
   name: import.meta.env.VITE_PRODUCT_NAME || 'NOCTE® Red-Tinted Glasses',
   description: 'Premium red-tinted blue light blocking glasses for better sleep',
 };

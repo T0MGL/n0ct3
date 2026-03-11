@@ -8,32 +8,40 @@ import {
   FaceSmileIcon
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import heroImage from "@/assets/nocte-hero-lifestyle.webp";
-import productImage from "@/assets/nocte-product.jpg";
-import caseImage from "@/assets/nocte-case.webp";
-import nocteProductImage from "@/assets/nocteproduct.webp";
+import productImage3 from "@/assets/productimage3.webp";
+import productImage2 from "@/assets/productimage2.webp";
+import productImage1 from "@/assets/productimage1.webp";
 import tarjetasImage from "@/assets/tarjetas.webp";
-import { StripePaymentButton } from "@/components/StripePaymentButton";
-import { PaymentSuccessModal } from "@/components/PaymentSuccessModal";
 import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
+import { BundleSelector } from "@/components/BundleSelector";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
+import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 
 interface HeroSectionProps {
   onBuyClick: () => void;
+  selectedBundleIndex: number;
+  onBundleSelect: (index: number) => void;
+  selectedPrice: number;
+  selectedQuantity: number;
 }
 
-export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
-  const [showStripeSuccess, setShowStripeSuccess] = useState(false);
-  const [useStripe] = useState(() => {
-    // Only enable Stripe if API key is configured
-    return !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  });
+export const HeroSection = ({
+  onBuyClick,
+  selectedBundleIndex,
+  onBundleSelect,
+  selectedPrice,
+  selectedQuantity,
+}: HeroSectionProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [hasPeeked, setHasPeeked] = useState(false);
+  const hasInteractedRef = useRef(false);
+  const hasPeekedRef = useRef(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const ctaInView = useInView(ctaRef, { amount: 0.5 });
 
   // Live purchase notification
   const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
@@ -46,18 +54,25 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
   // Dynamic stock counter (resets daily, creates urgency)
   const [stockLeft, setStockLeft] = useState(() => {
     const today = new Date().toDateString();
-    const stored = localStorage.getItem('nocte-stock-data');
-
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (data.date === today) {
-        return data.stock;
+    try {
+      const stored = localStorage.getItem('nocte-stock-data');
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.date === today) {
+          return data.stock;
+        }
       }
+    } catch {
+      // Corrupted localStorage data - reset
     }
 
     // Static stock of 17 units
     const newStock = 17;
-    localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+    try {
+      localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+    } catch {
+      // localStorage unavailable (private browsing, etc.)
+    }
     return newStock;
   });
 
@@ -66,10 +81,10 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
   const [stockAnimating, setStockAnimating] = useState(false);
 
   const slides = [
+    { image: productImage3, alt: "NOCTE Kit Completo - Lentes, Estuche y Bolsa" },
+    { image: productImage2, alt: "NOCTE Estuche Abierto con Lentes" },
+    { image: productImage1, alt: "NOCTE Estuche Premium" },
     { image: heroImage, alt: "Persona usando lentes NOCTE" },
-    { image: productImage, alt: "Lentes NOCTE - Vista detallada" },
-    { image: caseImage, alt: "NOCTE Packaging Premium" },
-    { image: nocteProductImage, alt: "NOCTE Producto Premium" }
   ];
 
   // Track ViewContent when hero section is viewed
@@ -77,22 +92,23 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
     trackViewContent();
 
     // Preload checkout modals after a short delay (for mobile users)
-    // This ensures instant response when user clicks CTA
     const preloadTimer = setTimeout(() => {
-      import("@/components/checkout/QuantitySelector");
       import("@/components/checkout/PhoneNameForm");
       import("@/components/checkout/StripeCheckoutModal");
-    }, 2000); // Wait 2 seconds after page load
+    }, 2000);
 
     return () => clearTimeout(preloadTimer);
   }, []);
 
   // Carousel peek animation - hints that carousel is scrollable
   useEffect(() => {
-    if (hasPeeked || hasInteracted || currentSlide !== 0) return;
+    if (hasPeekedRef.current || hasInteracted || currentSlide !== 0) return;
+
+    let returnTimer: ReturnType<typeof setTimeout>;
+    let snapTimer: ReturnType<typeof setTimeout>;
 
     const peekTimer = setTimeout(() => {
-      if (!carouselRef.current || hasInteracted) return;
+      if (!carouselRef.current || hasInteractedRef.current) return;
 
       const carousel = carouselRef.current;
 
@@ -102,28 +118,40 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       carousel.scrollTo({ left: 120, behavior: 'smooth' });
 
       // Hold the peek position longer (1 second) before returning
-      setTimeout(() => {
-        if (carousel && !hasInteracted) {
+      returnTimer = setTimeout(() => {
+        if (carousel && !hasInteractedRef.current) {
           carousel.scrollTo({ left: 0, behavior: 'smooth' });
-
-          // Re-enable scroll-snap after animation completes
-          setTimeout(() => {
-            if (carousel) {
-              carousel.style.scrollSnapType = 'x mandatory';
-            }
-          }, 500);
+        } else if (carousel) {
+          // User interacted during peek - just restore snap
+          carousel.style.scrollSnapType = 'x mandatory';
+          return;
         }
+
+        // Re-enable scroll-snap after scroll-back animation fully completes
+        snapTimer = setTimeout(() => {
+          if (carousel) {
+            // Force position to 0 before re-enabling snap to prevent mid-snap
+            carousel.scrollLeft = 0;
+            carousel.style.scrollSnapType = 'x mandatory';
+          }
+        }, 800);
       }, 1000);
 
-      setHasPeeked(true);
+      hasPeekedRef.current = true;
     }, 2000);
 
-    return () => clearTimeout(peekTimer);
-  }, [hasPeeked, hasInteracted, currentSlide]);
+    return () => {
+      clearTimeout(peekTimer);
+      clearTimeout(returnTimer);
+      clearTimeout(snapTimer);
+    };
+  }, [hasInteracted, currentSlide]);
 
   // Live purchase notification - shows once per session after 8 seconds
   useEffect(() => {
     if (hasShownPurchaseRef.current) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     const purchaseTimer = setTimeout(() => {
       if (hasShownPurchaseRef.current) return;
@@ -133,31 +161,38 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
       setShowPurchaseNotification(true);
 
       // Animate stock decrease after notification appears
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         const newStock = Math.max(stockLeft - 1, 1);
 
         // Trigger pulse animation on stock indicator
         setStockAnimating(true);
 
         // Update the display number with dramatic effect
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           setDisplayStock(newStock);
           setStockLeft(newStock);
 
           // Update localStorage
           const today = new Date().toDateString();
-          localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+          try {
+            localStorage.setItem('nocte-stock-data', JSON.stringify({ date: today, stock: newStock }));
+          } catch { /* localStorage unavailable */ }
 
           // Stop animation after a bit
-          setTimeout(() => setStockAnimating(false), 1500);
-        }, 300);
-      }, 1500);
+          timers.push(setTimeout(() => setStockAnimating(false), 1500));
+        }, 300));
+      }, 1500));
 
-      setTimeout(() => setShowPurchaseNotification(false), 4000);
+      timers.push(setTimeout(() => setShowPurchaseNotification(false), 4000));
     }, 8000);
 
-    return () => clearTimeout(purchaseTimer);
+    timers.push(purchaseTimer);
+
+    return () => timers.forEach(clearTimeout);
   }, [stockLeft]);
+
+  // Crossed-out original price based on selected quantity
+  const originalPrice = ORIGINAL_UNIT_PRICE * selectedQuantity;
 
   return (
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
@@ -169,10 +204,10 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-1 w-full"
           >
             {/* Authority Badge */}
@@ -219,8 +254,8 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                   const newSlide = Math.round(scrollLeft / slideWidth);
                   setCurrentSlide(newSlide);
                 }}
-                onTouchStart={() => setHasInteracted(true)}
-                onMouseDown={() => setHasInteracted(true)}
+                onTouchStart={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
+                onMouseDown={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
               >
                 {slides.map((slide, index) => (
                   <div
@@ -266,11 +301,11 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
           {/* Content - Order 2 on mobile */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-            className="space-y-4 md:space-y-6 order-2 w-full"
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-4 md:space-y-5 order-2 w-full"
           >
             {/* Main Title */}
             <div className="space-y-3">
@@ -281,25 +316,25 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
               {/* Star Rating + Social Proof */}
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-0.5">
-                  <StarIcon className="w-5 h-5 text-accent" />
-                  <StarIcon className="w-5 h-5 text-accent" />
-                  <StarIcon className="w-5 h-5 text-accent" />
-                  <StarIcon className="w-5 h-5 text-accent" />
+                  <StarIcon className="w-5 h-5 star-gold" />
+                  <StarIcon className="w-5 h-5 star-gold" />
+                  <StarIcon className="w-5 h-5 star-gold" />
+                  <StarIcon className="w-5 h-5 star-gold" />
                   <div className="relative w-5 h-5">
                     <StarIcon className="w-5 h-5 text-muted-foreground/30 absolute" />
                     <div className="overflow-hidden absolute inset-0" style={{ width: '80%' }}>
-                      <StarIcon className="w-5 h-5 text-accent" />
+                      <StarIcon className="w-5 h-5 star-gold" />
                     </div>
                   </div>
                 </div>
                 <p className="text-sm text-foreground/80 font-medium">
-                  4.8/5 (1.174 Clientes en Paraguay)
+                  4.8/5 (+5.380 Clientes Satisfechos)
                 </p>
               </div>
             </div>
 
             {/* Benefits Grid - 2x2 Icons */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4 py-2">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 py-1">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <ComputerDesktopIcon className="w-6 h-6 text-primary" />
@@ -326,10 +361,20 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
               </div>
             </div>
 
+            {/* Bundle Selector */}
+            <BundleSelector
+              selectedIndex={selectedBundleIndex}
+              onSelect={onBundleSelect}
+            />
+
             {/* Price */}
-            <div className="flex items-center gap-3 py-2">
-              <span className="text-base text-foreground/40 line-through">Gs. 239.000</span>
-              <span className="text-4xl md:text-5xl font-bold text-white">Gs. 199.000</span>
+            <div className="flex items-center gap-3">
+              <span className="text-base text-foreground/40 line-through">
+                Gs. {originalPrice.toLocaleString('es-PY')}
+              </span>
+              <span className="text-4xl md:text-5xl font-bold text-white">
+                Gs. {selectedPrice.toLocaleString('es-PY')}
+              </span>
             </div>
 
             {/* Stock Urgency Indicator */}
@@ -356,10 +401,10 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={displayStock}
-                    initial={{ opacity: 0, y: -20, scale: 1.5 }}
+                    initial={{ opacity: 0, y: -10, scale: 1.2 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 20, scale: 0.5 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                     className={`inline-block font-bold ${stockAnimating ? 'text-white' : ''}`}
                   >
                     {displayStock}
@@ -371,52 +416,28 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
 
             {/* CTA Button */}
             <div className="space-y-3">
-              {useStripe ? (
-                <motion.div
-                  animate={{
-                    scale: [1, 1.02, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "loop",
-                    ease: "easeInOut"
-                  }}
+              <motion.div
+                ref={ctaRef}
+                animate={ctaInView ? {
+                  scale: [1, 1.02, 1],
+                } : { scale: 1 }}
+                transition={ctaInView ? {
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  ease: "easeInOut"
+                } : { duration: 0 }}
+              >
+                <Button
+                  data-hero-cta
+                  variant="hero"
+                  size="xl"
+                  className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+                  onClick={onBuyClick}
                 >
-                  <StripePaymentButton
-                    onSuccess={() => setShowStripeSuccess(true)}
-                    onError={(error) => {
-                      console.error('Stripe error:', error);
-                      onBuyClick();
-                    }}
-                    className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
-                  >
-                    COMPRAR AHORA - Gs. 199.000
-                  </StripePaymentButton>
-                </motion.div>
-              ) : (
-                <motion.div
-                  animate={{
-                    scale: [1, 1.02, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "loop",
-                    ease: "easeInOut"
-                  }}
-                >
-                  <Button
-                    data-hero-cta
-                    variant="hero"
-                    size="xl"
-                    className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
-                    onClick={onBuyClick}
-                  >
-                    COMPRAR AHORA - Gs. 199.000
-                  </Button>
-                </motion.div>
-              )}
+                  COMPRAR AHORA - Gs. {selectedPrice.toLocaleString('es-PY')}
+                </Button>
+              </motion.div>
 
               {/* Dynamic Delivery Date */}
               <p className="text-sm text-center text-accent font-medium">
@@ -440,12 +461,6 @@ export const HeroSection = ({ onBuyClick }: HeroSectionProps) => {
           </motion.div>
         </div>
       </div>
-
-      {/* Stripe Payment Success Modal */}
-      <PaymentSuccessModal
-        open={showStripeSuccess}
-        onClose={() => setShowStripeSuccess(false)}
-      />
 
       {/* Live Purchase Notification */}
       <LivePurchaseNotification

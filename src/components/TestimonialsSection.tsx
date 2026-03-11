@@ -1,30 +1,58 @@
 import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
+import testimonial1 from "@/assets/testimonial1.webp";
+import testimonial2 from "@/assets/testimonial2.webp";
+import testimonial3 from "@/assets/testimonial3.webp";
+import testimonial4 from "@/assets/testimonial4.webp";
+import testimonial5 from "@/assets/testimonial5.webp";
 
 const testimonials = [
   {
-    name: "Juan López",
-    role: "Founder, Asunción",
+    name: "Juan L.",
+    role: "Asunción",
     rating: 5,
-    quote: "Trabajo hasta las 2-3AM y antes no podía dormir hasta las 6. Con NOCTE me duermo a las 4AM sin problemas. Game changer total.",
+    date: "Hace 2 semanas",
+    verified: true,
+    quote: "Literal me quedaba hasta las 3am laburando y despues no podia pegar un ojo hasta las 6. Ahora me los pongo tipo 10 y a las 2 ya estoy durmiendo tranquilo. No se como pero funciona.",
+    image: testimonial1,
   },
   {
-    name: "María Fernández",
-    role: "Desarrolladora, Remoto",
+    name: "María F.",
+    role: "Remoto",
     rating: 5,
-    quote: "Los uso mientras trabajo de 8PM a 1AM. Termino mi día y me duermo en 15 minutos. Antes tardaba 2 horas dando vueltas. Es real.",
+    date: "Hace 1 mes",
+    verified: true,
+    quote: "Al principio era medio esceptica pero bueno los probe. Laburo de 8 a 1am todos los dias y ahora cuando apago la compu me duermo en nada. Antes estaba 2 horas mirando el techo.",
+    image: testimonial2,
   },
   {
-    name: "Carlos Gómez",
-    role: "Emprendedor Tech, Fernando de la Mora",
-    rating: 5,
-    quote: "No son mágicos, pero funcionan. Los uso 3 horas antes de dormir mientras trabajo en mi laptop. Duermo profundo y despierto descansado.",
+    name: "Carlos G.",
+    role: "Fernando de la Mora",
+    rating: 4,
+    date: "Hace 3 semanas",
+    verified: true,
+    quote: "Tardó un poco más de lo que esperaba en llegar, pero el producto cumple. Los uso todas las noches mientras laburo en la notebook y la verdad que duermo bastante mejor que antes.",
+    image: testimonial3,
   },
   {
-    name: "Andrea Pérez",
-    role: "Consultora, Encarnación",
+    name: "Andrés P.",
+    role: "Encarnación",
     rating: 5,
-    quote: "Pensé que era marketing. Pero después de 2 semanas usándolos en mis sesiones nocturnas, duermo como nunca. 100% recomendado.",
+    date: "Hace 1 semana",
+    verified: true,
+    quote: "Pense que era puro marketing nomas pero mi novia me regalo uno y la verdad que despues de unas semanas se nota bastante la diferencia. Duermo profundo de verdad.",
+    image: testimonial4,
+  },
+  {
+    name: "Diego R.",
+    role: "Luque",
+    rating: 4,
+    date: "Hace 2 meses",
+    verified: true,
+    quote: "Soy diseñador asi que estoy toda la noche en la pantalla. Funcionan bien, duermo mejor. Lo unico es que al principio cuesta acostumbrarse a ver todo rojo, pero despues ni lo notas.",
+    image: testimonial5,
   },
 ];
 
@@ -33,20 +61,20 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
+      staggerChildren: 0.12,
       delayChildren: 0.1,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.3,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1] as const,
     },
   },
 };
@@ -66,72 +94,57 @@ export const TestimonialsSection = () => {
           </p>
         </div>
 
-        {/* Rating Summary Banner */}
-        <div className="max-w-3xl mx-auto mb-12 md:mb-16">
-          <div className="bg-gradient-to-b from-secondary/40 to-secondary/20 backdrop-blur-sm border border-accent/30 rounded-lg p-8 md:p-10 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
-              {/* Star Rating Display */}
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIcon key={i} className="w-7 h-7 md:w-8 md:h-8 text-accent" />
-                  ))}
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl md:text-5xl font-bold text-accent">4.7</span>
-                  <span className="text-lg md:text-xl text-muted-foreground font-light">de 5</span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="hidden md:block w-px h-20 bg-border/50" />
-
-              {/* Customer Count */}
-              <div className="flex flex-col items-center gap-2 text-center">
-                <p className="text-3xl md:text-4xl font-bold text-foreground">1,174</p>
-                <p className="text-base md:text-lg text-muted-foreground font-light">
-                  clientes satisfechos
-                </p>
-                <p className="text-xs md:text-sm text-accent/80 font-medium mt-1">
-                  ★ Reviews verificadas
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5"
         >
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
-              className="group p-6 md:p-8 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/30 transition-all duration-300"
+              className="group p-5 md:p-6 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/30 transition-all duration-300"
             >
-              <div className="space-y-5 md:space-y-6">
-                <div className="flex gap-0.5">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <StarIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent" />
-                  ))}
+              <div className="space-y-4 md:space-y-5">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="w-10 h-10 rounded-full object-cover object-center border border-border/50"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-foreground text-sm md:text-base">
+                        {testimonial.name}
+                      </p>
+                      {testimonial.verified && (
+                        <CheckBadgeIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-light">
+                      {testimonial.role}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      i < testimonial.rating ? (
+                        <StarIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 star-gold" />
+                      ) : (
+                        <StarOutlineIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground/30" />
+                      )
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/60">{testimonial.date}</span>
                 </div>
 
                 <p className="text-foreground/80 leading-relaxed font-light text-sm">
                   &ldquo;{testimonial.quote}&rdquo;
                 </p>
-
-                <div className="pt-4 border-t border-border/30">
-                  <p className="font-semibold text-foreground text-sm md:text-base">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-light mt-1">
-                    {testimonial.role}
-                  </p>
-                </div>
               </div>
             </motion.div>
           ))}

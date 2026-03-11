@@ -26,20 +26,20 @@ const useCaseContainerVariants = {
   animate: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.15,
       delayChildren: 0.1,
     },
   },
 };
 
 const useCaseItemVariants = {
-  initial: { opacity: 0, y: 15 },
+  initial: { opacity: 0, y: 30 },
   animate: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1] as const,
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1] as const,
     },
   },
 };
@@ -51,10 +51,10 @@ export const LifestyleSection = () => {
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
@@ -68,10 +68,10 @@ export const LifestyleSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Image Side */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-2 lg:order-1"
           >
             <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px] scale-75" />
@@ -128,10 +128,10 @@ export const LifestyleSection = () => {
 
         {/* Bottom CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-16 md:mt-20 text-center"
         >
           <div className="inline-block bg-secondary/50 backdrop-blur-sm border border-primary/30 rounded-lg px-8 py-6 md:px-12 md:py-8">

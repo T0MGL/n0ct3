@@ -140,6 +140,16 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     }
   };
 
+  // Ref to abort in-flight geocoding requests on unmount
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   const handleUseLocation = () => {
     setIsLoadingLocation(true);
     setLocationError(null);
@@ -151,29 +161,25 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       return;
     }
 
+    // Abort any previous in-flight request
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        // Check if component is still mounted before updating state
-        if (!isMountedRef.current) return;
+        if (!isMountedRef.current || controller.signal.aborted) return;
 
         const { latitude, longitude } = position.coords;
 
         try {
-          console.log(`📍 GPS coordinates obtained: ${latitude}, ${longitude}`);
-
-          // Call backend reverse geocoding API
           const response = await fetch(`${API_CONFIG.baseUrl}/api/reverse-geocode`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              lat: latitude,
-              lng: longitude,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: latitude, lng: longitude }),
+            signal: controller.signal,
           });
 
-          // Check again after async operation
           if (!isMountedRef.current) return;
 
           if (!response.ok) {
@@ -181,31 +187,23 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
           }
 
           const data = await response.json();
-          console.log('✅ Reverse geocoding result:', data);
 
-          // Final check before state updates
           if (!isMountedRef.current) return;
 
-          // Use the precise address from reverse geocoding
           const locationText = data.city || data.formattedAddress || "Paraguay";
           setDetectedLocation(locationText);
           setLocationCoords({ lat: latitude, long: longitude });
           setIsLoadingLocation(false);
         } catch (err) {
-          // Check if component is still mounted before updating state
-          if (!isMountedRef.current) return;
+          if (!isMountedRef.current || controller.signal.aborted) return;
 
           console.error("Location processing error:", err);
-
-          // Fallback: use coordinates with generic location
-          console.log('⚠️ Reverse geocoding failed, using fallback');
           setDetectedLocation("Paraguay (coordenadas GPS obtenidas)");
           setLocationCoords({ lat: latitude, long: longitude });
           setIsLoadingLocation(false);
         }
       },
       (err) => {
-        // Check if component is still mounted before updating state
         if (!isMountedRef.current) return;
 
         console.error("Geolocation error:", err);
@@ -213,7 +211,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
         setDetectedLocation(null);
         setIsLoadingLocation(false);
         setShowManualLocation(true);
-      }
+      },
+      { timeout: 10000, enableHighAccuracy: false, maximumAge: 300000 }
     );
   };
 
@@ -253,9 +252,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     if (!validateForm()) return;
 
     setLoading(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     onSubmit({
       name: name.trim(),

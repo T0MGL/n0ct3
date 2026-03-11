@@ -1,17 +1,17 @@
-// Optimized Framer Motion animation variants
-// Reduces animation complexity and respects user preferences
+// Framer Motion animation variants — premium, deliberate reveal animations
+// Respects user preferences for reduced motion
 // Note: For reactive reduced motion detection in components, use useReducedMotion hook
 
 import { REDUCED_MOTION } from '@/hooks/useReducedMotion';
 
-// Fast easing function for smooth animations
-export const EASING = [0.25, 0.1, 0.25, 1] as const;
+// Premium easing — slow start, confident settle (Apple-style ease-out)
+export const EASING = [0.16, 1, 0.3, 1] as const;
 
-// Optimized durations (shorter = better performance)
+// Durations — slow enough to feel intentional, fast enough to not drag
 export const DURATION = {
-  fast: 0.3,
-  normal: 0.4,
-  slow: 0.5,
+  fast: 0.5,
+  normal: 0.7,
+  slow: 0.9,
 } as const;
 
 // Fade in animation (lightweight)
@@ -24,9 +24,9 @@ export const fadeIn = {
   },
 };
 
-// Fade in with slight Y movement (most common pattern)
+// Fade in with Y movement (most common pattern)
 export const fadeInUp = {
-  initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
+  initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 40 },
   animate: { opacity: 1, y: 0 },
   transition: {
     duration: REDUCED_MOTION ? 0 : DURATION.normal,
@@ -35,13 +35,12 @@ export const fadeInUp = {
 };
 
 // For viewport-triggered animations (whileInView)
-// Note: Removed negative margin to prevent animations starting off-screen (causes abrupt pop-in)
 export const fadeInUpView = {
-  initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 15 },
+  initial: { opacity: 0, y: REDUCED_MOTION ? 0 : 40 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.15 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.fast,
+    duration: REDUCED_MOTION ? 0 : DURATION.normal,
     ease: EASING,
   },
 };
@@ -52,7 +51,7 @@ export const staggerContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: REDUCED_MOTION ? 0 : 0.08,
+      staggerChildren: REDUCED_MOTION ? 0 : 0.15,
       delayChildren: 0.1,
     },
   },
@@ -60,7 +59,7 @@ export const staggerContainerVariants = {
 
 // Stagger item variants (use with variants prop, NOT spread)
 export const staggerItemVariants = {
-  hidden: { opacity: 0, y: REDUCED_MOTION ? 0 : 20 },
+  hidden: { opacity: 0, y: REDUCED_MOTION ? 0 : 30 },
   visible: {
     opacity: 1,
     y: 0,
@@ -86,22 +85,22 @@ export const scaleOnHover = {
 
 // Fade in from left (for side content)
 export const fadeInLeft = {
-  initial: { opacity: 0, x: REDUCED_MOTION ? 0 : -20 },
+  initial: { opacity: 0, x: REDUCED_MOTION ? 0 : -30 },
   whileInView: { opacity: 1, x: 0 },
-  viewport: { once: true, amount: 0.3 },
+  viewport: { once: true, amount: 0.2 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.fast,
+    duration: REDUCED_MOTION ? 0 : DURATION.normal,
     ease: EASING,
   },
 };
 
 // Fade in from right (for side content)
 export const fadeInRight = {
-  initial: { opacity: 0, x: REDUCED_MOTION ? 0 : 20 },
+  initial: { opacity: 0, x: REDUCED_MOTION ? 0 : 30 },
   whileInView: { opacity: 1, x: 0 },
-  viewport: { once: true, amount: 0.3 },
+  viewport: { once: true, amount: 0.2 },
   transition: {
-    duration: REDUCED_MOTION ? 0 : DURATION.fast,
+    duration: REDUCED_MOTION ? 0 : DURATION.normal,
     ease: EASING,
   },
 };

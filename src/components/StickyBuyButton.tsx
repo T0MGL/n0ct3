@@ -6,9 +6,10 @@ import { getDeliveryDates } from "@/lib/delivery-utils";
 
 interface StickyBuyButtonProps {
   onBuyClick: () => void;
+  selectedPrice: number;
 }
 
-export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
+export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const deliveryDates = useMemo(() => getDeliveryDates(), []);
 
@@ -16,11 +17,25 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
   const heroButtonRef = useRef<Element | null>(null);
   const guaranteeButtonRef = useRef<Element | null>(null);
 
+  // Cache DOM references on mount and after lazy-loaded sections render
+  useEffect(() => {
+    const cacheRefs = () => {
+      heroButtonRef.current = document.querySelector('[data-hero-cta]');
+      guaranteeButtonRef.current = document.querySelector('[data-guarantee-cta]');
+    };
+
+    // Try immediately and retry once after lazy sections load
+    cacheRefs();
+    const retryTimer = setTimeout(cacheRefs, 3000);
+
+    return () => clearTimeout(retryTimer);
+  }, []);
+
   useEffect(() => {
     let ticking = false;
 
     const handleScroll = () => {
-      // Try to find buttons if not cached (lazy loading support)
+      // Retry caching if hero button not found yet (lazy load)
       if (!heroButtonRef.current) {
         heroButtonRef.current = document.querySelector('[data-hero-cta]');
         guaranteeButtonRef.current = document.querySelector('[data-guarantee-cta]');
@@ -30,17 +45,14 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
       const heroRect = heroButtonRef.current.getBoundingClientRect();
       const heroOutOfView = heroRect.bottom < 0 || heroRect.top > window.innerHeight;
 
-      // Only show sticky button if user has scrolled down at least 300px
       const hasScrolledDown = window.scrollY > 300;
 
-      // Check if guarantee button is visible
       let guaranteeInView = false;
       if (guaranteeButtonRef.current) {
         const guaranteeRect = guaranteeButtonRef.current.getBoundingClientRect();
         guaranteeInView = guaranteeRect.top < window.innerHeight && guaranteeRect.bottom > 0;
       }
 
-      // Show sticky button only when user has scrolled, hero button is out of view AND guarantee button is not visible
       setIsVisible(hasScrolledDown && heroOutOfView && !guaranteeInView);
     };
 
@@ -54,10 +66,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
       }
     };
 
-    // Don't check initial state - wait for user to scroll
     window.addEventListener('scroll', onScroll, { passive: true });
-
-    // Initial check in case we reload mid-page
     onScroll();
 
     return () => window.removeEventListener('scroll', onScroll);
@@ -83,9 +92,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
               <div>
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  <span className="line-through text-foreground/40">Gs. 239.000</span>
-                  {" "}
-                  <span className="text-xl md:text-2xl font-bold text-white ml-2">Gs. 199.000</span>
+                  <span className="text-xl md:text-2xl font-bold text-white">Gs. {selectedPrice.toLocaleString('es-PY')}</span>
                 </p>
                 <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                   <TruckIcon className="w-4 h-4 text-gold/90" />
@@ -104,17 +111,17 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
               </div>
             </div>
 
-            {/* Botón de compra - Using CSS animation instead of JS for GPU acceleration */}
+            {/* Botón de compra - Only animate when visible */}
             <motion.div
-              animate={{
+              animate={isVisible ? {
                 scale: [1, 1.02, 1],
-              }}
-              transition={{
+              } : { scale: 1 }}
+              transition={isVisible ? {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "loop",
                 ease: "easeInOut"
-              }}
+              } : { duration: 0 }}
             >
               <Button
                 variant="hero"
@@ -122,7 +129,7 @@ export const StickyBuyButton = ({ onBuyClick }: StickyBuyButtonProps) => {
                 className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
                 onClick={onBuyClick}
               >
-                Comprar Ahora
+                Comprar Ahora - Gs. {selectedPrice.toLocaleString('es-PY')}
               </Button>
             </motion.div>
           </div>

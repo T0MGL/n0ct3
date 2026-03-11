@@ -69,6 +69,10 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  .star-gold {
+    color: hsl(var(--gold));
+  }
+
   .glow-red {
     box-shadow: var(--glow-red);
   }

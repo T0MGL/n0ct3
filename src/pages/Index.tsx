@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { HeroSection } from "@/components/HeroSection";
@@ -11,12 +11,13 @@ import {
   trackAddToCart,
   trackPurchase,
 } from "@/lib/meta-pixel";
+import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
 
 // Lazy load heavy sections that are below the fold
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
-const ProductGallery = lazy(() => import("@/components/ProductGallery"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
 const ScienceSection = lazy(() => import("@/components/ScienceSection"));
+const UnboxingSection = lazy(() => import("@/components/UnboxingSection"));
 const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
 const LifestyleSection = lazy(() => import("@/components/LifestyleSection"));
 const ComparisonTable = lazy(() => import("@/components/ComparisonTable"));
@@ -25,38 +26,30 @@ const FAQSection = lazy(() => import("@/components/FAQSection"));
 const GuaranteeSection = lazy(() => import("@/components/GuaranteeSection"));
 
 // Lazy load checkout modals (only loaded when user clicks buy)
-const QuantitySelector = lazy(() => import("@/components/checkout/QuantitySelector").then(module => ({ default: module.QuantitySelector })));
 const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
 const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
-const PaymentFallbackModal = lazy(() => import("@/components/checkout/PaymentFallbackModal"));
 const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
 
-// Skeleton loader for lazy-loaded sections - prevents layout shift
-const SectionSkeleton = memo(({ height }: { height: string }) => (
-  <div className={`${height} bg-black animate-pulse`}>
-    <div className="container max-w-[1400px] mx-auto px-4 py-12 md:py-20">
-      <div className="h-8 md:h-10 w-48 md:w-64 bg-secondary/30 rounded mx-auto mb-8" />
-      <div className="space-y-4">
-        <div className="h-4 bg-secondary/20 rounded w-3/4 mx-auto" />
-        <div className="h-4 bg-secondary/20 rounded w-1/2 mx-auto" />
-      </div>
-    </div>
-  </div>
-));
-SectionSkeleton.displayName = 'SectionSkeleton';
+
+const defaultBundle = BUNDLES[DEFAULT_BUNDLE_INDEX];
 
 const Index = () => {
+  // Bundle selection state (visible on landing page)
+  const [selectedBundleIndex, setSelectedBundleIndex] = useState(DEFAULT_BUNDLE_INDEX);
+
+  const selectedBundle = BUNDLES[selectedBundleIndex];
+  const selectedPrice = selectedBundle.price;
+  const selectedQuantity = selectedBundle.quantity;
+
   // Checkout state management
-  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
-  const [showPaymentFallback, setShowPaymentFallback] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkoutInProgress, setCheckoutInProgress] = useState(false);
 
   const [checkoutData, setCheckoutData] = useState({
-    quantity: 1,
-    totalPrice: 199000, // Default to single unit price
+    quantity: defaultBundle.quantity,
+    totalPrice: defaultBundle.price,
     colors: null as [string, string] | null,
     location: "",
     name: "",
@@ -110,36 +103,35 @@ const Index = () => {
     }
   }, [showPhoneForm, checkoutData.quantity, checkoutData.totalPrice]);
 
-  const handleBuyClick = useCallback(() => {
-    setCheckoutInProgress(true); // Start checkout progress tracking
-    setShowQuantitySelector(true);
-
-    // Preload next modals for seamless transition
-    import("@/components/checkout/PhoneNameForm");
-    import("@/components/checkout/StripeCheckoutModal");
+  const handleBundleSelect = useCallback((index: number) => {
+    setSelectedBundleIndex(index);
   }, []);
 
-  const handleQuantitySelected = useCallback((quantity: number, totalPrice: number) => {
-    setCheckoutData((prev) => ({ ...prev, quantity, totalPrice }));
-    setShowQuantitySelector(false);
+  const handleBuyClick = useCallback(() => {
+    const bundle = BUNDLES[selectedBundleIndex];
 
-    // Track AddToCart when user selects quantity
+    setCheckoutInProgress(true);
+    setCheckoutData((prev) => ({ ...prev, quantity: bundle.quantity, totalPrice: bundle.price }));
+
+    // Track AddToCart
     trackAddToCart({
-      content_name: quantity === 1
+      content_name: bundle.quantity === 1
         ? 'NOCTE® Red Light Blocking Glasses'
-        : `NOCTE® Red Light Blocking Glasses - Pack x${quantity}`,
-      content_ids: quantity === 1
+        : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
+      content_ids: bundle.quantity === 1
         ? ['nocte-red-glasses']
-        : [`nocte-red-glasses-${quantity}pack`],
-      num_items: quantity,
-      value: totalPrice,
+        : [`nocte-red-glasses-${bundle.quantity}pack`],
+      num_items: bundle.quantity,
+      value: bundle.price,
       currency: 'PYG',
     });
 
-    // Open phone form immediately
-    // InitiateCheckout will be tracked when the form opens
+    // Go directly to phone form (skip QuantitySelector)
     setShowPhoneForm(true);
-  }, []);
+
+    // Preload Stripe checkout
+    import("@/components/checkout/StripeCheckoutModal");
+  }, [selectedBundleIndex]);
 
   const handlePaymentSuccess = useCallback((result: {
     paymentIntentId: string;
@@ -195,43 +187,26 @@ const Index = () => {
     setShowPhoneForm(true);
   }, []);
 
-  const handleQuantitySelectorClose = useCallback(() => {
-    setShowQuantitySelector(false);
-    setCheckoutInProgress(false);
-    setCheckoutData({
-      quantity: 1,
-      totalPrice: 199000,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-      lat: undefined,
-      long: undefined,
-    });
-  }, []);
+  const resetCheckoutData = useCallback(() => ({
+    quantity: defaultBundle.quantity,
+    totalPrice: defaultBundle.price,
+    colors: null as [string, string] | null,
+    location: "",
+    name: "",
+    phone: "",
+    address: "",
+    paymentMethod: "digital" as "digital" | "cash",
+    orderNumber: generateOrderNumber(),
+    paymentIntentId: "",
+    lat: undefined as number | undefined,
+    long: undefined as number | undefined,
+  }), []);
 
   const handleStripeCheckoutClose = useCallback(() => {
     setShowStripeCheckout(false);
     setCheckoutInProgress(false);
-    setCheckoutData({
-      quantity: 1,
-      totalPrice: 199000,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-      lat: undefined,
-      long: undefined,
-    });
-  }, []);
+    setCheckoutData(resetCheckoutData());
+  }, [resetCheckoutData]);
 
   const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => {
     // Store personal info and location, then proceed to payment
@@ -252,41 +227,14 @@ const Index = () => {
   const handlePhoneFormClose = useCallback(() => {
     setShowPhoneForm(false);
     setCheckoutInProgress(false);
-    setCheckoutData({
-      quantity: 1,
-      totalPrice: 199000,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-      lat: undefined,
-      long: undefined,
-    });
-  }, []);
+    setCheckoutData(resetCheckoutData());
+  }, [resetCheckoutData]);
 
   const handleSuccessClose = useCallback(() => {
     setShowSuccess(false);
     setCheckoutInProgress(false); // Deactivate protection
-    // Reset checkout state
-    setCheckoutData({
-      quantity: 1,
-      totalPrice: 199000,
-      colors: null,
-      location: "",
-      name: "",
-      phone: "",
-      address: "",
-      paymentMethod: "digital",
-      orderNumber: generateOrderNumber(),
-      paymentIntentId: "",
-      lat: undefined,
-      long: undefined,
-    });
-  }, []);
+    setCheckoutData(resetCheckoutData());
+  }, [resetCheckoutData]);
 
 
   const orderData = useMemo(() => {
@@ -324,12 +272,13 @@ const Index = () => {
 
   useEffect(() => {
     let ticking = false;
+    let mounted = true;
 
     const controlNavbar = () => {
+      if (!mounted) return;
       const currentScrollY = window.scrollY;
       const lastY = lastScrollYRef.current;
 
-      // Hide on scroll down, show on scroll up
       if (currentScrollY > lastY && currentScrollY > 50) {
         setShowHeader(false);
       } else if (currentScrollY < lastY) {
@@ -350,6 +299,7 @@ const Index = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
 
     return () => {
+      mounted = false;
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
@@ -370,7 +320,7 @@ const Index = () => {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
             <button
               onClick={handleBuyClick}
-              className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight mix-blend-difference"
+              className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight"
             >
               Comprar Ahora
             </button>
@@ -380,75 +330,71 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="pt-0 pb-0 transition-all duration-300">
-        <HeroSection onBuyClick={handleBuyClick} />
+        <HeroSection
+          onBuyClick={handleBuyClick}
+          selectedBundleIndex={selectedBundleIndex}
+          onBundleSelect={handleBundleSelect}
+          selectedPrice={selectedPrice}
+          selectedQuantity={selectedQuantity}
+        />
 
-        <Suspense fallback={<SectionSkeleton height="h-[300px] md:h-[340px]" />}>
+        <Suspense fallback={null}>
           <CelebritiesMarquee />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
-          <ProductGallery />
-        </Suspense>
-
-        <Suspense fallback={<SectionSkeleton height="h-[400px] md:h-[500px]" />}>
+        <Suspense fallback={null}>
           <ProductVideo />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton height="h-[600px] md:h-[700px]" />}>
+        <Suspense fallback={null}>
+          <UnboxingSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
           <ScienceSection />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
+        <Suspense fallback={null}>
           <BenefitsSection />
         </Suspense>
 
         {/* CTA 1: After Benefits */}
-        <OfferCTA onBuyClick={handleBuyClick} />
+        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
 
-        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
+        <Suspense fallback={null}>
           <LifestyleSection />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton height="h-[600px] md:h-[700px]" />}>
+        <Suspense fallback={null}>
           <ComparisonTable />
         </Suspense>
 
         {/* CTA 2: After Comparison */}
-        <OfferCTA onBuyClick={handleBuyClick} />
+        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
 
-        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
+        <Suspense fallback={null}>
           <TestimonialsSection />
         </Suspense>
 
         {/* CTA 3: After Testimonials (minimal) */}
-        <OfferCTA onBuyClick={handleBuyClick} variant="minimal" />
+        <OfferCTA onBuyClick={handleBuyClick} variant="minimal" selectedPrice={selectedPrice} />
 
-        <Suspense fallback={<SectionSkeleton height="h-[500px] md:h-[600px]" />}>
+        <Suspense fallback={null}>
           <FAQSection />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton height="h-[400px] md:h-[500px]" />}>
+        <Suspense fallback={null}>
           <GuaranteeSection onBuyClick={handleBuyClick} />
         </Suspense>
       </main>
 
       {/* Sticky Buy Button */}
-      <StickyBuyButton onBuyClick={handleBuyClick} />
+      <StickyBuyButton onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
 
       {/* WhatsApp Button */}
       <WhatsAppButton />
 
       {/* Checkout Modals - Lazy loaded */}
-      {showQuantitySelector && (
-        <Suspense fallback={null}>
-          <QuantitySelector
-            isOpen={showQuantitySelector}
-            onClose={handleQuantitySelectorClose}
-            onContinue={handleQuantitySelected}
-          />
-        </Suspense>
-      )}
-
       {showPhoneForm && (
         <Suspense fallback={null}>
           <PhoneNameForm
@@ -470,17 +416,6 @@ const Index = () => {
             currency="pyg"
             isProcessingOrder={false}
             customerData={customerData}
-          />
-        </Suspense>
-      )}
-
-      {showPaymentFallback && (
-        <Suspense fallback={null}>
-          <PaymentFallbackModal
-            isOpen={showPaymentFallback}
-            onPayOnDelivery={() => { }}
-            onRetryPayment={() => { }}
-            onCancel={() => setShowPaymentFallback(false)}
           />
         </Suspense>
       )}

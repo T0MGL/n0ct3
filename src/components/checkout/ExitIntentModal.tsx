@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 interface ExitIntentModalProps {
   isOpen: boolean;
@@ -15,16 +16,11 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open (ref-counted)
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    if (!isOpen) return;
+    lockScroll();
+    return () => { unlockScroll(); };
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,8 +43,8 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
           email,
           timestamp: new Date().toISOString(),
           discountOffered: "10%",
-          originalPrice: 199000,
-          discountedPrice: Math.round(199000 * 0.9), // 10% discount
+          originalPrice: 229000,
+          discountedPrice: Math.round(229000 * 0.9), // 10% discount
         }),
       });
 
@@ -98,6 +94,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Cerrar"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -115,7 +112,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Déjanos tu email y te enviaremos un cupón especial con{" "}
                     <span className="text-primary font-semibold">10% de descuento adicional</span>{" "}
-                    sobre el precio promocional de 199.000 Gs.{" "}
+                    sobre el precio promocional de 229.000 Gs.{" "}
                     <span className="text-foreground font-medium">Podrás volver cuando quieras para completar tu compra.</span>
                   </p>
                 </div>
@@ -125,17 +122,17 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Precio actual</span>
                     <span className="text-foreground font-medium line-through">
-                      199.000 Gs
+                      229.000 Gs
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-foreground font-semibold">Con cupón del 10%</span>
                     <span className="text-2xl font-bold text-primary">
-                      {Math.round(199000 * 0.9).toLocaleString('es-PY')} Gs
+                      {Math.round(229000 * 0.9).toLocaleString('es-PY')} Gs
                     </span>
                   </div>
                   <p className="text-xs text-center text-primary/80 pt-2">
-                    ¡Ahorras {Math.round(199000 * 0.1).toLocaleString('es-PY')} Gs adicionales!
+                    ¡Ahorras {Math.round(229000 * 0.1).toLocaleString('es-PY')} Gs adicionales!
                   </p>
                 </div>
 

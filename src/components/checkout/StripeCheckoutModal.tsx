@@ -399,8 +399,8 @@ const CheckoutForm = ({
         <div className="flex justify-between items-start gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground leading-tight">
-              {customerData.quantity === 2
-                ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
+              {customerData.quantity > 1
+                ? `Lentes Rojos Premium Anti-Luz Azul - Pack x${customerData.quantity}`
                 : 'Lentes Rojos Premium Anti-Luz Azul'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -662,7 +662,7 @@ export const StripeCheckoutModal = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 touch-none"
-          onClick={onClose}
+          onClick={handleCloseAttempt}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -676,6 +676,7 @@ export const StripeCheckoutModal = ({
             <button
               onClick={handleCloseAttempt}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
+              aria-label="Cerrar"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -684,6 +685,7 @@ export const StripeCheckoutModal = ({
             <button
               onClick={onBack}
               className="absolute top-4 left-4 text-sm text-muted-foreground hover:text-foreground transition-colors z-10 flex items-center gap-1"
+              aria-label="Volver al paso anterior"
             >
               ← Volver
             </button>
@@ -736,7 +738,6 @@ export const StripeCheckoutModal = ({
             {/* Stripe Elements */}
             {!isInitializing && !initError && clientSecret && (
               <>
-                {console.log('🔵 [Elements] Rendering Stripe Elements with clientSecret:', clientSecret.substring(0, 20) + '...')}
                 <Elements
                   stripe={stripePromise}
                   options={{

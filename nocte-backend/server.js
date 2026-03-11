@@ -464,9 +464,9 @@ function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, 
 function getUnitPrice(quantity, total) {
   // Known pricing structure
   const prices = {
-    1: 199000,
-    2: 299000,
-    3: 429000,
+    1: 229000,
+    2: 349000,
+    3: 489000,
   };
 
   // If total matches known price, calculate unit price
@@ -657,7 +657,7 @@ app.post('/api/send-order', async (req, res) => {
       order: {
         quantity: quantity || 1,
         product: 'NOCTE® Red Light Blocking Glasses',
-        total: total || (quantity === 2 ? 369000 : 249000),
+        total: total || (quantity === 2 ? 349000 : 229000),
         currency: 'PYG'
       },
       payment: {

@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { XMarkIcon, TruckIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
+import { BUNDLES } from "@/lib/bundles";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
@@ -9,44 +11,8 @@ interface QuantitySelectorProps {
   onContinue: (quantity: number, totalPrice: number) => void;
 }
 
-const BUNDLES = [
-  {
-    id: 'personal',
-    quantity: 1,
-    price: 199000,
-    unitPrice: 199000,
-    label: "Personal",
-    badge: null,
-    highlighted: false,
-  },
-  {
-    id: 'pareja',
-    quantity: 2,
-    price: 299000,
-    unitPrice: 149500,
-    label: "Pack Pareja",
-    badge: "🔥 MÁS VENDIDO: Ahorrás Gs. 99.000",
-    highlighted: true,
-    savings: 99000,
-  },
-  {
-    id: 'oficina',
-    quantity: 3,
-    price: 429000,
-    unitPrice: 143000,
-    label: "Pack Oficina",
-    badge: "Super Ahorro",
-    highlighted: false,
-    savings: 168000,
-    allowExtraUnits: true,
-  },
-] as const;
-
-const EXTRA_UNIT_PRICE = 143000;
-
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
-  const [extraUnits, setExtraUnits] = useState(0);
   const [showWhatsAppOffer, setShowWhatsAppOffer] = useState(false);
   const [hasShownOffer, setHasShownOffer] = useState(false);
 
@@ -54,7 +20,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   useEffect(() => {
     if (isOpen) {
       setSelectedBundleIndex(1);
-      setExtraUnits(0);
       setShowWhatsAppOffer(false);
       setHasShownOffer(false);
     }
@@ -87,50 +52,17 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
     onClose();
   };
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open (ref-counted)
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    if (!isOpen) return;
+    lockScroll();
+    return () => { unlockScroll(); };
   }, [isOpen]);
-
-  const selectedBundle = BUNDLES[selectedBundleIndex];
-  const isOfficePackSelected = selectedBundleIndex === 2;
-  const finalQuantity = isOfficePackSelected
-    ? selectedBundle.quantity + extraUnits
-    : selectedBundle.quantity;
-  const finalPrice = isOfficePackSelected
-    ? selectedBundle.price + (extraUnits * EXTRA_UNIT_PRICE)
-    : selectedBundle.price;
 
   const handleBundleSelect = (index: number) => {
     const bundle = BUNDLES[index];
-
-    if (index !== 2) {
-      // Personal o Pack Pareja: avanzar inmediatamente al hacer clic
-      onContinue(bundle.quantity, bundle.price);
-    } else {
-      // Pack Oficina: mostrar selector de unidades
-      setSelectedBundleIndex(index);
-      setExtraUnits(0);
-    }
-  };
-
-  const handleAddUnit = () => {
-    setExtraUnits(prev => Math.min(prev + 1, 7));
-  };
-
-  const handleRemoveUnit = () => {
-    setExtraUnits(prev => Math.max(prev - 1, 0));
-  };
-
-  const handleContinue = () => {
-    onContinue(finalQuantity, finalPrice);
+    setSelectedBundleIndex(index);
+    onContinue(bundle.quantity, bundle.price);
   };
 
   return (
@@ -156,6 +88,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
             <button
               onClick={handleCloseAttempt}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Cerrar"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -260,73 +193,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 })}
               </div>
 
-              {/* Extra Units Control - Only for Pack Oficina */}
-              <AnimatePresence>
-                {isOfficePackSelected && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-5 bg-gold/10 border border-gold/30 rounded-lg space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            ¿Necesitás más unidades?
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Mismo precio de descuento: {EXTRA_UNIT_PRICE.toLocaleString('es-PY')} Gs c/u
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={handleRemoveUnit}
-                            disabled={extraUnits === 0}
-                            className={`
-                              w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all
-                              ${extraUnits === 0
-                                ? 'border-border/30 text-muted-foreground/50 cursor-not-allowed'
-                                : 'border-gold text-gold hover:bg-gold/10 active:scale-95'
-                              }
-                            `}
-                          >
-                            <MinusIcon className="w-4 h-4" />
-                          </button>
-                          <span className="w-8 text-center text-lg font-bold text-foreground">
-                            {finalQuantity}
-                          </span>
-                          <button
-                            onClick={handleAddUnit}
-                            disabled={extraUnits >= 7}
-                            className={`
-                              w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all
-                              ${extraUnits >= 7
-                                ? 'border-border/30 text-muted-foreground/50 cursor-not-allowed'
-                                : 'border-gold text-gold hover:bg-gold/10 active:scale-95'
-                              }
-                            `}
-                          >
-                            <PlusIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      {extraUnits > 0 && (
-                        <div className="pt-3 border-t border-gold/20 flex justify-between items-center">
-                          <p className="text-sm text-muted-foreground">
-                            {selectedBundle.quantity} base + {extraUnits} extra
-                          </p>
-                          <p className="text-lg font-bold text-gold">
-                            Total: {finalPrice.toLocaleString('es-PY')} Gs
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Free Shipping Banner */}
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <div className="flex items-center justify-center gap-2">
@@ -336,18 +202,6 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                   </p>
                 </div>
               </div>
-
-              {/* Botón Continuar - solo para Pack Oficina */}
-              {isOfficePackSelected && (
-                <Button
-                  onClick={handleContinue}
-                  variant="hero"
-                  size="xl"
-                  className="w-full h-14 text-base font-semibold"
-                >
-                  Continuar con {finalQuantity} {finalQuantity === 1 ? 'unidad' : 'unidades'} - {finalPrice.toLocaleString('es-PY')} Gs
-                </Button>
-              )}
 
               {/* Trust Indicators */}
               <p className="text-center text-xs text-muted-foreground/60 leading-relaxed">

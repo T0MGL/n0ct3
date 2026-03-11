@@ -1,4 +1,4 @@
-import { EyeIcon, BoltIcon, MoonIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, ShieldCheckIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 
@@ -9,7 +9,7 @@ const benefits = [
     description: "Úsalos durante tus sesiones nocturnas de trabajo. Bloquean la luz azul (400-550nm) que quema tus ojos después de 8+ horas de pantalla. Termina tu día sin ojos rojos ni cansancio visual.",
   },
   {
-    icon: BoltIcon,
+    icon: ShieldCheckIcon,
     title: "Cero dolores de cabeza",
     description: "La luz azul de las pantallas causa tensión que termina en migrañas. Con NOCTE, trabajas tranquilo. El 70% de nuestros usuarios reportan eliminación total de dolores de cabeza nocturnos.",
   },
@@ -27,10 +27,10 @@ export const BenefitsSection = () => {
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12 md:mb-20 space-y-3 md:space-y-4"
         >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-4">
