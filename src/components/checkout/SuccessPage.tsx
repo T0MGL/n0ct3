@@ -84,10 +84,10 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
               {/* Headline */}
               <div className="space-y-2">
                 <h2 className="text-3xl md:text-5xl font-bold text-[#4ADE80]">
-                  ¡Gracias por tu compra! 🎉
+                  ¡Orden registrada!
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground">
-                  Tu orden ha sido confirmada
+                  Tu pedido ha sido registrado con éxito
                 </p>
               </div>
 
@@ -110,7 +110,7 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
 
                 <div className="flex justify-between items-center gap-3">
                   <span className="text-xs md:text-sm text-muted-foreground">Estado:</span>
-                  <span className="text-xs md:text-sm font-semibold text-[#4ADE80]">Preparando para envío</span>
+                  <span className="text-xs md:text-sm font-semibold text-yellow-400">Pendiente de confirmación</span>
                 </div>
 
                 <div className="flex justify-between items-start gap-3">
@@ -141,7 +141,7 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
                   size="xl"
                   className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
                 >
-                  Escribirnos por WhatsApp (Opcional)
+                  Confirmar por WhatsApp (Opcional)
                 </Button>
 
                 <Button
