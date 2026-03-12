@@ -64,6 +64,7 @@ const Index = () => {
     paymentMethod: "digital" as "digital" | "cash",
     orderNumber: "",
     paymentIntentId: "",
+    ruc: "" as string | undefined,
   });
 
   // Detect exit intent during checkout — show WhatsApp downsell
@@ -224,10 +225,16 @@ const Index = () => {
   }), []);
 
   const handleStripeCheckoutClose = useCallback(() => {
-    setShowStripeCheckout(false);
-    setCheckoutInProgress(false);
-    setCheckoutData(resetCheckoutData());
-  }, [resetCheckoutData]);
+    if (!exitIntentShown) {
+      setShowStripeCheckout(false);
+      setShowExitIntent(true);
+      setExitIntentShown(true);
+    } else {
+      setShowStripeCheckout(false);
+      setCheckoutInProgress(false);
+      setCheckoutData(resetCheckoutData());
+    }
+  }, [resetCheckoutData, exitIntentShown]);
 
   const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number; ruc?: string }) => {
     // Store personal info and location, then proceed to payment
@@ -247,10 +254,18 @@ const Index = () => {
   }, []);
 
   const handlePhoneFormClose = useCallback(() => {
-    setShowPhoneForm(false);
-    setCheckoutInProgress(false);
-    setCheckoutData(resetCheckoutData());
-  }, [resetCheckoutData]);
+    if (!exitIntentShown) {
+      // First time closing → show WhatsApp downsell instead of closing
+      setShowPhoneForm(false);
+      setShowExitIntent(true);
+      setExitIntentShown(true);
+    } else {
+      // Already shown WhatsApp modal → just close
+      setShowPhoneForm(false);
+      setCheckoutInProgress(false);
+      setCheckoutData(resetCheckoutData());
+    }
+  }, [resetCheckoutData, exitIntentShown]);
 
   const handleSuccessClose = useCallback(() => {
     setShowSuccess(false);
