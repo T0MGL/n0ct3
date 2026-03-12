@@ -12,6 +12,7 @@ import {
   trackPurchase,
 } from "@/lib/meta-pixel";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
+import { useExitIntent } from "@/hooks/useExitIntent";
 
 // Lazy load heavy sections that are below the fold
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
@@ -29,6 +30,7 @@ const GuaranteeSection = lazy(() => import("@/components/GuaranteeSection"));
 const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
 const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
 const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
+const ExitIntentModal = lazy(() => import("@/components/checkout/ExitIntentModal"));
 
 
 const defaultBundle = BUNDLES[DEFAULT_BUNDLE_INDEX];
@@ -46,6 +48,8 @@ const Index = () => {
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkoutInProgress, setCheckoutInProgress] = useState(false);
+  const [showExitIntent, setShowExitIntent] = useState(false);
+  const [exitIntentShown, setExitIntentShown] = useState(false);
 
   const [checkoutData, setCheckoutData] = useState({
     quantity: defaultBundle.quantity,
@@ -60,6 +64,20 @@ const Index = () => {
     paymentMethod: "digital" as "digital" | "cash",
     orderNumber: "",
     paymentIntentId: "",
+  });
+
+  // Detect exit intent during checkout — show WhatsApp downsell
+  const isInCheckout = checkoutInProgress || showPhoneForm || showStripeCheckout;
+  useExitIntent({
+    onExitIntent: () => {
+      if (isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent) {
+        setShowPhoneForm(false);
+        setShowStripeCheckout(false);
+        setShowExitIntent(true);
+        setExitIntentShown(true);
+      }
+    },
+    enabled: isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent,
   });
 
   // Prevent page close/reload during checkout
@@ -129,8 +147,9 @@ const Index = () => {
     // Go directly to phone form (skip QuantitySelector)
     setShowPhoneForm(true);
 
-    // Preload Stripe checkout
+    // Preload Stripe checkout and exit intent modal
     import("@/components/checkout/StripeCheckoutModal");
+    import("@/components/checkout/ExitIntentModal");
   }, [selectedBundleIndex]);
 
   const handlePaymentSuccess = useCallback((result: {
@@ -429,6 +448,18 @@ const Index = () => {
             isOpen={showSuccess}
             orderData={orderData}
             onClose={handleSuccessClose}
+          />
+        </Suspense>
+      )}
+
+      {showExitIntent && (
+        <Suspense fallback={null}>
+          <ExitIntentModal
+            isOpen={showExitIntent}
+            onClose={() => {
+              setShowExitIntent(false);
+              setCheckoutInProgress(false);
+            }}
           />
         </Suspense>
       )}

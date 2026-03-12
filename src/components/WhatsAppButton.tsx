@@ -6,15 +6,8 @@ export const WhatsAppButton = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Get ProductGallery section
-      const productGallery = document.querySelector('[data-section="product-gallery"]');
-      if (!productGallery) return;
-
-      // Get the position of the ProductGallery section
-      const galleryBottom = productGallery.getBoundingClientRect().bottom;
-
-      // Show button when user scrolls past the ProductGallery
-      setIsVisible(galleryBottom < 0);
+      // Show button after scrolling past the hero section
+      setIsVisible(window.scrollY > 500);
 
       // Check if sticky button is visible (same logic as StickyBuyButton)
       const heroButton = document.querySelector('[data-hero-cta]');
