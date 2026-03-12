@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
@@ -14,6 +15,13 @@ export const LivePurchaseNotification = ({
   buyerCity,
   onDismiss,
 }: LivePurchaseNotificationProps) => {
+  // Auto-dismiss after 3 seconds
+  useEffect(() => {
+    if (!isVisible) return;
+    const timer = setTimeout(() => onDismiss?.(), 3000);
+    return () => clearTimeout(timer);
+  }, [isVisible, onDismiss]);
+
   return (
     <AnimatePresence>
       {isVisible && (

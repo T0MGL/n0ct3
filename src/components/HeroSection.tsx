@@ -183,7 +183,6 @@ export const HeroSection = ({
         }, 300));
       }, 1500));
 
-      timers.push(setTimeout(() => setShowPurchaseNotification(false), 4000));
     }, 8000);
 
     timers.push(purchaseTimer);
@@ -243,7 +242,7 @@ export const HeroSection = ({
             </motion.div>
 
             {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full max-w-[500px] mx-auto">
+            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] mx-auto">
               <div
                 ref={carouselRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
