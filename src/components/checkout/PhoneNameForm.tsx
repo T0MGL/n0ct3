@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
 import { API_CONFIG } from "@/lib/stripe";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { PARAGUAY_CITIES } from "@/data/paraguayCities";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
@@ -15,15 +16,18 @@ interface PhoneNameFormProps {
 export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+595 "); // ✅ Predefined prefix
+  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
   const [showManualLocation, setShowManualLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationCoords, setLocationCoords] = useState<{ lat?: number; long?: number }>({});
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string; city?: string }>({});
   const [loading, setLoading] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const cityInputRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
 
   // Track component mounted state to prevent state updates after unmount
@@ -39,7 +43,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     if (isOpen) {
       setName("");
       setPhone("+595 ");
+      setCity("");
       setAddress("");
+      setShowCitySuggestions(false);
       setDetectedLocation(null);
       setShowManualLocation(false);
       setLocationError(null);
@@ -49,6 +55,17 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setLoading(false);
     }
   }, [isOpen]);
+
+  // Close city suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cityInputRef.current && !cityInputRef.current.contains(e.target as Node)) {
+        setShowCitySuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Prevent body scroll when modal is open (iOS-safe, ref-counted)
   useEffect(() => {
@@ -217,7 +234,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   };
 
   const validateForm = () => {
-    const newErrors: { name?: string; phone?: string; address?: string } = {};
+    const newErrors: { name?: string; phone?: string; address?: string; city?: string } = {};
 
     // Validate name
     if (!name || name.trim().length < 3) {
@@ -237,14 +254,27 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       newErrors.phone = "Por favor, introducí un número válido";
     }
 
-    // Validate address (either detected or manual)
-    if (!detectedLocation && address.trim().length < 10) {
-      newErrors.address = "La dirección debe tener al menos 10 caracteres";
+    // Validate location (either GPS-detected or manual city + address)
+    if (!detectedLocation) {
+      if (!city.trim()) {
+        newErrors.city = "Seleccioná una ciudad";
+      }
+      if (address.trim().length < 5) {
+        newErrors.address = "Ingresá tu dirección (mín. 5 caracteres)";
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // Filter cities based on input
+  const filteredCities = city.trim().length >= 2
+    ? PARAGUAY_CITIES.filter((c) =>
+        c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .includes(city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
+      ).slice(0, 6)
+    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,7 +286,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     onSubmit({
       name: name.trim(),
       phone: phone.trim(),
-      location: detectedLocation || address.trim(),
+      location: detectedLocation || city.trim(),
       address: address.trim(),
       lat: locationCoords.lat,
       long: locationCoords.long,
@@ -267,7 +297,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
 
   // Validate button state
   const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
-  const hasValidLocation = detectedLocation || address.trim().length >= 10;
+  const hasValidLocation = detectedLocation || (city.trim().length > 0 && address.trim().length >= 5);
   const isValidPhone = phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && !isFakePhoneNumber(phoneDigitsOnly);
   const isValid = name.trim().length >= 3 && isValidPhone && hasValidLocation;
 
@@ -466,46 +496,94 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     </div>
                   )}
 
-                  {/* Manual Location Entry */}
+                  {/* Manual Location Entry — City autocomplete + Address */}
                   {showManualLocation && !detectedLocation && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-2"
+                      className="space-y-3"
                     >
-                      <label className="block text-sm font-medium text-foreground">
-                        Dirección completa
-                      </label>
-                      <div className="relative">
-                        <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="text"
-                          value={address}
-                          onChange={(e) => {
-                            setAddress(e.target.value);
-                            setErrors((prev) => ({ ...prev, address: undefined }));
-                            // Clear location error when user starts typing
-                            if (locationError) {
-                              setLocationError(null);
-                            }
-                          }}
-                          placeholder="Ej: Asunción, Av. Mariscal López 1234"
-                          className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-primary"
-                            }`}
-                        />
+                      {/* City autocomplete */}
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-foreground">
+                          Ciudad
+                        </label>
+                        <div className="relative" ref={cityInputRef}>
+                          <BuildingOfficeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+                          <input
+                            type="text"
+                            value={city}
+                            onChange={(e) => {
+                              setCity(e.target.value);
+                              setShowCitySuggestions(true);
+                              setErrors((prev) => ({ ...prev, city: undefined }));
+                            }}
+                            onFocus={() => {
+                              if (city.trim().length >= 2) setShowCitySuggestions(true);
+                            }}
+                            placeholder="Ej: Asunción, Luque, CDE..."
+                            autoComplete="off"
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-primary"}`}
+                          />
+                          {/* Suggestions dropdown */}
+                          {showCitySuggestions && filteredCities.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-secondary border border-border rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                              {filteredCities.map((suggestion) => (
+                                <button
+                                  key={suggestion}
+                                  type="button"
+                                  onClick={() => {
+                                    setCity(suggestion);
+                                    setShowCitySuggestions(false);
+                                    setErrors((prev) => ({ ...prev, city: undefined }));
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 transition-colors"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {errors.city && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-red-400"
+                          >
+                            {errors.city}
+                          </motion.p>
+                        )}
                       </div>
-                      {errors.address && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-xs text-red-400"
-                        >
-                          {errors.address}
-                        </motion.p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        Incluye ciudad y dirección (mínimo 10 caracteres)
-                      </p>
+
+                      {/* Address field */}
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-foreground">
+                          Dirección
+                        </label>
+                        <div className="relative">
+                          <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <input
+                            type="text"
+                            value={address}
+                            onChange={(e) => {
+                              setAddress(e.target.value);
+                              setErrors((prev) => ({ ...prev, address: undefined }));
+                            }}
+                            placeholder="Ej: Av. Mariscal López 1234"
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-primary"}`}
+                          />
+                        </div>
+                        {errors.address && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-red-400"
+                          >
+                            {errors.address}
+                          </motion.p>
+                        )}
+                      </div>
                     </motion.div>
                   )}
                 </div>

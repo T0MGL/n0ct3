@@ -97,33 +97,14 @@ export async function sendOrderToN8N(
     // Generate Google Maps link (more precise version)
     let googleMapsLink: string | null = null;
 
-    // If we have lat/long from geolocation, use those (most accurate)
+    // Only generate Google Maps link from actual GPS coordinates (browser geolocation).
+    // Never geocode manual text addresses into coordinates — that creates
+    // fake GPS links that confuse downstream systems (n8n bot sends wrong template).
     if (orderData.lat && orderData.long) {
       googleMapsLink = `https://www.google.com/maps?q=${orderData.lat},${orderData.long}`;
-      console.log('📍 Google Maps link from coordinates:', googleMapsLink);
-    } else if (orderData.address && orderData.location) {
-      // If we have both address and location, use geocoding for precision
-      try {
-        const geocodeResult = await getGoogleMapsLink(
-          orderData.location,
-          orderData.address
-        );
-        
-        // ONLY use the link if it's NOT a fallback (precise location found)
-        if (!geocodeResult.usesFallback) {
-          googleMapsLink = geocodeResult.googleMapsLink;
-          console.log('📍 Google Maps link from geocoding:', googleMapsLink);
-        } else {
-          console.log('⚠️ Geocoding returned fallback link, ignoring for Ordefy to avoid fake location links.');
-        }
-      } catch (error) {
-        console.warn('⚠️ Could not generate Google Maps link:', error);
-        // Continue without link
-      }
-    } else if (orderData.location) {
-      // Fallback: just use location/city - DO NOT generate a map link here
-      // This ensures we send text address to Ordefy instead of a search link
-      console.log('ℹ️ Location only provided, skipping Google Maps search link generation.');
+      console.log('📍 Google Maps link from GPS coordinates:', googleMapsLink);
+    } else {
+      console.log('ℹ️ No GPS coordinates, sending text address only (no googleMapsLink).');
     }
 
     // Send to backend (which handles n8n and Ordefy)

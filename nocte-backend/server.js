@@ -650,7 +650,7 @@ app.post('/api/send-order', async (req, res) => {
         email: email || null
       },
       location: {
-        city: location,
+        city: location || '',
         address: address || '',
         googleMapsLink: googleMapsLink || null
       },
