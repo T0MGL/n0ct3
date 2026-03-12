@@ -150,6 +150,7 @@ const Index = () => {
         address: prev.address,
         lat: prev.lat,
         long: prev.long,
+        ruc: prev.ruc,
         quantity: prev.quantity,
         total: result.finalTotal,
         orderNumber: prev.orderNumber,
@@ -200,6 +201,7 @@ const Index = () => {
     paymentIntentId: "",
     lat: undefined as number | undefined,
     long: undefined as number | undefined,
+    ruc: undefined as string | undefined,
   }), []);
 
   const handleStripeCheckoutClose = useCallback(() => {
@@ -208,7 +210,7 @@ const Index = () => {
     setCheckoutData(resetCheckoutData());
   }, [resetCheckoutData]);
 
-  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => {
+  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number; ruc?: string }) => {
     // Store personal info and location, then proceed to payment
     setCheckoutData((prev) => ({
       ...prev,
@@ -218,6 +220,7 @@ const Index = () => {
       address: data.address,
       lat: data.lat,
       long: data.long,
+      ruc: data.ruc,
     }));
 
     setShowPhoneForm(false);

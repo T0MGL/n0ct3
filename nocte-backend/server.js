@@ -436,21 +436,21 @@ function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, 
   if (lat && long) {
     return {
       google_maps_url: `https://www.google.com/maps?q=${lat},${long}`,
+      city: city || undefined,
       notes: reference || address || undefined,
     };
   }
 
   // If googleMapsLink is provided AND it contains coordinates (not a search link)
-  // Check if it's a coordinate-based link (contains "?q=" followed by numbers)
   if (googleMapsLink && /maps\.google\.com\/.*\?q=-?\d+\.?\d*,-?\d+\.?\d*/.test(googleMapsLink)) {
     return {
       google_maps_url: googleMapsLink,
+      city: city || undefined,
       notes: reference || address || undefined,
     };
   }
 
   // Otherwise, use manual text address (google_maps_url will be null/undefined)
-  // This is the correct behavior when user types their address manually
   return {
     address: address || city,
     city: city,
@@ -518,6 +518,7 @@ async function sendToOrdefy(orderData) {
     paymentType,
     isPaid,
     deliveryType,
+    ruc,
   } = orderData;
 
   // Check if Ordefy is configured
@@ -553,6 +554,18 @@ async function sendToOrdefy(orderData) {
   // Card payments are always paid, COD is pending payment
   const paymentStatus = isPaid === true || paymentType === 'Card' ? 'paid' : 'pending';
 
+  // Parse RUC: "80012345-6" → customer_ruc: "80012345", customer_ruc_dv: 6
+  let parsedRuc = {};
+  if (ruc) {
+    const rucParts = ruc.split('-');
+    if (rucParts.length === 2 && rucParts[0] && rucParts[1]) {
+      parsedRuc = {
+        customer_ruc: rucParts[0],
+        customer_ruc_dv: parseInt(rucParts[1], 10),
+      };
+    }
+  }
+
   // Build Ordefy payload
   // Use orderNumber as idempotency_key for traceability and duplicate prevention
   const ordefyPayload = {
@@ -562,6 +575,7 @@ async function sendToOrdefy(orderData) {
       phone: phone || undefined,
       email: email || undefined,
     },
+    ...parsedRuc,
     shipping_address: buildOrdefyShippingAddress({
       lat,
       long,
@@ -630,7 +644,8 @@ app.post('/api/send-order', async (req, res) => {
       email,
       paymentType,
       isPaid,
-      deliveryType
+      deliveryType,
+      ruc
     } = req.body;
 
     // Validation
@@ -647,7 +662,8 @@ app.post('/api/send-order', async (req, res) => {
       customer: {
         name,
         phone,
-        email: email || null
+        email: email || null,
+        ruc: ruc || null
       },
       location: {
         city: location || '',
@@ -701,6 +717,7 @@ app.post('/api/send-order', async (req, res) => {
         paymentType,
         isPaid,
         deliveryType,
+        ruc,
       }),
     ]);
 

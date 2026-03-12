@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
+import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon, BuildingOfficeIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
 import { API_CONFIG } from "@/lib/stripe";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
@@ -9,7 +9,7 @@ import { PARAGUAY_CITIES } from "@/data/paraguayCities";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
-  onSubmit: (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number }) => void;
+  onSubmit: (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number; ruc?: string }) => void;
   onClose?: () => void;
 }
 
@@ -18,6 +18,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [phone, setPhone] = useState("+595 "); // ✅ Predefined prefix
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [ruc, setRuc] = useState("");
+  const [showRuc, setShowRuc] = useState(false);
+  const [customPrefix, setCustomPrefix] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
   const [showManualLocation, setShowManualLocation] = useState(false);
@@ -45,6 +48,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setPhone("+595 ");
       setCity("");
       setAddress("");
+      setRuc("");
+      setShowRuc(false);
+      setCustomPrefix(false);
       setShowCitySuggestions(false);
       setDetectedLocation(null);
       setShowManualLocation(false);
@@ -102,40 +108,38 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     return false;
   };
 
-  const formatPhoneNumber = (value: string) => {
-    // Always ensure it starts with +595
-    if (!value.startsWith("+595")) {
-      return "+595 ";
-    }
-
-    // Remove all non-digits after the prefix
-    const afterPrefix = value.slice(5); // Get everything after "+595 "
-    const digits = afterPrefix.replace(/\D/g, "");
-
-    // Return formatted number
-    return `+595 ${digits}`;
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
 
-    // Prevent deletion of the prefix
+    if (customPrefix) {
+      // Free editing mode — just ensure "+" at start
+      if (!newValue.startsWith("+")) {
+        setPhone("+" + newValue.replace(/[^0-9]/g, ""));
+      } else {
+        // Keep "+" and digits/spaces only
+        setPhone("+" + newValue.slice(1).replace(/[^0-9 ]/g, ""));
+      }
+      setErrors((prev) => ({ ...prev, phone: undefined }));
+      return;
+    }
+
+    // Default Paraguay mode — lock +595 prefix
     if (!newValue.startsWith("+595")) {
       setPhone("+595 ");
       return;
     }
 
-    // If user tries to delete space after +595, restore it
     if (newValue === "+595") {
       setPhone("+595 ");
       return;
     }
 
-    const formatted = formatPhoneNumber(newValue);
+    const afterPrefix = newValue.slice(5);
+    const digits = afterPrefix.replace(/\D/g, "");
+    const formatted = `+595 ${digits}`;
     setPhone(formatted);
 
     // Real-time validation for fake numbers
-    const digits = formatted.slice(5).replace(/\D/g, "");
     if (digits.length >= 8 && isFakePhoneNumber(digits)) {
       setErrors((prev) => ({ ...prev, phone: "Por favor, introducí un número válido" }));
     } else {
@@ -144,16 +148,18 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   };
 
   const handlePhoneFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Position cursor at the end (after the prefix)
-    const length = e.target.value.length;
-    e.target.setSelectionRange(length, length);
+    if (!customPrefix) {
+      const length = e.target.value.length;
+      e.target.setSelectionRange(length, length);
+    }
   };
 
   const handlePhoneClick = (e: React.MouseEvent<HTMLInputElement>) => {
-    // If user clicks before the end of prefix, move cursor to end
-    const target = e.target as HTMLInputElement;
-    if (target.selectionStart !== null && target.selectionStart < 5) {
-      target.setSelectionRange(5, 5); // Position after "+595 "
+    if (!customPrefix) {
+      const target = e.target as HTMLInputElement;
+      if (target.selectionStart !== null && target.selectionStart < 5) {
+        target.setSelectionRange(5, 5);
+      }
     }
   };
 
@@ -245,13 +251,22 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       newErrors.name = "Solo letras, espacios y guiones";
     }
 
-    // Validate phone - only digits after "+595 "
-    const afterPrefix = phone.slice(5); // Remove "+595 "
-    const phoneDigits = afterPrefix.replace(/\D/g, "");
-    if (phoneDigits.length < 8 || phoneDigits.length > 10) {
-      newErrors.phone = "Teléfono inválido (ej: +595 971 234567)";
-    } else if (isFakePhoneNumber(phoneDigits)) {
-      newErrors.phone = "Por favor, introducí un número válido";
+    // Validate phone
+    if (customPrefix) {
+      // Custom country code — just check minimum length (code + number)
+      const allDigits = phone.replace(/\D/g, "");
+      if (allDigits.length < 10) {
+        newErrors.phone = "Número inválido (incluí código de país + número)";
+      }
+    } else {
+      // Paraguay mode — digits after "+595 "
+      const afterPrefix = phone.slice(5);
+      const phoneDigits = afterPrefix.replace(/\D/g, "");
+      if (phoneDigits.length < 8 || phoneDigits.length > 10) {
+        newErrors.phone = "Teléfono inválido (ej: +595 971 234567)";
+      } else if (isFakePhoneNumber(phoneDigits)) {
+        newErrors.phone = "Por favor, introducí un número válido";
+      }
     }
 
     // Validate location (either GPS-detected or manual city + address)
@@ -290,15 +305,20 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       address: address.trim(),
       lat: locationCoords.lat,
       long: locationCoords.long,
+      ruc: ruc.trim() || undefined,
     });
 
     setLoading(false);
   };
 
   // Validate button state
-  const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
   const hasValidLocation = detectedLocation || (city.trim().length > 0 && address.trim().length >= 5);
-  const isValidPhone = phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && !isFakePhoneNumber(phoneDigitsOnly);
+  const isValidPhone = customPrefix
+    ? phone.replace(/\D/g, "").length >= 10
+    : (() => {
+        const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
+        return phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && !isFakePhoneNumber(phoneDigitsOnly);
+      })();
   const isValid = name.trim().length >= 3 && isValidPhone && hasValidLocation;
 
   return (
@@ -407,6 +427,69 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     >
                       {errors.phone}
                     </motion.p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customPrefix) {
+                        setCustomPrefix(false);
+                        setPhone("+595 ");
+                      } else {
+                        setCustomPrefix(true);
+                        setPhone("+");
+                        setErrors((prev) => ({ ...prev, phone: undefined }));
+                        // Focus and place cursor after "+"
+                        setTimeout(() => phoneInputRef.current?.focus(), 0);
+                      }
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {customPrefix ? "Volver a +595 (Paraguay)" : "¿Otro país?"}
+                  </button>
+                </div>
+
+                {/* RUC - Optional, collapsible */}
+                <div>
+                  {!showRuc ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowRuc(true)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ¿Necesitás factura? Ingresá tu RUC
+                    </button>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="space-y-1.5"
+                    >
+                      <label className="block text-sm font-medium text-foreground">
+                        RUC <span className="text-muted-foreground font-normal">(opcional)</span>
+                      </label>
+                      <div className="relative">
+                        <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={ruc}
+                          onChange={(e) => {
+                            // Allow digits and one hyphen only
+                            const val = e.target.value.replace(/[^0-9-]/g, "");
+                            setRuc(val);
+                          }}
+                          placeholder="Ej: 80012345-6"
+                          maxLength={12}
+                          className="w-full pl-11 pr-4 py-3 bg-secondary border border-border focus:border-primary rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setShowRuc(false); setRuc(""); }}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        No necesito factura
+                      </button>
+                    </motion.div>
                   )}
                 </div>
 

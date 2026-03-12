@@ -13,6 +13,7 @@ export interface OrderData {
   address?: string;
   lat?: number;
   long?: number;
+  ruc?: string;
   quantity: number;
   total: number;
   orderNumber: string;
