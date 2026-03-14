@@ -194,7 +194,7 @@ export const HeroSection = ({
   const originalPrice = ORIGINAL_UNIT_PRICE * selectedQuantity;
 
   return (
-    <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
+    <section className="relative min-h-[85vh] flex items-start lg:items-center overflow-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
 
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-[88px] pb-6 md:pb-12">
