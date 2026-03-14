@@ -199,7 +199,7 @@ export const HeroSection = ({
 
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-36 pb-6 md:pb-12">
         {/* Mobile-First Layout */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 md:gap-8 items-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-4 md:gap-8 lg:gap-14 items-start lg:items-center">
 
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
@@ -242,7 +242,7 @@ export const HeroSection = ({
             </motion.div>
 
             {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] mx-auto">
+            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-none mx-auto lg:mx-0">
               <div
                 ref={carouselRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
@@ -275,7 +275,7 @@ export const HeroSection = ({
               </div>
 
               {/* Carousel Indicators */}
-              <div className="flex justify-center gap-2 mt-4">
+              <div className="flex justify-center lg:justify-start gap-2 mt-4 lg:ml-1">
                 {slides.map((_, index) => (
                   <button
                     key={index}
@@ -304,7 +304,7 @@ export const HeroSection = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-4 md:space-y-5 order-2 w-full"
+            className="space-y-4 md:space-y-5 lg:space-y-6 order-2 w-full"
           >
             {/* Main Title */}
             <div className="space-y-3">
@@ -439,13 +439,13 @@ export const HeroSection = ({
               </motion.div>
 
               {/* Dynamic Delivery Date */}
-              <p className="text-sm text-center text-accent font-medium">
+              <p className="text-sm text-center lg:text-left text-accent font-medium">
                 📦 Pedí hoy y recibí entre el {deliveryDates.startDay} y {deliveryDates.endDay}
               </p>
             </div>
 
             {/* Payment Methods */}
-            <div className="flex justify-center pt-2">
+            <div className="flex justify-center lg:justify-start pt-2">
               <img
                 src={tarjetasImage}
                 alt="Visa, Mastercard, Apple Pay, Google Pay"
@@ -454,7 +454,7 @@ export const HeroSection = ({
             </div>
 
             {/* Countdown Timer */}
-            <div className="flex justify-center pt-2">
+            <div className="flex justify-center lg:justify-start pt-2">
               <CountdownTimer />
             </div>
           </motion.div>
