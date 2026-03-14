@@ -197,9 +197,9 @@ export const HeroSection = ({
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
 
-      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-20 pb-6 md:pb-12">
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-[88px] pb-6 md:pb-12">
         {/* Mobile-First Layout */}
-        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-4 md:gap-8 lg:gap-14 items-start lg:items-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-4 md:gap-8 lg:gap-14 items-start lg:items-center">
 
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
