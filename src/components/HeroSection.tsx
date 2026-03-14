@@ -197,7 +197,7 @@ export const HeroSection = ({
     <section className="relative min-h-[85vh] flex items-start overflow-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
 
-      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-36 pb-6 md:pb-12">
+      <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-28 pb-6 md:pb-12">
         {/* Mobile-First Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-4 md:gap-8 lg:gap-14 items-start lg:items-center">
 
@@ -207,7 +207,7 @@ export const HeroSection = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-1 w-full"
+            className="relative order-1 w-full lg:flex lg:flex-col lg:justify-center"
           >
             {/* Authority Badge */}
             <motion.div
@@ -242,7 +242,7 @@ export const HeroSection = ({
             </motion.div>
 
             {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-none mx-auto lg:mx-0">
+            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-[520px] mx-auto lg:mx-0">
               <div
                 ref={carouselRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
@@ -309,7 +309,7 @@ export const HeroSection = ({
             {/* Main Title */}
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                Lentes Rojos Premium Anti-Luz Azul
+                Lentes Rojos<br />Anti-Luz Azul
               </h1>
 
               {/* Star Rating + Social Proof */}
