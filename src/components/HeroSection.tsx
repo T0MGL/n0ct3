@@ -194,7 +194,7 @@ export const HeroSection = ({
   const originalPrice = ORIGINAL_UNIT_PRICE * selectedQuantity;
 
   return (
-    <section className="relative min-h-[85vh] flex items-start lg:items-center overflow-hidden bg-black">
+    <section className="relative min-h-[85vh] lg:min-h-screen flex items-start lg:items-center overflow-x-hidden bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
 
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-[88px] pb-6 md:pb-12">
@@ -242,7 +242,7 @@ export const HeroSection = ({
             </motion.div>
 
             {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-[520px] mx-auto lg:mx-0">
+            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-[560px] mx-auto">
               <div
                 ref={carouselRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
@@ -261,7 +261,7 @@ export const HeroSection = ({
                     key={index}
                     className="flex-shrink-0 w-full snap-center"
                   >
-                    <div className="relative w-full aspect-square overflow-hidden rounded-lg">
+                    <div className="relative w-full aspect-square lg:aspect-[4/5] overflow-hidden rounded-lg">
                       <img
                         src={slide.image}
                         alt={slide.alt}
