@@ -59,6 +59,7 @@ const Index = () => {
     name: "",
     phone: "",
     address: "",
+    isGeolocated: false,
     lat: undefined as number | undefined,
     long: undefined as number | undefined,
     paymentMethod: "digital" as "digital" | "cash",
@@ -216,6 +217,7 @@ const Index = () => {
     name: "",
     phone: "",
     address: "",
+    isGeolocated: false,
     paymentMethod: "digital" as "digital" | "cash",
     orderNumber: generateOrderNumber(),
     paymentIntentId: "",
@@ -236,7 +238,7 @@ const Index = () => {
     }
   }, [resetCheckoutData, exitIntentShown]);
 
-  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number; ruc?: string }) => {
+  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; isGeolocated: boolean; lat?: number; long?: number; ruc?: string }) => {
     // Store personal info and location, then proceed to payment
     setCheckoutData((prev) => ({
       ...prev,
@@ -244,6 +246,7 @@ const Index = () => {
       phone: data.phone,
       location: data.location,
       address: data.address,
+      isGeolocated: data.isGeolocated,
       lat: data.lat,
       long: data.long,
       ruc: data.ruc,
@@ -299,9 +302,10 @@ const Index = () => {
     phone: checkoutData.phone,
     location: checkoutData.location,
     address: checkoutData.address,
+    isGeolocated: checkoutData.isGeolocated,
     orderNumber: checkoutData.orderNumber,
     quantity: checkoutData.quantity,
-  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.orderNumber, checkoutData.quantity]);
+  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity]);
 
   // Scroll detection for header - uses ref to avoid re-renders on every scroll
   const lastScrollYRef = useRef(0);

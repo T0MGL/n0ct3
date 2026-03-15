@@ -207,7 +207,7 @@ export const HeroSection = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-1 w-full lg:self-center"
+            className="relative order-1 w-full lg:self-center lg:-mt-10"
           >
             {/* Authority Badge */}
             <motion.div

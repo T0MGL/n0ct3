@@ -135,3 +135,37 @@ export const PARAGUAY_CITIES: string[] = [
   "Fuerte Olimpo",
   "Puerto Casado",
 ];
+
+/**
+ * Cities in the Gran Asunción metropolitan area.
+ * Delivery is free for these cities.
+ */
+export const GRAN_ASUNCION_CITIES: string[] = [
+  "Asunción",
+  "San Lorenzo",
+  "Luque",
+  "Fernando de la Mora",
+  "Lambaré",
+  "Capiatá",
+  "Limpio",
+  "Ñemby",
+  "Mariano Roque Alonso",
+  "San Antonio",
+  "Villa Elisa",
+  "Itauguá",
+  "Areguá",
+  "Ypané",
+  "Guarambaré",
+  "J. Augusto Saldívar",
+  "Nueva Italia",
+  "Villeta",
+];
+
+const normalizeStr = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+/** Returns true if the given city/location string belongs to Gran Asunción. */
+export const isGranAsuncion = (cityOrLocation: string): boolean => {
+  const n = normalizeStr(cityOrLocation);
+  return GRAN_ASUNCION_CITIES.some((c) => normalizeStr(c) === n || n.includes(normalizeStr(c)));
+};

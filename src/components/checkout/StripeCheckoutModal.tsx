@@ -8,6 +8,7 @@ import { useStripePayment } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
+import { isGranAsuncion } from '@/data/paraguayCities';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
@@ -34,6 +35,7 @@ interface StripeCheckoutModalProps {
     phone: string;
     location: string;
     address: string;
+    isGeolocated?: boolean;
     orderNumber: string;
     quantity: number;
   };
@@ -55,6 +57,9 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
+
+  // Determine if delivery is free (Gran Asunción only)
+  const isFreeDelivery = isGranAsuncion(customerData.location);
 
   // Calculate final total including priority shipping
   const finalTotal = amount + (isPriorityShipping ? PRIORITY_SHIPPING_COST : 0);
@@ -219,8 +224,13 @@ const CheckoutForm = ({
           <span className="font-semibold text-foreground">Teléfono:</span> {customerData.phone}
         </p>
         <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Dirección:</span> {customerData.location}
+          <span className="font-semibold text-foreground">Ciudad:</span> {customerData.location}
         </p>
+        {!customerData.isGeolocated && customerData.address && (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">Dirección:</span> {customerData.address}
+          </p>
+        )}
       </div>
 
       {/* Payment Method Selection */}
@@ -416,13 +426,21 @@ const CheckoutForm = ({
         <div className="flex justify-between items-center pt-2 border-t border-border/30">
           <div className="flex items-center gap-2">
             <p className="text-sm text-foreground">Delivery</p>
-            <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-xs font-semibold text-primary">
-              GRATIS
-            </span>
+            {isFreeDelivery && (
+              <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-xs font-semibold text-primary">
+                GRATIS
+              </span>
+            )}
           </div>
-          <p className="text-sm font-semibold text-muted-foreground line-through">
-            Gs. 30.000
-          </p>
+          {isFreeDelivery ? (
+            <p className="text-sm font-semibold text-muted-foreground line-through">
+              Gs. 30.000
+            </p>
+          ) : (
+            <p className="text-sm font-semibold text-muted-foreground">
+              A cargo del Courier
+            </p>
+          )}
         </div>
 
         {/* PRIORITY SHIPPING UPSELL */}

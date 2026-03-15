@@ -9,7 +9,7 @@ import { PARAGUAY_CITIES } from "@/data/paraguayCities";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
-  onSubmit: (data: { name: string; phone: string; location: string; address: string; lat?: number; long?: number; ruc?: string }) => void;
+  onSubmit: (data: { name: string; phone: string; location: string; address: string; isGeolocated: boolean; lat?: number; long?: number; ruc?: string }) => void;
   onClose?: () => void;
 }
 
@@ -303,6 +303,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       phone: phone.trim(),
       location: detectedLocation || city.trim(),
       address: address.trim(),
+      isGeolocated: !!detectedLocation,
       lat: locationCoords.lat,
       long: locationCoords.long,
       ruc: ruc.trim() || undefined,
@@ -671,13 +672,35 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   )}
                 </div>
 
+                {/* Consent Disclosure */}
+                <p className="text-[11px] leading-relaxed text-muted-foreground text-center mt-4">
+                  Al continuar, acepto los{" "}
+                  <a
+                    href="/terminos-condiciones"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground transition-colors"
+                  >
+                    Terminos y Condiciones
+                  </a>{" "}
+                  y la{" "}
+                  <a
+                    href="/politica-privacidad"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground transition-colors"
+                  >
+                    Politica de Privacidad
+                  </a>
+                </p>
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   disabled={!isValid || loading}
                   variant="hero"
                   size="xl"
-                  className="w-full h-14 text-base font-bold mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-14 text-base font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
