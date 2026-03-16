@@ -1,29 +1,22 @@
-# robots.txt para NOCTE - Lentes Rojos Anti-Luz Azul Paraguay
+# robots.txt — NOCTE Lentes Anti-Luz Azul Paraguay
 # https://nocte.studio
-# Optimizado para SEO y AI Discovery
 
 # ===========================================
-# Configuración general
+# Regla global: todo permitido
+# No se usa Crawl-delay para no penalizar indexación
 # ===========================================
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /*.json$
-Crawl-delay: 1
 
 # ===========================================
-# Google (Principal para SEO)
+# Google — crawlers primarios
 # ===========================================
 User-agent: Googlebot
 Allow: /
 
 User-agent: Googlebot-Image
 Allow: /
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.png$
-Allow: /*.webp$
-Allow: /*.svg$
 
 User-agent: Googlebot-Video
 Allow: /
@@ -53,7 +46,7 @@ User-agent: Slurp
 Allow: /
 
 # ===========================================
-# Otros motores de búsqueda
+# Otros motores
 # ===========================================
 User-agent: DuckDuckBot
 Allow: /
@@ -74,7 +67,7 @@ User-agent: Exabot
 Allow: /
 
 # ===========================================
-# Redes Sociales (Open Graph / Rich Previews)
+# Redes sociales — Open Graph / Rich Previews
 # ===========================================
 User-agent: Twitterbot
 Allow: /
@@ -82,19 +75,10 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: facebookexternalhit/1.0
-Allow: /
-
-User-agent: facebookexternalhit/1.1
-Allow: /
-
 User-agent: LinkedInBot
 Allow: /
 
 User-agent: Pinterest
-Allow: /
-
-User-agent: Pinterestbot
 Allow: /
 
 User-agent: WhatsApp
@@ -113,7 +97,7 @@ User-agent: Slackbot-LinkExpanding
 Allow: /
 
 # ===========================================
-# AI Crawlers - ChatGPT / OpenAI
+# AI Crawlers — OpenAI / ChatGPT
 # ===========================================
 User-agent: GPTBot
 Allow: /
@@ -125,7 +109,7 @@ User-agent: OAI-SearchBot
 Allow: /
 
 # ===========================================
-# AI Crawlers - Anthropic / Claude
+# AI Crawlers — Anthropic / Claude
 # ===========================================
 User-agent: anthropic-ai
 Allow: /
@@ -137,22 +121,19 @@ User-agent: ClaudeBot
 Allow: /
 
 # ===========================================
-# AI Crawlers - Perplexity
+# AI Crawlers — Perplexity
 # ===========================================
 User-agent: PerplexityBot
 Allow: /
 
 # ===========================================
-# AI Crawlers - Google AI / Gemini
+# AI Crawlers — Google AI / Gemini
 # ===========================================
 User-agent: Google-Extended
 Allow: /
 
-User-agent: Googlebot-AI
-Allow: /
-
 # ===========================================
-# AI Crawlers - Meta AI
+# AI Crawlers — Meta AI
 # ===========================================
 User-agent: FacebookBot
 Allow: /
@@ -161,58 +142,37 @@ User-agent: meta-externalagent
 Allow: /
 
 # ===========================================
-# AI Crawlers - Microsoft Copilot
+# AI Crawlers — Microsoft Copilot
 # ===========================================
 User-agent: Copilot
 Allow: /
 
 # ===========================================
-# AI Crawlers - Cohere
+# AI Crawlers — varios
 # ===========================================
 User-agent: cohere-ai
 Allow: /
 
-# ===========================================
-# AI Crawlers - Amazon / Alexa
-# ===========================================
 User-agent: Amazonbot
 Allow: /
 
-# ===========================================
-# AI Crawlers - Common Crawl (training data)
-# ===========================================
 User-agent: CCBot
 Allow: /
 
-# ===========================================
-# AI Crawlers - You.com
-# ===========================================
 User-agent: YouBot
 Allow: /
 
-# ===========================================
-# AI Crawlers - Brave Search
-# ===========================================
 User-agent: Brave
 Allow: /
 
-# ===========================================
-# AI Crawlers - Other AI assistants
-# ===========================================
 User-agent: AI2Bot
 Allow: /
 
 User-agent: Diffbot
 Allow: /
 
-User-agent: omgili
-Allow: /
-
-User-agent: omgilibot
-Allow: /
-
 # ===========================================
-# SEO Tools (permitidos para análisis)
+# SEO Tools (análisis permitido)
 # ===========================================
 User-agent: Screaming Frog SEO Spider
 Allow: /
@@ -223,11 +183,8 @@ Allow: /
 User-agent: SemrushBot
 Allow: /
 
-User-agent: MJ12bot
-Allow: /
-
 # ===========================================
-# Bots bloqueados (scrapers maliciosos)
+# Scrapers maliciosos — bloqueados
 # ===========================================
 User-agent: MauiBot
 Disallow: /
@@ -241,12 +198,10 @@ Disallow: /
 User-agent: AhrefsSiteAudit
 Disallow: /
 
+User-agent: MJ12bot
+Disallow: /
+
 # ===========================================
 # Sitemap
 # ===========================================
 Sitemap: https://nocte.studio/sitemap.xml
-
-# ===========================================
-# Host preferido
-# ===========================================
-Host: https://nocte.studio

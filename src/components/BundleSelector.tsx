@@ -29,6 +29,7 @@ export const BundleSelector = ({ selectedIndex, onSelect }: BundleSelectorProps)
             `}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {/* Badge */}
             {bundle.badge && (

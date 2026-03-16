@@ -64,9 +64,6 @@ const CheckoutForm = ({
   // Calculate final total including priority shipping
   const finalTotal = amount + (isPriorityShipping ? PRIORITY_SHIPPING_COST : 0);
 
-  // Refs to track AddPaymentInfo events and prevent duplicates
-  const initialTrackDoneRef = useRef(false);
-  const previousPaymentMethodRef = useRef<PaymentMethod | null>(null);
   const submitButtonRef = useRef<HTMLDivElement>(null);
 
   // Scroll to submit button when user selects card payment
@@ -82,35 +79,8 @@ const CheckoutForm = ({
     console.log('🔵 [CheckoutForm] Component mounted, stripe:', !!stripe, 'elements:', !!elements);
   }, [stripe, elements]);
 
-  // Track AddPaymentInfo when user sees form and when they change payment method
-  useEffect(() => {
-    // First render: Track the default payment method ("Pago contra entrega")
-    if (!initialTrackDoneRef.current) {
-      console.log('📊 [Meta Pixel] Tracking AddPaymentInfo - Default: Pago contra entrega');
-      trackAddPaymentInfo({
-        value: finalTotal,
-        currency: currency.toUpperCase(),
-        num_items: customerData.quantity,
-        payment_type: 'Pago contra entrega',
-      });
-      initialTrackDoneRef.current = true;
-      previousPaymentMethodRef.current = paymentMethod;
-      return;
-    }
-
-    // Subsequent renders: Track only when user manually changes payment method
-    if (previousPaymentMethodRef.current !== paymentMethod) {
-      const paymentType = paymentMethod === 'cash_on_delivery' ? 'Pago contra entrega' : 'Tarjeta';
-      console.log(`📊 [Meta Pixel] Tracking AddPaymentInfo - User changed to: ${paymentType}`);
-      trackAddPaymentInfo({
-        value: finalTotal,
-        currency: currency.toUpperCase(),
-        num_items: customerData.quantity,
-        payment_type: paymentType,
-      });
-      previousPaymentMethodRef.current = paymentMethod;
-    }
-  }, [paymentMethod, amount, currency, customerData.quantity, finalTotal]);
+  // AddPaymentInfo is tracked at submit time only (not on render)
+  // to avoid sending Meta signals for users who abandon checkout
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +105,14 @@ const CheckoutForm = ({
 
         // Simulate async processing
         await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Track AddPaymentInfo only at confirmed purchase (COD)
+        trackAddPaymentInfo({
+          value: finalTotal,
+          currency: currency.toUpperCase(),
+          num_items: customerData.quantity,
+          payment_type: 'Pago contra entrega',
+        });
 
         onSuccess({
           paymentIntentId: codOrderId,
@@ -190,6 +168,15 @@ const CheckoutForm = ({
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Payment succeeded
         console.log('✅ [Payment] Payment succeeded:', paymentIntent.id);
+
+        // Track AddPaymentInfo only at confirmed card purchase
+        trackAddPaymentInfo({
+          value: finalTotal,
+          currency: currency.toUpperCase(),
+          num_items: customerData.quantity,
+          payment_type: 'Tarjeta',
+        });
+
         onSuccess({
           paymentIntentId: paymentIntent.id,
           paymentType: 'Card',

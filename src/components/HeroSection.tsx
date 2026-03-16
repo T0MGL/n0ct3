@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import {
@@ -211,10 +211,8 @@ export const HeroSection = ({
           >
             {/* Authority Badge */}
             <motion.div
-              layout
               className="absolute top-4 left-2 md:top-2 md:left-4 z-20 bg-gradient-to-r from-primary to-red-600 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
               initial={false}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {currentSlide === 0 ? (
@@ -382,14 +380,17 @@ export const HeroSection = ({
               animate={{
                 opacity: 1,
                 scale: stockAnimating ? [1, 1.08, 1] : 1,
-                borderColor: stockAnimating ? ['rgba(239,68,68,0.3)', 'rgba(239,68,68,0.8)', 'rgba(239,68,68,0.3)'] : 'rgba(239,68,68,0.3)',
+                boxShadow: stockAnimating
+                  ? ['0 0 0px rgba(239,68,68,0)', '0 0 20px rgba(239,68,68,0.6)', '0 0 0px rgba(239,68,68,0)']
+                  : '0 0 0px rgba(239,68,68,0)',
               }}
               transition={{
                 delay: stockAnimating ? 0 : 0.3,
                 duration: stockAnimating ? 0.6 : 0.4,
                 repeat: stockAnimating ? 2 : 0,
               }}
-              className={`inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg transition-all ${stockAnimating ? 'shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
+              style={{ willChange: 'transform, box-shadow' }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg"
             >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>

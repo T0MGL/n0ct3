@@ -23,7 +23,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [customPrefix, setCustomPrefix] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
-  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [showManualLocation, setShowManualLocation] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationCoords, setLocationCoords] = useState<{ lat?: number; long?: number }>({});
@@ -53,7 +53,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setCustomPrefix(false);
       setShowCitySuggestions(false);
       setDetectedLocation(null);
-      setShowManualLocation(false);
+      setShowManualLocation(true);
       setLocationError(null);
       setIsLoadingLocation(false);
       setLocationCoords({});
@@ -98,12 +98,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       const reversedSecond = secondHalf.split('').reverse().join('');
       if (firstHalf === reversedSecond) return true;
     }
-
-    // Three or more same consecutive digits anywhere (e.g., 981111234)
-    if (/(\d)\1{3,}/.test(digits)) return true;
-
-    // Two groups of 3+ same digits (e.g., 981222333)
-    if (/(\d)\1{2,}.*(\d)\2{2,}/.test(digits)) return true;
 
     return false;
   };
@@ -543,42 +537,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     </motion.div>
                   )}
 
-                  {/* Use Location Button */}
-                  {!detectedLocation && !showManualLocation && (
-                    <div className="space-y-2">
-                      <Button
-                        type="button"
-                        onClick={handleUseLocation}
-                        disabled={isLoadingLocation}
-                        variant="outline"
-                        size="lg"
-                        className="w-full bg-transparent border-border/50 hover:bg-secondary/50"
-                      >
-                        {isLoadingLocation ? (
-                          <span className="flex items-center gap-2">
-                            <div className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Detectando ubicación...
-                          </span>
-                        ) : (
-                          <>
-                            <MapPinIcon className="w-4 h-4 mr-2" />
-                            Usar mi ubicación actual
-                          </>
-                        )}
-                      </Button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowManualLocation(true);
-                          setLocationError(null); // Clear any location errors
-                        }}
-                        className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        O ingresar manualmente
-                      </button>
-                    </div>
-                  )}
 
                   {/* Manual Location Entry — City autocomplete + Address */}
                   {showManualLocation && !detectedLocation && (
@@ -587,6 +545,25 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       animate={{ opacity: 1, y: 0 }}
                       className="space-y-3"
                     >
+                      {/* GPS as secondary option */}
+                      <button
+                        type="button"
+                        onClick={handleUseLocation}
+                        disabled={isLoadingLocation}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        {isLoadingLocation ? (
+                          <>
+                            <div className="inline-block w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                            Detectando...
+                          </>
+                        ) : (
+                          <>
+                            <MapPinIcon className="w-3.5 h-3.5" />
+                            Usar mi ubicación actual
+                          </>
+                        )}
+                      </button>
                       {/* City autocomplete */}
                       <div className="space-y-1.5">
                         <label className="block text-sm font-medium text-foreground">

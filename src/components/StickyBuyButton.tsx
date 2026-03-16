@@ -81,8 +81,9 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
       }}
       transition={{
         duration: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94] // easeOutQuad for smooth feel
+        ease: [0.25, 0.46, 0.45, 0.94]
       }}
+      style={{ willChange: 'transform, opacity' }}
       className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
     >
       <div className="w-full px-4 md:px-6 pb-4 md:pb-6">
@@ -122,6 +123,7 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
                 repeatType: "loop",
                 ease: "easeInOut"
               } : { duration: 0 }}
+              style={{ willChange: 'transform' }}
             >
               <Button
                 variant="hero"
