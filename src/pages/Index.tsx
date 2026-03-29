@@ -5,7 +5,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { OfferCTA } from "@/components/OfferCTA";
-import { sendOrderInBackground, generateOrderNumber } from "@/services/orderService";
+import { sendOrderInBackground, generateOrderNumber, notifyCheckoutStarted } from "@/services/orderService";
 import {
   trackInitiateCheckout,
   trackAddToCart,
@@ -252,9 +252,22 @@ const Index = () => {
       ruc: data.ruc,
     }));
 
+    const bundle = BUNDLES[selectedBundleIndex];
+    notifyCheckoutStarted({
+      name: data.name,
+      phone: data.phone,
+      location: data.location,
+      address: data.address,
+      lat: data.lat,
+      long: data.long,
+      bundleLabel: bundle.label,
+      quantity: bundle.quantity,
+      price: bundle.price,
+    });
+
     setShowPhoneForm(false);
     setShowStripeCheckout(true); // Show payment with all info collected
-  }, []);
+  }, [selectedBundleIndex]);
 
   const handlePhoneFormClose = useCallback(() => {
     if (!exitIntentShown) {

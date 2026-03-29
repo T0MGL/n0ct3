@@ -7,57 +7,62 @@ interface UseExitIntentOptions {
   delay?: number;
 }
 
-/**
- * Custom hook to detect exit intent behavior
- * Triggers when user tries to leave the page via:
- * - Mouse moving to top of viewport (to close tab/navigate)
- * - Browser back button
- * - Attempting to close the page
- */
 export const useExitIntent = ({
   onExitIntent,
   enabled = true,
-  sensitivity = 20,
+  sensitivity = 10,
   delay = 2000,
 }: UseExitIntentOptions) => {
   const hasTriggeredRef = useRef(false);
   const enabledTimeRef = useRef<number>(0);
+  const mousePositionsRef = useRef<Array<{ y: number; t: number }>>([]);
 
   useEffect(() => {
     if (!enabled) {
       hasTriggeredRef.current = false;
       enabledTimeRef.current = 0;
+      mousePositionsRef.current = [];
       return;
     }
 
-    // Track when the hook was enabled to add delay before triggering
     enabledTimeRef.current = Date.now();
 
-    const handleMouseLeave = (e: MouseEvent) => {
-      // Only trigger if mouse is leaving from the top of the page
-      // (typical behavior when going to browser controls)
-      // Also require minimum time elapsed to prevent accidental triggers
-      const timeElapsed = Date.now() - enabledTimeRef.current;
-      if (
-        !hasTriggeredRef.current &&
-        e.clientY <= sensitivity &&
-        e.relatedTarget === null &&
-        timeElapsed >= delay
-      ) {
-        hasTriggeredRef.current = true;
-        onExitIntent();
-      }
+    const handleMouseMove = (e: MouseEvent) => {
+      const positions = mousePositionsRef.current;
+      positions.push({ y: e.clientY, t: Date.now() });
+      if (positions.length > 5) positions.shift();
     };
 
-    // Listen for mouse movements near the top of the viewport
-    document.addEventListener("mouseout", handleMouseLeave);
+    const handleMouseLeave = (e: MouseEvent) => {
+      const timeElapsed = Date.now() - enabledTimeRef.current;
+
+      if (hasTriggeredRef.current || timeElapsed < delay) return;
+      if (e.clientY > sensitivity) return;
+
+      const positions = mousePositionsRef.current;
+      if (positions.length >= 2) {
+        const recent = positions[positions.length - 1];
+        const earlier = positions[Math.max(0, positions.length - 3)];
+        const deltaY = recent.y - earlier.y;
+        const deltaT = recent.t - earlier.t;
+        if (deltaT === 0 || deltaY >= 0) return;
+        const velocity = Math.abs(deltaY / deltaT);
+        if (velocity < 0.3) return;
+      }
+
+      hasTriggeredRef.current = true;
+      onExitIntent();
+    };
+
+    document.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.documentElement.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      document.removeEventListener("mouseout", handleMouseLeave);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [enabled, onExitIntent, sensitivity, delay]);
 
-  // Reset trigger when enabled state changes
   useEffect(() => {
     if (!enabled) {
       hasTriggeredRef.current = false;

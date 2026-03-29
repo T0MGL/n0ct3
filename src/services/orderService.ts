@@ -162,6 +162,32 @@ export function sendOrderInBackground(orderData: OrderData): void {
  * Generate a unique order number
  * Format: #NOC-MMDD-XXXX (e.g., #NOC-0121-5847)
  */
+export interface CheckoutStartedData {
+  name: string;
+  phone: string;
+  location: string;
+  address: string;
+  lat?: number;
+  long?: number;
+  bundleLabel: string;
+  quantity: number;
+  price: number;
+}
+
+/**
+ * Fire-and-forget notification when user completes Step 1 (contact info)
+ * Used for abandoned checkout recovery via n8n
+ */
+export function notifyCheckoutStarted(data: CheckoutStartedData): void {
+  setTimeout(() => {
+    fetch(`${API_CONFIG.baseUrl}/api/checkout-started`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => {});
+  }, 0);
+}
+
 export function generateOrderNumber(): string {
   const date = new Date();
   const month = String(date.getMonth() + 1).padStart(2, '0');

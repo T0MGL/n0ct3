@@ -800,6 +800,46 @@ app.post('/api/send-order', async (req, res) => {
 });
 
 /**
+ * POST /api/checkout-started
+ * Notify n8n when a user completes Step 1 (contact info) for abandoned checkout recovery
+ */
+app.post('/api/checkout-started', async (req, res) => {
+  try {
+    const { name, phone, location, address, lat, long, bundleLabel, quantity, price } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Name and phone are required' });
+    }
+
+    res.json({ success: true });
+
+    const webhookUrl = process.env.N8N_ABANDONED_CHECKOUT_WEBHOOK_URL;
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'checkout_started',
+          store_id: 'nocte',
+          timestamp: new Date().toISOString(),
+          customer: { name, phone },
+          location: { city: location || '', address: address || '', lat: lat || null, long: long || null },
+          bundle: { label: bundleLabel || '', quantity: quantity || 1, price: price || 0 },
+          source: 'nocte-landing-page'
+        })
+      }).catch(err => {
+        console.error('Failed to forward checkout-started to n8n:', err.message);
+      });
+    }
+  } catch (error) {
+    console.error('Error in checkout-started:', error);
+    if (!res.headersSent) {
+      res.json({ success: true });
+    }
+  }
+});
+
+/**
  * POST /api/webhook
  * Stripe webhook endpoint (for production use)
  */
