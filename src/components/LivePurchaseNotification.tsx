@@ -39,7 +39,7 @@ export const LivePurchaseNotification = ({
             }
           }}
           onClick={onDismiss}
-          className="fixed bottom-24 left-4 right-4 md:left-auto md:right-6 md:bottom-6 z-[60] md:max-w-sm cursor-pointer select-none"
+          className="fixed bottom-40 left-4 right-4 md:left-auto md:right-6 md:bottom-6 z-[60] md:max-w-sm cursor-pointer select-none"
         >
           <div className="bg-secondary/95 backdrop-blur-sm border border-green-500/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-start gap-3">

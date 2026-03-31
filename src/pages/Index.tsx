@@ -13,6 +13,10 @@ import {
 } from "@/lib/meta-pixel";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
 import { useExitIntent } from "@/hooks/useExitIntent";
+import { getStripe } from "@/lib/stripe";
+
+// Preload Stripe.js immediately so it's ready when the user clicks buy
+getStripe();
 
 // Lazy load heavy sections that are below the fold
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));

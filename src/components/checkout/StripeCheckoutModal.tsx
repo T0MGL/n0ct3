@@ -66,21 +66,14 @@ const CheckoutForm = ({
   const finalTotal = amount + (isPriorityShipping ? PRIORITY_SHIPPING_COST : 0);
 
   const submitButtonRef = useRef<HTMLDivElement>(null);
+  const paymentElementRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to submit button when user selects card payment
   // Reset element readiness when switching away from card so a re-mount re-triggers onReady
   useEffect(() => {
     if (paymentMethod === 'card') {
       setIsElementReady(false);
-      setTimeout(() => {
-        submitButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 400);
     }
   }, [paymentMethod]);
-
-  useEffect(() => {
-    console.log('🔵 [CheckoutForm] Component mounted, stripe:', !!stripe, 'elements:', !!elements);
-  }, [stripe, elements]);
 
   // AddPaymentInfo is tracked at submit time only (not on render)
   // to avoid sending Meta signals for users who abandon checkout
@@ -88,23 +81,17 @@ const CheckoutForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('🔵 [Payment] Starting payment submission...', { paymentMethod, isPriorityShipping, finalTotal });
-
     setIsProcessing(true);
     setErrorMessage(null);
 
     try {
       // Handle Cash on Delivery
       if (paymentMethod === 'cash_on_delivery') {
-        console.log('🔵 [Payment] Processing Cash on Delivery order...');
-
         // Generate a COD order ID - Append PRIORITY tag if selected
         let codOrderId = `COD-${customerData.orderNumber}-${Date.now()}`;
         if (isPriorityShipping) {
           codOrderId += '-PRIORITY';
         }
-
-        console.log('✅ [Payment] Cash on Delivery order created:', codOrderId);
 
         // Simulate async processing
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -129,7 +116,6 @@ const CheckoutForm = ({
 
       // Handle Stripe payment (card, Apple Pay, Google Pay)
       if (!stripe || !elements) {
-        console.error('❌ [Payment] Stripe or Elements not initialized');
         setErrorMessage('Error al inicializar el sistema de pago');
         setIsProcessing(false);
         return;
@@ -140,8 +126,6 @@ const CheckoutForm = ({
         setIsProcessing(false);
         return;
       }
-
-      console.log('🔵 [Payment] Confirming payment with Stripe...');
 
       // Confirm payment using PaymentElement
       const { error, paymentIntent } = await stripe.confirmPayment({
@@ -164,20 +148,10 @@ const CheckoutForm = ({
         redirect: 'if_required',
       });
 
-      console.log('🔵 [Payment] Stripe response received:', {
-        hasError: !!error,
-        paymentIntentStatus: paymentIntent?.status,
-        errorMessage: error?.message
-      });
-
       if (error) {
-        console.error('❌ [Payment] Payment failed:', error);
         setErrorMessage(error.message || 'Error al procesar el pago');
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Payment succeeded
-        console.log('✅ [Payment] Payment succeeded:', paymentIntent.id);
-
         // Track AddPaymentInfo only at confirmed card purchase
         trackAddPaymentInfo({
           value: finalTotal,
@@ -194,7 +168,6 @@ const CheckoutForm = ({
           finalTotal,
         });
       } else {
-        console.warn('⚠️ [Payment] Unexpected payment status:', paymentIntent?.status);
         setErrorMessage(`Estado de pago inesperado: ${paymentIntent?.status}`);
         setIsProcessing(false);
       }
@@ -329,13 +302,16 @@ const CheckoutForm = ({
 
       {/* Payment Element - Only show for card payments */}
       {paymentMethod === 'card' && (
-        <div className="p-5 bg-secondary/20 rounded-lg border border-border/30">
+        <div ref={paymentElementRef} className="p-5 bg-secondary/20 rounded-lg border border-border/30">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide border-b border-border/30 pb-2 mb-4">
             Detalles de pago
           </h3>
 
           <PaymentElement
-            onReady={() => setIsElementReady(true)}
+            onReady={() => {
+              setIsElementReady(true);
+              paymentElementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
             options={{
               layout: {
                 type: 'tabs',
@@ -593,12 +569,6 @@ export const StripeCheckoutModal = ({
     let isMounted = true;
 
     if (isOpen && !clientSecret) {
-      console.log('🔵 [Init] Creating payment intent...', {
-        amount,
-        currency,
-        customerData: customerData.name
-      });
-
       setIsInitializing(true);
       setInitError(null);
 
@@ -620,28 +590,12 @@ export const StripeCheckoutModal = ({
         },
       })
         .then((response) => {
-          // Only update state if component is still mounted
-          if (!isMounted) {
-            console.log('⚠️ [Init] Component unmounted, skipping state update');
-            return;
-          }
-
-          console.log('✅ [Init] Payment intent created successfully:', {
-            paymentIntentId: response.paymentIntentId,
-            hasClientSecret: !!response.clientSecret
-          });
-
+          if (!isMounted) return;
           setClientSecret(response.clientSecret);
           setIsInitializing(false);
         })
         .catch((error) => {
-          // Only update state if component is still mounted
-          if (!isMounted) {
-            console.log('⚠️ [Init] Component unmounted, skipping error state update');
-            return;
-          }
-
-          console.error('❌ [Init] Failed to create payment intent:', error);
+          if (!isMounted) return;
           setInitError(error.message || 'Error al inicializar el pago');
           setIsInitializing(false);
         });
@@ -685,7 +639,7 @@ export const StripeCheckoutModal = ({
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto overscroll-contain touch-auto"
+            className="relative w-full max-w-[550px] bg-gradient-to-b from-secondary to-black border border-border/50 rounded-xl p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] max-h-[90dvh] overflow-y-auto overflow-x-hidden overscroll-contain touch-auto"
           >
             {/* Close Button */}
             <button
