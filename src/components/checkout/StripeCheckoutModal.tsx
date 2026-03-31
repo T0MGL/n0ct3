@@ -54,6 +54,7 @@ const CheckoutForm = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
@@ -67,8 +68,10 @@ const CheckoutForm = ({
   const submitButtonRef = useRef<HTMLDivElement>(null);
 
   // Scroll to submit button when user selects card payment
+  // Reset element readiness when switching away from card so a re-mount re-triggers onReady
   useEffect(() => {
-    if (paymentMethod === 'card' && submitButtonRef.current) {
+    if (paymentMethod === 'card') {
+      setIsElementReady(false);
       setTimeout(() => {
         submitButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 400);
@@ -128,6 +131,12 @@ const CheckoutForm = ({
       if (!stripe || !elements) {
         console.error('❌ [Payment] Stripe or Elements not initialized');
         setErrorMessage('Error al inicializar el sistema de pago');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!isElementReady) {
+        setErrorMessage('El formulario de pago aún se está cargando. Intenta de nuevo en un momento.');
         setIsProcessing(false);
         return;
       }
@@ -326,6 +335,7 @@ const CheckoutForm = ({
           </h3>
 
           <PaymentElement
+            onReady={() => setIsElementReady(true)}
             options={{
               layout: {
                 type: 'tabs',
@@ -499,7 +509,7 @@ const CheckoutForm = ({
           variant="hero"
           size="xl"
           className="w-full h-14 text-sm md:text-base"
-          disabled={paymentMethod === 'card' ? (!stripe || isProcessing) : isProcessing}
+          disabled={paymentMethod === 'card' ? (!stripe || !isElementReady || isProcessing) : isProcessing}
         >
           {isProcessing ? (
             <>
@@ -748,7 +758,7 @@ export const StripeCheckoutModal = ({
                   options={{
                     clientSecret,
                     locale: 'es',
-                    loader: 'never',
+                    loader: 'auto',
                     appearance: {
                       theme: 'night',
                       variables: {
