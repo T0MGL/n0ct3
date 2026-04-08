@@ -41,38 +41,23 @@ interface StripeCheckoutModalProps {
   };
 }
 
-interface CheckoutFormProps {
-  onSuccess: StripeCheckoutModalProps['onSuccess'];
-  amount: number;
-  currency: string;
-  customerData: StripeCheckoutModalProps['customerData'];
-  onCloseAttempt: () => void;
-  paymentMethod: PaymentMethod;
-  setPaymentMethod: (method: PaymentMethod) => void;
-  isPriorityShipping: boolean;
-  setIsPriorityShipping: (value: boolean) => void;
-  isCardInitializing: boolean;
-  cardInitError: string | null;
-}
-
 const CheckoutForm = ({
   onSuccess,
+  onClose,
   amount,
   currency,
   customerData,
   onCloseAttempt,
-  paymentMethod,
-  setPaymentMethod,
-  isPriorityShipping,
-  setIsPriorityShipping,
-  isCardInitializing,
-  cardInitError,
-}: CheckoutFormProps) => {
+}: Omit<StripeCheckoutModalProps, 'isOpen'> & {
+  onCloseAttempt: () => void;
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isElementReady, setIsElementReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
+  const [isPriorityShipping, setIsPriorityShipping] = useState(false);
 
   // Determine if delivery is free (Gran Asunción only)
   const isFreeDelivery = isGranAsuncion(customerData.location);
@@ -83,16 +68,11 @@ const CheckoutForm = ({
   const submitButtonRef = useRef<HTMLDivElement>(null);
   const paymentElementRef = useRef<HTMLDivElement>(null);
 
-  // Stripe Elements remounts when switching back to card, so reset readiness flag
+  // Reset element readiness when switching away from card so a re-mount re-triggers onReady
   useEffect(() => {
     if (paymentMethod === 'card') {
       setIsElementReady(false);
     }
-  }, [paymentMethod]);
-
-  // Clear stale validation errors when the user changes payment method
-  useEffect(() => {
-    setErrorMessage(null);
   }, [paymentMethod]);
 
   // AddPaymentInfo is tracked at submit time only (not on render)
@@ -135,20 +115,8 @@ const CheckoutForm = ({
       }
 
       // Handle Stripe payment (card, Apple Pay, Google Pay)
-      if (isCardInitializing) {
-        setErrorMessage('Estamos preparando el pago con tarjeta. Intenta de nuevo en un momento.');
-        setIsProcessing(false);
-        return;
-      }
-
-      if (cardInitError) {
-        setErrorMessage(cardInitError);
-        setIsProcessing(false);
-        return;
-      }
-
       if (!stripe || !elements) {
-        setErrorMessage('El formulario de pago aún se está cargando. Intenta de nuevo en un momento.');
+        setErrorMessage('Error al inicializar el sistema de pago');
         setIsProcessing(false);
         return;
       }
@@ -339,61 +307,44 @@ const CheckoutForm = ({
             Detalles de pago
           </h3>
 
-          {isCardInitializing && (
-            <div className="flex flex-col items-center justify-center py-8 space-y-3">
-              <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-              <p className="text-xs text-muted-foreground">
-                Preparando pago con tarjeta...
-              </p>
-            </div>
-          )}
-
-          {cardInitError && !isCardInitializing && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <p className="text-sm text-red-400 text-center">{cardInitError}</p>
-            </div>
-          )}
-
-          {!isCardInitializing && !cardInitError && stripe && elements && (
-            <PaymentElement
-              onReady={() => {
-                setIsElementReady(true);
-                paymentElementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              options={{
-                layout: {
-                  type: 'tabs',
-                  defaultCollapsed: false,
-                },
-                fields: {
-                  billingDetails: {
-                    name: 'never',
-                    phone: 'never',
-                    address: {
-                      country: 'never',
-                      postalCode: 'never',
-                    },
+          <PaymentElement
+            onReady={() => {
+              setIsElementReady(true);
+              paymentElementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            options={{
+              layout: {
+                type: 'tabs',
+                defaultCollapsed: false,
+              },
+              fields: {
+                billingDetails: {
+                  name: 'never',
+                  phone: 'never',
+                  address: {
+                    country: 'never',
+                    postalCode: 'never',
                   },
                 },
-                defaultValues: {
-                  billingDetails: {
-                    name: customerData.name,
-                    address: {
-                      country: 'PY',
-                      city: customerData.location,
-                    },
+              },
+              defaultValues: {
+                billingDetails: {
+                  name: customerData.name,
+                  address: {
+                    country: 'PY',
+                    city: customerData.location,
                   },
                 },
-                wallets: {
-                  applePay: 'auto',
-                  googlePay: 'auto',
-                },
-                terms: {
-                  card: 'never',
-                },
-              }}
-            />
-          )}
+              },
+              wallets: {
+                applePay: 'auto',
+                googlePay: 'auto',
+              },
+              terms: {
+                card: 'never',
+              },
+            }}
+          />
         </div>
       )}
 
@@ -534,11 +485,7 @@ const CheckoutForm = ({
           variant="hero"
           size="xl"
           className="w-full h-14 text-sm md:text-base"
-          disabled={
-            paymentMethod === 'card'
-              ? isCardInitializing || !!cardInitError || !stripe || !isElementReady || isProcessing
-              : isProcessing
-          }
+          disabled={paymentMethod === 'card' ? (!stripe || !isElementReady || isProcessing) : isProcessing}
         >
           {isProcessing ? (
             <>
@@ -579,16 +526,11 @@ export const StripeCheckoutModal = ({
 }: StripeCheckoutModalProps) => {
   const [stripePromise] = useState(() => getStripe());
   const { createPaymentIntent } = useStripePayment();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
-  const [isPriorityShipping, setIsPriorityShipping] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isCardInitializing, setIsCardInitializing] = useState(false);
-  const [cardInitError, setCardInitError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [hasShownExitOffer, setHasShownExitOffer] = useState(false);
-  // Tracks an in-flight PaymentIntent fetch so the effect can dedupe across re-runs
-  // without depending on the loading state (which would otherwise re-trigger the effect).
-  const cardIntentInFlightRef = useRef(false);
 
   // Intercept close attempt - show WhatsApp help if not shown yet
   const handleCloseAttempt = () => {
@@ -621,66 +563,55 @@ export const StripeCheckoutModal = ({
     onClose();
   };
 
-  // Lazy create PaymentIntent: only fire when the user actually selects card payment.
-  // Paraguay traffic is 90%+ COD, so this avoids a wasted Stripe round trip on most opens.
-  // Reuses an existing clientSecret if the user toggles back to card after switching away.
+  // Create PaymentIntent when modal opens
   useEffect(() => {
-    if (!isOpen || paymentMethod !== 'card' || clientSecret || cardIntentInFlightRef.current) {
-      return;
+    // Track if effect is still mounted to prevent state updates after unmount
+    let isMounted = true;
+
+    if (isOpen && !clientSecret) {
+      setIsInitializing(true);
+      setInitError(null);
+
+      createPaymentIntent({
+        amount,
+        currency,
+        paymentMethodId: 'pending',
+        email: 'customer@nocte.studio',
+        metadata: {
+          orderNumber: customerData.orderNumber,
+          customerName: customerData.name,
+          customerPhone: customerData.phone,
+          deliveryLocation: customerData.location,
+          deliveryAddress: customerData.address,
+          quantity: customerData.quantity.toString(),
+          product: customerData.quantity === 2
+            ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
+            : 'Lentes Rojos Premium Anti-Luz Azul',
+        },
+      })
+        .then((response) => {
+          if (!isMounted) return;
+          setClientSecret(response.clientSecret);
+          setIsInitializing(false);
+        })
+        .catch((error) => {
+          if (!isMounted) return;
+          setInitError(error.message || 'Error al inicializar el pago');
+          setIsInitializing(false);
+        });
     }
 
-    cardIntentInFlightRef.current = true;
-    let cancelled = false;
-    setIsCardInitializing(true);
-    setCardInitError(null);
-
-    createPaymentIntent({
-      amount,
-      currency,
-      paymentMethodId: 'pending',
-      email: 'customer@nocte.studio',
-      metadata: {
-        orderNumber: customerData.orderNumber,
-        customerName: customerData.name,
-        customerPhone: customerData.phone,
-        deliveryLocation: customerData.location,
-        deliveryAddress: customerData.address,
-        quantity: customerData.quantity.toString(),
-        product: customerData.quantity === 2
-          ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
-          : 'Lentes Rojos Premium Anti-Luz Azul',
-      },
-    })
-      .then((response) => {
-        if (cancelled) return;
-        setClientSecret(response.clientSecret);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        const message = error instanceof Error ? error.message : 'Error al inicializar el pago';
-        setCardInitError(message);
-      })
-      .finally(() => {
-        cardIntentInFlightRef.current = false;
-        if (!cancelled) {
-          setIsCardInitializing(false);
-        }
-      });
-
+    // Cleanup function: mark as unmounted when effect re-runs or component unmounts
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
-  }, [isOpen, paymentMethod, clientSecret, amount, currency, customerData, createPaymentIntent]);
+  }, [isOpen, clientSecret, amount, currency, customerData, createPaymentIntent]);
 
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setClientSecret(null);
-      setCardInitError(null);
-      setIsCardInitializing(false);
-      setPaymentMethod('cash_on_delivery');
-      setIsPriorityShipping(false);
-      cardIntentInFlightRef.current = false;
+      setInitError(null);
     }
   }, [isOpen]);
 
@@ -748,57 +679,65 @@ export const StripeCheckoutModal = ({
               </div>
             </div>
 
-            {/* Form renders immediately for COD. Stripe Elements wraps it only once
-                the user actually picks card and the PaymentIntent is ready. */}
-            {paymentMethod === 'card' && clientSecret ? (
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  locale: 'es',
-                  loader: 'auto',
-                  appearance: {
-                    theme: 'night',
-                    variables: {
-                      colorPrimary: '#EF4444',
-                      colorBackground: '#000000',
-                      colorText: '#F9FAFB',
-                      colorDanger: '#DC2626',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      fontSizeBase: '16px',
-                      borderRadius: '8px',
+            {/* Loading or Error State */}
+            {isInitializing && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <p className="text-sm text-muted-foreground">
+                  Preparando método de pago...
+                </p>
+              </div>
+            )}
+
+            {initError && (
+              <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p className="text-sm text-red-400 text-center">{initError}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full mt-4 bg-transparent border-border/50 hover:bg-secondary/50"
+                  onClick={onClose}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            )}
+
+            {/* Stripe Elements */}
+            {!isInitializing && !initError && clientSecret && (
+              <>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    locale: 'es',
+                    loader: 'auto',
+                    appearance: {
+                      theme: 'night',
+                      variables: {
+                        colorPrimary: '#EF4444',
+                        colorBackground: '#000000',
+                        colorText: '#F9FAFB',
+                        colorDanger: '#DC2626',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        fontSizeBase: '16px',
+                        borderRadius: '8px',
+                      },
                     },
-                  },
-                }}
-              >
-                <CheckoutForm
-                  onSuccess={onSuccess}
-                  amount={amount}
-                  currency={currency}
-                  customerData={customerData}
-                  onCloseAttempt={handleCloseAttempt}
-                  paymentMethod={paymentMethod}
-                  setPaymentMethod={setPaymentMethod}
-                  isPriorityShipping={isPriorityShipping}
-                  setIsPriorityShipping={setIsPriorityShipping}
-                  isCardInitializing={isCardInitializing}
-                  cardInitError={cardInitError}
-                />
-              </Elements>
-            ) : (
-              <CheckoutForm
-                onSuccess={onSuccess}
-                amount={amount}
-                currency={currency}
-                customerData={customerData}
-                onCloseAttempt={handleCloseAttempt}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                isPriorityShipping={isPriorityShipping}
-                setIsPriorityShipping={setIsPriorityShipping}
-                isCardInitializing={isCardInitializing}
-                cardInitError={cardInitError}
-              />
+                  }}
+                >
+                  <CheckoutForm
+                    onSuccess={onSuccess}
+                    onClose={onClose}
+                    onBack={onBack}
+                    amount={amount}
+                    currency={currency}
+                    customerData={customerData}
+                    onCloseAttempt={handleCloseAttempt}
+                  />
+                </Elements>
+              </>
             )}
 
             {/* Exit WhatsApp Help Overlay */}
