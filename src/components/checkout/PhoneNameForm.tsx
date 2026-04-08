@@ -653,7 +653,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 <p className="text-[11px] leading-relaxed text-muted-foreground text-center mt-4">
                   Al continuar, acepto los{" "}
                   <a
-                    href="/terminos-condiciones"
+                    href="/terminos-y-condiciones"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline hover:text-foreground transition-colors"
@@ -662,7 +662,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   </a>{" "}
                   y la{" "}
                   <a
-                    href="/politica-privacidad"
+                    href="/politica-de-privacidad"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline hover:text-foreground transition-colors"
