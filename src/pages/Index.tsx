@@ -11,6 +11,7 @@ import {
   trackAddToCart,
   trackPurchase,
 } from "@/lib/meta-pixel";
+import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164 } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
@@ -70,6 +71,7 @@ const Index = () => {
     orderNumber: "",
     paymentIntentId: "",
     ruc: "" as string | undefined,
+    email: undefined as string | undefined,
   });
 
   // Detect exit intent during checkout — show WhatsApp downsell
@@ -164,9 +166,15 @@ const Index = () => {
     isPaid: boolean;
     deliveryType: 'común' | 'premium';
     finalTotal: number;
+    email?: string;
   }) => {
     // INSTANT transition - no waiting for API calls
     setCheckoutData((prev) => {
+      // Prefer the email that came back from the payment modal (card typed
+      // it in-form, COD may have it from the factura path) and fall back to
+      // whatever was already stored on checkoutData from PhoneNameForm.
+      const effectiveEmail = result.email || prev.email;
+
       // Send order to backend in background (fire-and-forget)
       sendOrderInBackground({
         name: prev.name,
@@ -180,14 +188,13 @@ const Index = () => {
         total: result.finalTotal,
         orderNumber: prev.orderNumber,
         paymentIntentId: result.paymentIntentId,
-        email: undefined,
+        email: effectiveEmail,
         paymentType: result.paymentType,
         isPaid: result.isPaid,
         deliveryType: result.deliveryType,
       });
 
-      // Track Purchase conversion event (also non-blocking)
-      trackPurchase({
+      const purchaseParams = {
         value: result.finalTotal,
         currency: 'PYG',
         content_name: prev.quantity === 1
@@ -198,9 +205,33 @@ const Index = () => {
           : [`nocte-red-glasses-${prev.quantity}pack`],
         num_items: prev.quantity,
         order_id: prev.orderNumber,
-      });
+      };
 
-      return { ...prev, paymentIntentId: result.paymentIntentId, totalPrice: result.finalTotal };
+      // Build the Advanced Matching payload off the main thread and then
+      // fire Purchase. Non blocking, fire-and-forget. If hashing fails for
+      // any reason we still fire the event without user_data so we never
+      // lose a conversion signal.
+      void (async () => {
+        try {
+          const [em, ph, external_id] = await Promise.all([
+            hashEmail(effectiveEmail),
+            hashPhoneE164(prev.phone),
+            hashExternalId(prev.orderNumber),
+          ]);
+          trackPurchase(purchaseParams, {
+            em,
+            ph,
+            external_id,
+            fbc: getFbc(),
+            fbp: getFbp(),
+          }, prev.orderNumber);
+        } catch (err) {
+          console.error('[Meta] hash/track failed, firing without user_data', err);
+          trackPurchase(purchaseParams);
+        }
+      })();
+
+      return { ...prev, paymentIntentId: result.paymentIntentId, totalPrice: result.finalTotal, email: effectiveEmail };
     });
 
     // INSTANT UI update - show success immediately
@@ -228,6 +259,7 @@ const Index = () => {
     lat: undefined as number | undefined,
     long: undefined as number | undefined,
     ruc: undefined as string | undefined,
+    email: undefined as string | undefined,
   }), []);
 
   const handleStripeCheckoutClose = useCallback(() => {
@@ -242,7 +274,7 @@ const Index = () => {
     }
   }, [resetCheckoutData, exitIntentShown]);
 
-  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; isGeolocated: boolean; lat?: number; long?: number; ruc?: string }) => {
+  const handlePhoneSubmit = useCallback((data: { name: string; phone: string; location: string; address: string; isGeolocated: boolean; lat?: number; long?: number; ruc?: string; email?: string }) => {
     // Store personal info and location, then proceed to payment
     setCheckoutData((prev) => ({
       ...prev,
@@ -254,6 +286,7 @@ const Index = () => {
       lat: data.lat,
       long: data.long,
       ruc: data.ruc,
+      email: data.email,
     }));
 
     const bundle = BUNDLES[selectedBundleIndex];
@@ -322,7 +355,8 @@ const Index = () => {
     isGeolocated: checkoutData.isGeolocated,
     orderNumber: checkoutData.orderNumber,
     quantity: checkoutData.quantity,
-  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity]);
+    email: checkoutData.email,
+  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity, checkoutData.email]);
 
   // Scroll detection for header - uses ref to avoid re-renders on every scroll
   const lastScrollYRef = useRef(0);
