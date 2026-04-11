@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
@@ -13,6 +13,8 @@ import { isGranAsuncion } from '@/data/paraguayCities';
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
 const PRIORITY_SHIPPING_COST = 10000;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FALLBACK_EMAIL = 'noreply@nocte.studio';
 
 export interface PaymentResult {
   paymentIntentId: string;
@@ -20,6 +22,7 @@ export interface PaymentResult {
   isPaid: boolean;
   deliveryType: 'común' | 'premium';
   finalTotal: number;
+  email?: string;
 }
 
 interface StripeCheckoutModalProps {
@@ -38,6 +41,7 @@ interface StripeCheckoutModalProps {
     isGeolocated?: boolean;
     orderNumber: string;
     quantity: number;
+    email?: string;
   };
 }
 
@@ -58,6 +62,8 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
+  const [email, setEmail] = useState(customerData.email ?? '');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   // Determine if delivery is free (Gran Asunción only)
   const isFreeDelivery = isGranAsuncion(customerData.location);
@@ -75,6 +81,13 @@ const CheckoutForm = ({
     }
   }, [paymentMethod]);
 
+  // Prefill email from the factura upstream path if it arrives after mount
+  useEffect(() => {
+    if (customerData.email && !email) {
+      setEmail(customerData.email);
+    }
+  }, [customerData.email, email]);
+
   // AddPaymentInfo is tracked at submit time only (not on render)
   // to avoid sending Meta signals for users who abandon checkout
 
@@ -83,6 +96,27 @@ const CheckoutForm = ({
 
     setIsProcessing(true);
     setErrorMessage(null);
+    setEmailError(null);
+
+    // Email is only required for card payments where Stripe needs a receipt
+    // target. COD continues to be backward compatible and optional.
+    const emailTrimmed = email.trim();
+    if (paymentMethod === 'card') {
+      if (!emailTrimmed) {
+        setEmailError('Email requerido para el recibo del pago');
+        setIsProcessing(false);
+        return;
+      }
+      if (!EMAIL_REGEX.test(emailTrimmed) || emailTrimmed.length > 120) {
+        setEmailError('Email inválido');
+        setIsProcessing(false);
+        return;
+      }
+    }
+
+    // Value used downstream: real typed email for card, typed or factura for COD,
+    // undefined if the user chose COD and never typed anything.
+    const emailForPipeline: string | undefined = emailTrimmed || customerData.email || undefined;
 
     try {
       // Handle Cash on Delivery
@@ -110,6 +144,7 @@ const CheckoutForm = ({
           isPaid: false,
           deliveryType: isPriorityShipping ? 'premium' : 'común',
           finalTotal,
+          email: emailForPipeline,
         });
         return;
       }
@@ -132,10 +167,12 @@ const CheckoutForm = ({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment-success`,
+          receipt_email: emailTrimmed,
           payment_method_data: {
             billing_details: {
               name: customerData.name,
               phone: customerData.phone,
+              email: emailTrimmed,
               address: {
                 line1: customerData.address,
                 city: customerData.location,
@@ -166,13 +203,14 @@ const CheckoutForm = ({
           isPaid: true,
           deliveryType: isPriorityShipping ? 'premium' : 'común',
           finalTotal,
+          email: emailTrimmed,
         });
       } else {
         setErrorMessage(`Estado de pago inesperado: ${paymentIntent?.status}`);
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error('❌ [Payment] Exception during payment:', error);
+      console.error('[Payment] Exception during payment:', error);
       const message = error instanceof Error ? error.message : 'Error al procesar el pago';
       setErrorMessage(message);
       setIsProcessing(false);
@@ -302,10 +340,44 @@ const CheckoutForm = ({
 
       {/* Payment Element - Only show for card payments */}
       {paymentMethod === 'card' && (
-        <div ref={paymentElementRef} className="p-5 bg-secondary/20 rounded-lg border border-border/30">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide border-b border-border/30 pb-2 mb-4">
+        <div ref={paymentElementRef} className="p-5 bg-secondary/20 rounded-lg border border-border/30 space-y-4">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide border-b border-border/30 pb-2">
             Detalles de pago
           </h3>
+
+          {/* Email for payment receipt. Required by Stripe to send the receipt
+              and by Meta Advanced Matching to attribute the conversion. */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-foreground">
+              Email para el recibo
+            </label>
+            <div className="relative">
+              <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError(null);
+                }}
+                placeholder="nombre@email.com"
+                maxLength={120}
+                autoComplete="email"
+                inputMode="email"
+                aria-invalid={!!emailError}
+                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-primary'}`}
+              />
+            </div>
+            {emailError && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-400"
+              >
+                {emailError}
+              </motion.p>
+            )}
+          </div>
 
           <PaymentElement
             onReady={() => {
@@ -576,7 +648,11 @@ export const StripeCheckoutModal = ({
         amount,
         currency,
         paymentMethodId: 'pending',
-        email: 'customer@nocte.studio',
+        // Initial email: use the factura email if already captured upstream,
+        // otherwise a monitored fallback. The real customer email from the
+        // card form is re-applied at confirmPayment time via receipt_email
+        // and billing_details.email, which Stripe uses for the actual receipt.
+        email: customerData.email || FALLBACK_EMAIL,
         metadata: {
           orderNumber: customerData.orderNumber,
           customerName: customerData.name,
