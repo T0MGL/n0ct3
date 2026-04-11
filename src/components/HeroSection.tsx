@@ -261,7 +261,7 @@ export const HeroSection = ({
                     key={index}
                     className="flex-shrink-0 w-full snap-center"
                   >
-                    <div className="relative w-full aspect-square lg:aspect-[4/5] overflow-hidden rounded-lg">
+                    <div className="relative w-full aspect-[4/5] overflow-hidden rounded-lg">
                       <img
                         src={slide.image}
                         alt={slide.alt}
