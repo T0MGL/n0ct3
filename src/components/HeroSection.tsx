@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+import hero1Image from "@/assets/hero1.webp";
 import heroImage from "@/assets/nocte-hero-lifestyle.webp";
 import productImage3 from "@/assets/productimage3.webp";
 import productImage2 from "@/assets/productimage2.webp";
@@ -81,6 +82,7 @@ export const HeroSection = ({
   const [stockAnimating, setStockAnimating] = useState(false);
 
   const slides = [
+    { image: hero1Image, alt: "NOCTE - Lentes Rojos Anti-Luz Azul" },
     { image: productImage3, alt: "NOCTE Kit Completo - Lentes, Estuche y Bolsa" },
     { image: productImage2, alt: "NOCTE Estuche Abierto con Lentes" },
     { image: productImage1, alt: "NOCTE Estuche Premium" },
