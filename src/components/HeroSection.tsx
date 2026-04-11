@@ -242,7 +242,7 @@ export const HeroSection = ({
             </motion.div>
 
             {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full max-w-[80vw] sm:max-w-[500px] lg:max-w-[560px] mx-auto">
+            <div className="relative w-full sm:max-w-[500px] lg:max-w-[560px] mx-auto">
               <div
                 ref={carouselRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
