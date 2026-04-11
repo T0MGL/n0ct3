@@ -41,8 +41,15 @@ export const HeroSection = ({
   const [hasInteracted, setHasInteracted] = useState(false);
   const hasInteractedRef = useRef(false);
   const hasPeekedRef = useRef(false);
+  const [badgeCollapsed, setBadgeCollapsed] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { amount: 0.5 });
+
+  // Auto-collapse the authority badge once, 2s after mount — never expands again
+  useEffect(() => {
+    const timer = setTimeout(() => setBadgeCollapsed(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Live purchase notification
   const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
@@ -205,24 +212,24 @@ export const HeroSection = ({
 
           {/* Image Slider - Order 1 on mobile (shows first) */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-1 w-full lg:self-center lg:-mt-10"
           >
-            {/* Authority Badge */}
+            {/* Authority Badge — auto-collapses to the left after 2s, one-way */}
             <motion.div
               className="absolute top-4 left-2 md:top-2 md:left-4 z-20 bg-gradient-to-r from-primary to-red-600 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
               initial={false}
             >
               <AnimatePresence mode="wait" initial={false}>
-                {currentSlide === 0 ? (
+                {!badgeCollapsed ? (
                   <motion.p
                     key="full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, x: 0 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -40 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                     className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
                   >
                     #1 Lentes Anti-Luz Azul en Paraguay 🇵🇾
@@ -230,9 +237,9 @@ export const HeroSection = ({
                 ) : (
                   <motion.p
                     key="short"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                     className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
                   >
                     #1 🇵🇾
@@ -300,10 +307,9 @@ export const HeroSection = ({
 
           {/* Content - Order 2 on mobile */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-4 md:space-y-5 lg:space-y-6 order-2 w-full"
           >
             {/* Main Title */}
