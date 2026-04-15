@@ -8,14 +8,9 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const metaCapi = require('./meta-capi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Vercel / Railway run behind a proxy. Required for correct req.ip and
-// X-Forwarded-For parsing (used by express-rate-limit and CAPI IP forwarding).
-app.set('trust proxy', 1);
 
 // ==================== MIDDLEWARE ====================
 
@@ -37,18 +32,6 @@ const paymentLimiter = rateLimit({
   message: { error: 'Too many payment attempts, please try again later.' },
 });
 
-// CAPI events fire on every funnel step (PageView, ViewContent, ATC, IC, API, Purchase)
-// so the generic apiLimiter (100 per 15 min) would cap a normal session. Use a
-// dedicated per-minute window for CAPI while keeping the generic cap for everything else.
-const capiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'CAPI rate limit exceeded' },
-});
-
-app.use('/api/meta-capi', capiLimiter);
 app.use('/api/', apiLimiter);
 app.use('/api/create-payment-intent', paymentLimiter);
 app.use('/api/send-order', paymentLimiter);
@@ -914,10 +897,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   res.json({ received: true });
 });
 
-// ==================== META CONVERSIONS API ====================
-
-metaCapi.register(app);
-
 // ==================== ERROR HANDLING ====================
 
 // 404 handler
@@ -950,7 +929,6 @@ const server = app.listen(PORT, () => {
   console.log(`  ✓ Stripe Key:    ${process.env.STRIPE_SECRET_KEY ? '✓ Configured' : '✗ Missing'}`);
   console.log(`  ✓ n8n Webhook:   ${process.env.N8N_WEBHOOK_URL ? '✓ Configured' : '✗ Missing'}`);
   console.log(`  ✓ Ordefy:        ${process.env.ORDEFY_WEBHOOK_URL && process.env.ORDEFY_API_KEY ? '✓ Configured' : '✗ Missing'}`);
-  console.log(`  ✓ Meta CAPI:     ${process.env.META_CAPI_PIXEL_ID && process.env.META_CAPI_ACCESS_TOKEN ? '✓ Configured' : '✗ Missing (endpoint accepts, forward skipped)'}`);
   console.log('═══════════════════════════════════════════');
   console.log('');
   console.log('📝 Endpoints:');
@@ -959,7 +937,6 @@ const server = app.listen(PORT, () => {
   console.log('   POST /api/reverse-geocode');
   console.log('   POST /api/send-order');
   console.log('   POST /api/webhook');
-  console.log('   POST /api/meta-capi/event');
   console.log('   GET  /api/health');
   console.log('');
   console.log('💡 Tip: Use Ctrl+C to stop the server');
