@@ -43,6 +43,11 @@ const defaultBundle = BUNDLES[DEFAULT_BUNDLE_INDEX];
 const Index = () => {
   // Bundle selection state (visible on landing page)
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(DEFAULT_BUNDLE_INDEX);
+  // Tracks whether trackAddToCart has already fired for the current session so
+  // we never emit ATC twice (on pack switch + on comprar ahora). The Meta
+  // funnel needs ATC before IC, so if the user accepts the default pack
+  // without touching the selector, ATC fires on the buy click as a fallback.
+  const [atcFired, setAtcFired] = useState(false);
 
   const selectedBundle = BUNDLES[selectedBundleIndex];
   const selectedPrice = selectedBundle.price;
@@ -130,8 +135,27 @@ const Index = () => {
   }, [showPhoneForm, checkoutData.quantity, checkoutData.totalPrice]);
 
   const handleBundleSelect = useCallback((index: number) => {
+    // Only emit AddToCart when the user actually switches to a different pack.
+    // Re-clicking the already-selected pack is a no-op so we never flood Meta
+    // with redundant events, and Personal (the default) never fires ATC from
+    // here because it is pre-selected.
+    if (index !== selectedBundleIndex) {
+      const bundle = BUNDLES[index];
+      trackAddToCart({
+        content_name: bundle.quantity === 1
+          ? 'NOCTE® Red Light Blocking Glasses'
+          : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
+        content_ids: bundle.quantity === 1
+          ? ['nocte-red-glasses']
+          : [`nocte-red-glasses-${bundle.quantity}pack`],
+        num_items: bundle.quantity,
+        value: bundle.price,
+        currency: 'PYG',
+      });
+      setAtcFired(true);
+    }
     setSelectedBundleIndex(index);
-  }, []);
+  }, [selectedBundleIndex]);
 
   const handleBuyClick = useCallback(() => {
     const bundle = BUNDLES[selectedBundleIndex];
@@ -139,18 +163,23 @@ const Index = () => {
     setCheckoutInProgress(true);
     setCheckoutData((prev) => ({ ...prev, quantity: bundle.quantity, totalPrice: bundle.price }));
 
-    // Track AddToCart
-    trackAddToCart({
-      content_name: bundle.quantity === 1
-        ? 'NOCTE® Red Light Blocking Glasses'
-        : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
-      content_ids: bundle.quantity === 1
-        ? ['nocte-red-glasses']
-        : [`nocte-red-glasses-${bundle.quantity}pack`],
-      num_items: bundle.quantity,
-      value: bundle.price,
-      currency: 'PYG',
-    });
+    // Fallback ATC: fires only if the user never interacted with the pack
+    // selector, i.e. accepted the default Personal pack and went straight to
+    // checkout. Meta's funnel needs ATC before IC so we guarantee one fires.
+    if (!atcFired) {
+      trackAddToCart({
+        content_name: bundle.quantity === 1
+          ? 'NOCTE® Red Light Blocking Glasses'
+          : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
+        content_ids: bundle.quantity === 1
+          ? ['nocte-red-glasses']
+          : [`nocte-red-glasses-${bundle.quantity}pack`],
+        num_items: bundle.quantity,
+        value: bundle.price,
+        currency: 'PYG',
+      });
+      setAtcFired(true);
+    }
 
     // Go directly to phone form (skip QuantitySelector)
     setShowPhoneForm(true);
@@ -158,7 +187,7 @@ const Index = () => {
     // Preload Stripe checkout and exit intent modal
     import("@/components/checkout/StripeCheckoutModal");
     import("@/components/checkout/ExitIntentModal");
-  }, [selectedBundleIndex]);
+  }, [selectedBundleIndex, atcFired]);
 
   const handlePaymentSuccess = useCallback((result: {
     paymentIntentId: string;
