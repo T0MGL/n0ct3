@@ -35,7 +35,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; connect-src 'self' https://api.nocte.studio https://*.stripe.com https://www.facebook.com; img-src 'self' data: https://www.facebook.com; frame-src https://js.stripe.com; style-src 'self' 'unsafe-inline'; font-src 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; connect-src 'self' https://api.nocte.studio https://*.stripe.com https://*.facebook.com https://*.facebook.net https://*.fbsbx.com https://*.conversionsapigateway.com https://*.a.run.app; img-src 'self' data: https://*.facebook.com https://*.facebook.net; frame-src https://js.stripe.com https://*.facebook.com; style-src 'self' 'unsafe-inline'; font-src 'self';"
         }
       ]
     },
