@@ -93,8 +93,11 @@ export const hashEmail = async (email: string | undefined): Promise<string | und
  */
 export const hashPhoneE164 = async (phone: string | undefined): Promise<string | undefined> => {
   if (!phone) return undefined;
-  const digits = phone.replace(/\D/g, '');
+  let digits = phone.replace(/\D/g, '');
   if (!digits) return undefined;
+  if (digits.startsWith('0') && !digits.startsWith('00')) {
+    digits = '595' + digits.slice(1);
+  }
   return sha256Hex(digits);
 };
 
@@ -103,4 +106,36 @@ export const hashExternalId = async (value: string | undefined): Promise<string 
   const normalized = value.trim();
   if (!normalized) return undefined;
   return sha256Hex(normalized);
+};
+
+export const hashFirstName = async (fullName: string | undefined): Promise<string | undefined> => {
+  if (!fullName) return undefined;
+  const parts = fullName.trim().split(/\s+/);
+  const first = parts[0]?.toLowerCase().replace(/[^a-z\u00e0-\u00ff]/g, '');
+  if (!first) return undefined;
+  return sha256Hex(first);
+};
+
+export const hashLastName = async (fullName: string | undefined): Promise<string | undefined> => {
+  if (!fullName) return undefined;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length < 2) return undefined;
+  const last = parts.slice(1).join(' ').toLowerCase().replace(/[^a-z\u00e0-\u00ff\s]/g, '').trim();
+  if (!last) return undefined;
+  return sha256Hex(last);
+};
+
+export const hashCity = async (city: string | undefined): Promise<string | undefined> => {
+  if (!city) return undefined;
+  const normalized = city.trim().toLowerCase().replace(/[^a-z\u00e0-\u00ff]/g, '');
+  if (!normalized) return undefined;
+  return sha256Hex(normalized);
+};
+
+const PY_COUNTRY_HASH_CACHE: { value?: string } = {};
+export const hashCountry = async (): Promise<string | undefined> => {
+  if (PY_COUNTRY_HASH_CACHE.value) return PY_COUNTRY_HASH_CACHE.value;
+  const hash = await sha256Hex('py');
+  if (hash) PY_COUNTRY_HASH_CACHE.value = hash;
+  return hash;
 };

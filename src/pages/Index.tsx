@@ -11,7 +11,7 @@ import {
   trackAddToCart,
   trackPurchase,
 } from "@/lib/meta-pixel";
-import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164 } from "@/lib/meta-matching";
+import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
@@ -242,14 +242,22 @@ const Index = () => {
       // lose a conversion signal.
       void (async () => {
         try {
-          const [em, ph, external_id] = await Promise.all([
+          const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
             hashEmail(effectiveEmail),
             hashPhoneE164(prev.phone),
             hashExternalId(prev.orderNumber),
+            hashFirstName(prev.name),
+            hashLastName(prev.name),
+            hashCity(prev.location),
+            hashCountry(),
           ]);
           trackPurchase(purchaseParams, {
             em,
             ph,
+            fn,
+            ln,
+            ct,
+            country,
             external_id,
             fbc: getFbc(),
             fbp: getFbp(),

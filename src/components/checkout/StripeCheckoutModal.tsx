@@ -6,6 +6,7 @@ import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
+import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry } from '@/lib/meta-matching';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { isGranAsuncion } from '@/data/paraguayCities';
@@ -130,13 +131,33 @@ const CheckoutForm = ({
         // Simulate async processing
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Track AddPaymentInfo only at confirmed purchase (COD)
-        trackAddPaymentInfo({
-          value: finalTotal,
-          currency: currency.toUpperCase(),
-          num_items: customerData.quantity,
-          payment_type: 'Pago contra entrega',
-        });
+        void (async () => {
+          try {
+            const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
+              hashEmail(emailForPipeline),
+              hashPhoneE164(customerData.phone),
+              hashExternalId(customerData.orderNumber),
+              hashFirstName(customerData.name),
+              hashLastName(customerData.name),
+              hashCity(customerData.location),
+              hashCountry(),
+            ]);
+            trackAddPaymentInfo({
+              value: finalTotal,
+              currency: currency.toUpperCase(),
+              num_items: customerData.quantity,
+              payment_type: 'Pago contra entrega',
+              user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
+            });
+          } catch {
+            trackAddPaymentInfo({
+              value: finalTotal,
+              currency: currency.toUpperCase(),
+              num_items: customerData.quantity,
+              payment_type: 'Pago contra entrega',
+            });
+          }
+        })();
 
         onSuccess({
           paymentIntentId: codOrderId,
@@ -189,13 +210,33 @@ const CheckoutForm = ({
         setErrorMessage(error.message || 'Error al procesar el pago');
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Track AddPaymentInfo only at confirmed card purchase
-        trackAddPaymentInfo({
-          value: finalTotal,
-          currency: currency.toUpperCase(),
-          num_items: customerData.quantity,
-          payment_type: 'Tarjeta',
-        });
+        void (async () => {
+          try {
+            const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
+              hashEmail(emailTrimmed),
+              hashPhoneE164(customerData.phone),
+              hashExternalId(customerData.orderNumber),
+              hashFirstName(customerData.name),
+              hashLastName(customerData.name),
+              hashCity(customerData.location),
+              hashCountry(),
+            ]);
+            trackAddPaymentInfo({
+              value: finalTotal,
+              currency: currency.toUpperCase(),
+              num_items: customerData.quantity,
+              payment_type: 'Tarjeta',
+              user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
+            });
+          } catch {
+            trackAddPaymentInfo({
+              value: finalTotal,
+              currency: currency.toUpperCase(),
+              num_items: customerData.quantity,
+              payment_type: 'Tarjeta',
+            });
+          }
+        })();
 
         onSuccess({
           paymentIntentId: paymentIntent.id,
