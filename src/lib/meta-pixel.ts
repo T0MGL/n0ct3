@@ -11,7 +11,20 @@
  * (re-init on a second call corrupts the pixel, kills downstream events).
  * Helpers in meta-matching.ts produce all values in the format Meta expects.
  * Plaintext PII is never sent.
+ *
+ * Server-side mirroring (CAPI): every tracker also fires sendCapiEvent with
+ * the same event_id. Meta dedupes on (pixel_id, event_name, event_id) within
+ * 48h, so both signals count as one conversion while CAPI provides
+ * server-side reliability (ad blockers, iOS14.5+, cookie loss).
  */
+
+import {
+  sendCapiEvent,
+  newEventId,
+  nowUnixSeconds,
+  type CapiCustomData,
+  type CapiEventPayload,
+} from './meta-capi';
 
 declare global {
   interface Window {
@@ -112,23 +125,41 @@ const NOCTE_UNIT_PRICE = 229000;
 const NOCTE_CURRENCY = 'PYG';
 
 /**
+ * Fire CAPI mirror alongside the client pixel. Shares the same event_id so
+ * Meta deduplicates in its 48h window. Fire-and-forget, never throws.
+ */
+const mirrorToCapi = (
+  event_name: CapiEventPayload['event_name'],
+  event_id: string,
+  user_data: MetaUserData | undefined,
+  custom_data: CapiCustomData | undefined
+): void => {
+  if (typeof window === 'undefined') return;
+  sendCapiEvent({
+    event_name,
+    event_id,
+    event_time: nowUnixSeconds(),
+    event_source_url: window.location.href,
+    user_data,
+    custom_data,
+  });
+};
+
+/**
  * Track PageView event
  * Call this on route changes or initial page load
  */
 export const trackPageView = (user_data?: MetaUserData, event_id?: string): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const eventId = event_id ?? newEventId();
   const userData = buildUserDataPayload(user_data);
   const payload: Record<string, unknown> = {};
   if (userData) payload.user_data = userData;
 
-  const options = event_id ? { eventID: event_id } : undefined;
-  if (userData || event_id) {
-    window.fbq('track', 'PageView', payload, options);
-  } else {
-    window.fbq('track', 'PageView');
-  }
-  console.log('Meta Pixel: PageView tracked', { hasUserData: Boolean(userData), eventID: event_id });
+  window.fbq('track', 'PageView', payload, { eventID: eventId });
+  mirrorToCapi('PageView', eventId, user_data, undefined);
+  console.log('Meta Pixel: PageView tracked', { hasUserData: Boolean(userData), eventID: eventId });
 };
 
 /**
@@ -147,8 +178,9 @@ export const trackViewContent = (params?: {
 }): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const eventId = params?.event_id ?? newEventId();
   const userData = buildUserDataPayload(params?.user_data);
-  const payload: Record<string, unknown> = {
+  const customData: CapiCustomData = {
     content_name: params?.content_name ?? NOCTE_CONTENT_NAME,
     content_category: params?.content_category ?? NOCTE_CONTENT_CATEGORY,
     content_ids: params?.content_ids ?? [NOCTE_CONTENT_ID],
@@ -156,11 +188,12 @@ export const trackViewContent = (params?: {
     value: params?.value ?? NOCTE_UNIT_PRICE,
     currency: params?.currency ?? NOCTE_CURRENCY,
   };
+  const payload: Record<string, unknown> = { ...customData };
   if (userData) payload.user_data = userData;
 
-  const options = params?.event_id ? { eventID: params.event_id } : undefined;
-  window.fbq('track', 'ViewContent', payload, options);
-  console.log('Meta Pixel: ViewContent tracked', { ...payload, eventID: params?.event_id });
+  window.fbq('track', 'ViewContent', payload, { eventID: eventId });
+  mirrorToCapi('ViewContent', eventId, params?.user_data, customData);
+  console.log('Meta Pixel: ViewContent tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -179,8 +212,9 @@ export const trackInitiateCheckout = (params?: {
 }): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const eventId = params?.event_id ?? newEventId();
   const userData = buildUserDataPayload(params?.user_data);
-  const payload: Record<string, unknown> = {
+  const customData: CapiCustomData = {
     content_name: params?.content_name ?? NOCTE_CONTENT_NAME,
     content_category: params?.content_category ?? NOCTE_CONTENT_CATEGORY,
     content_ids: params?.content_ids ?? [NOCTE_CONTENT_ID],
@@ -189,11 +223,12 @@ export const trackInitiateCheckout = (params?: {
     value: params?.value ?? NOCTE_UNIT_PRICE,
     currency: params?.currency ?? NOCTE_CURRENCY,
   };
+  const payload: Record<string, unknown> = { ...customData };
   if (userData) payload.user_data = userData;
 
-  const options = params?.event_id ? { eventID: params.event_id } : undefined;
-  window.fbq('track', 'InitiateCheckout', payload, options);
-  console.log('Meta Pixel: InitiateCheckout tracked', { ...payload, eventID: params?.event_id });
+  window.fbq('track', 'InitiateCheckout', payload, { eventID: eventId });
+  mirrorToCapi('InitiateCheckout', eventId, params?.user_data, customData);
+  console.log('Meta Pixel: InitiateCheckout tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -211,8 +246,9 @@ export const trackAddToCart = (params: {
 }): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const eventId = params.event_id ?? newEventId();
   const userData = buildUserDataPayload(params.user_data);
-  const payload: Record<string, unknown> = {
+  const customData: CapiCustomData = {
     content_name: params.content_name,
     content_category: NOCTE_CONTENT_CATEGORY,
     content_ids: params.content_ids,
@@ -221,11 +257,12 @@ export const trackAddToCart = (params: {
     value: params.value,
     currency: params.currency,
   };
+  const payload: Record<string, unknown> = { ...customData };
   if (userData) payload.user_data = userData;
 
-  const options = params.event_id ? { eventID: params.event_id } : undefined;
-  window.fbq('track', 'AddToCart', payload, options);
-  console.log('Meta Pixel: AddToCart tracked', { ...payload, eventID: params.event_id });
+  window.fbq('track', 'AddToCart', payload, { eventID: eventId });
+  mirrorToCapi('AddToCart', eventId, params.user_data, customData);
+  console.log('Meta Pixel: AddToCart tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -244,8 +281,9 @@ export const trackAddPaymentInfo = (params: {
 }): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const eventId = params.event_id ?? newEventId();
   const userData = buildUserDataPayload(params.user_data);
-  const payload: Record<string, unknown> = {
+  const customData: CapiCustomData = {
     content_category: params.content_category ?? NOCTE_CONTENT_CATEGORY,
     content_ids: params.content_ids ?? [NOCTE_CONTENT_ID],
     num_items: params.num_items ?? 1,
@@ -253,11 +291,12 @@ export const trackAddPaymentInfo = (params: {
     currency: params.currency,
     ...(params.payment_type && { payment_type: params.payment_type }),
   };
+  const payload: Record<string, unknown> = { ...customData };
   if (userData) payload.user_data = userData;
 
-  const options = params.event_id ? { eventID: params.event_id } : undefined;
-  window.fbq('track', 'AddPaymentInfo', payload, options);
-  console.log('Meta Pixel: AddPaymentInfo tracked', { ...payload, eventID: params.event_id });
+  window.fbq('track', 'AddPaymentInfo', payload, { eventID: eventId });
+  mirrorToCapi('AddPaymentInfo', eventId, params.user_data, customData);
+  console.log('Meta Pixel: AddPaymentInfo tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -283,8 +322,9 @@ export const trackPurchase = (
 ): void => {
   if (typeof window === 'undefined' || !window.fbq) return;
 
+  const finalEventId = eventId ?? newEventId();
   const user_data = buildUserDataPayload(userData);
-  const payload: Record<string, unknown> = {
+  const customData: CapiCustomData = {
     value: params.value,
     currency: params.currency,
     content_name: params.content_name,
@@ -294,15 +334,16 @@ export const trackPurchase = (
     num_items: params.num_items,
     ...(params.order_id && { order_id: params.order_id }),
   };
+  const payload: Record<string, unknown> = { ...customData };
   if (user_data) payload.user_data = user_data;
 
-  const options = eventId ? { eventID: eventId } : undefined;
-  window.fbq('track', 'Purchase', payload, options);
+  window.fbq('track', 'Purchase', payload, { eventID: finalEventId });
+  mirrorToCapi('Purchase', finalEventId, userData, customData);
 
   console.log('Meta Pixel: Purchase tracked (CONVERSION)', {
     payloadKeys: Object.keys(payload),
     matchedKeys: user_data ? Object.keys(user_data) : [],
-    eventID: eventId,
+    eventID: finalEventId,
   });
 };
 
