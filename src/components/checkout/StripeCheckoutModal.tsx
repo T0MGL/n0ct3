@@ -379,46 +379,46 @@ const CheckoutForm = ({
         </div>
       </div>
 
+      {/* Email field - shown for all payment methods. Required for card
+          (Stripe receipt), optional for COD (improves Meta EMQ matching). */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-foreground">
+          {paymentMethod === 'card' ? 'Email para el recibo' : 'Email (opcional)'}
+        </label>
+        <div className="relative">
+          <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+            }}
+            placeholder="nombre@email.com"
+            maxLength={120}
+            autoComplete="email"
+            inputMode="email"
+            aria-invalid={!!emailError}
+            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-primary'}`}
+          />
+        </div>
+        {emailError && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-red-400"
+          >
+            {emailError}
+          </motion.p>
+        )}
+      </div>
+
       {/* Payment Element - Only show for card payments */}
       {paymentMethod === 'card' && (
         <div ref={paymentElementRef} className="p-5 bg-secondary/20 rounded-lg border border-border/30 space-y-4">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide border-b border-border/30 pb-2">
             Detalles de pago
           </h3>
-
-          {/* Email for payment receipt. Required by Stripe to send the receipt
-              and by Meta Advanced Matching to attribute the conversion. */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-foreground">
-              Email para el recibo
-            </label>
-            <div className="relative">
-              <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError(null);
-                }}
-                placeholder="nombre@email.com"
-                maxLength={120}
-                autoComplete="email"
-                inputMode="email"
-                aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-primary'}`}
-              />
-            </div>
-            {emailError && (
-              <motion.p
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-red-400"
-              >
-                {emailError}
-              </motion.p>
-            )}
-          </div>
 
           <PaymentElement
             onReady={() => {
