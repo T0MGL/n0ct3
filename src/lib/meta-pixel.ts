@@ -25,6 +25,7 @@ import {
   type CapiCustomData,
   type CapiEventPayload,
 } from './meta-capi';
+import { getFbp, getFbc } from './meta-matching';
 
 declare global {
   interface Window {
@@ -54,6 +55,31 @@ export interface MetaUserData {
   fbc?: string;
   fbp?: string;
 }
+
+/**
+ * Returns fbp/fbc cookie values as a minimal MetaUserData object.
+ * Used to enrich early-funnel events that fire before any form submission.
+ */
+const getCookieUserData = (): MetaUserData | undefined => {
+  const fbp = getFbp();
+  const fbc = getFbc();
+  if (!fbp && !fbc) return undefined;
+  const data: MetaUserData = {};
+  if (fbp) data.fbp = fbp;
+  if (fbc) data.fbc = fbc;
+  return data;
+};
+
+/**
+ * Merges caller-provided user_data with cookie identifiers (fbp/fbc).
+ * Caller values take precedence so Purchase (which already sends full
+ * user_data including fbp/fbc) is never overwritten.
+ */
+const enrichUserData = (user_data?: MetaUserData): MetaUserData | undefined => {
+  const cookies = getCookieUserData();
+  if (!cookies && !user_data) return undefined;
+  return { ...cookies, ...user_data };
+};
 
 const buildUserDataPayload = (user_data?: MetaUserData): Record<string, string> | undefined => {
   if (!user_data) return undefined;
@@ -179,7 +205,8 @@ export const trackViewContent = (params?: {
   if (typeof window === 'undefined' || !window.fbq) return;
 
   const eventId = params?.event_id ?? newEventId();
-  const userData = buildUserDataPayload(params?.user_data);
+  const enriched = enrichUserData(params?.user_data);
+  const userData = buildUserDataPayload(enriched);
   const customData: CapiCustomData = {
     content_name: params?.content_name ?? NOCTE_CONTENT_NAME,
     content_category: params?.content_category ?? NOCTE_CONTENT_CATEGORY,
@@ -192,7 +219,7 @@ export const trackViewContent = (params?: {
   if (userData) payload.user_data = userData;
 
   window.fbq('track', 'ViewContent', payload, { eventID: eventId });
-  mirrorToCapi('ViewContent', eventId, params?.user_data, customData);
+  mirrorToCapi('ViewContent', eventId, enriched, customData);
   console.log('Meta Pixel: ViewContent tracked', { ...payload, eventID: eventId });
 };
 
@@ -213,7 +240,8 @@ export const trackInitiateCheckout = (params?: {
   if (typeof window === 'undefined' || !window.fbq) return;
 
   const eventId = params?.event_id ?? newEventId();
-  const userData = buildUserDataPayload(params?.user_data);
+  const enriched = enrichUserData(params?.user_data);
+  const userData = buildUserDataPayload(enriched);
   const customData: CapiCustomData = {
     content_name: params?.content_name ?? NOCTE_CONTENT_NAME,
     content_category: params?.content_category ?? NOCTE_CONTENT_CATEGORY,
@@ -227,7 +255,7 @@ export const trackInitiateCheckout = (params?: {
   if (userData) payload.user_data = userData;
 
   window.fbq('track', 'InitiateCheckout', payload, { eventID: eventId });
-  mirrorToCapi('InitiateCheckout', eventId, params?.user_data, customData);
+  mirrorToCapi('InitiateCheckout', eventId, enriched, customData);
   console.log('Meta Pixel: InitiateCheckout tracked', { ...payload, eventID: eventId });
 };
 
@@ -247,7 +275,8 @@ export const trackAddToCart = (params: {
   if (typeof window === 'undefined' || !window.fbq) return;
 
   const eventId = params.event_id ?? newEventId();
-  const userData = buildUserDataPayload(params.user_data);
+  const enriched = enrichUserData(params.user_data);
+  const userData = buildUserDataPayload(enriched);
   const customData: CapiCustomData = {
     content_name: params.content_name,
     content_category: NOCTE_CONTENT_CATEGORY,
@@ -261,7 +290,7 @@ export const trackAddToCart = (params: {
   if (userData) payload.user_data = userData;
 
   window.fbq('track', 'AddToCart', payload, { eventID: eventId });
-  mirrorToCapi('AddToCart', eventId, params.user_data, customData);
+  mirrorToCapi('AddToCart', eventId, enriched, customData);
   console.log('Meta Pixel: AddToCart tracked', { ...payload, eventID: eventId });
 };
 
