@@ -159,7 +159,7 @@ const forwardToMeta = async (event) => {
   if (isString(testCode)) body.test_event_code = testCode;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 4000);
+  const timer = setTimeout(() => controller.abort(), 8000);
 
   try {
     const res = await fetch(url, {
@@ -190,12 +190,10 @@ const forwardToMeta = async (event) => {
 
 const register = (app) => {
   app.post('/api/meta-capi/event', async (req, res) => {
-    res.status(202).json({ accepted: true });
-
     const validation = validateEvent(req.body);
     if (validation.error) {
       console.warn('[capi] rejected event', { reason: validation.error });
-      return;
+      return res.status(202).json({ accepted: true });
     }
 
     const event = buildMetaEvent(req.body, req);
@@ -206,25 +204,23 @@ const register = (app) => {
         event_name: event.event_name,
         event_id: event.event_id,
       });
-      return;
-    }
-
-    if (!outcome.ok) {
+    } else if (!outcome.ok) {
       console.error('[capi] meta rejected event', {
         event_name: event.event_name,
         event_id: event.event_id,
         status: outcome.status,
         error: outcome.error,
       });
-      return;
+    } else {
+      console.log('[capi] forwarded', {
+        event_name: event.event_name,
+        event_id: event.event_id,
+        fbtrace_id: outcome.result?.fbtrace_id,
+        events_received: outcome.result?.events_received,
+      });
     }
 
-    console.log('[capi] forwarded', {
-      event_name: event.event_name,
-      event_id: event.event_id,
-      fbtrace_id: outcome.result?.fbtrace_id,
-      events_received: outcome.result?.events_received,
-    });
+    return res.status(202).json({ accepted: true });
   });
 };
 
