@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
 import TerminosCondiciones from "./pages/TerminosCondiciones";
+import { RouteTracker } from "@/components/RouteTracker";
 import { useDisableDevTools } from "@/hooks/useDisableDevTools";
 
 // Optimized QueryClient configuration for better performance
@@ -34,6 +35,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <RouteTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
