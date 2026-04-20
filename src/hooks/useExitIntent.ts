@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface UseExitIntentOptions {
   onExitIntent: () => void;
@@ -19,6 +19,12 @@ export const useExitIntent = ({
   onExitIntent,
   enabled = true,
 }: UseExitIntentOptions) => {
+  const callbackRef = useRef(onExitIntent);
+
+  useEffect(() => {
+    callbackRef.current = onExitIntent;
+  }, [onExitIntent]);
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -31,7 +37,7 @@ export const useExitIntent = ({
       if (didTrigger) return;
       didTrigger = true;
       window.history.pushState({ __exitIntent: marker }, "");
-      onExitIntent();
+      callbackRef.current();
     };
 
     window.addEventListener("popstate", onPop);
@@ -42,5 +48,5 @@ export const useExitIntent = ({
         window.history.back();
       }
     };
-  }, [enabled, onExitIntent]);
+  }, [enabled]);
 };

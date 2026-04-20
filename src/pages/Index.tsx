@@ -79,12 +79,11 @@ const Index = () => {
     email: undefined as string | undefined,
   });
 
-  // Detect exit intent during checkout — show WhatsApp downsell
-  const isInCheckout = checkoutInProgress || showPhoneForm || showStripeCheckout;
+  // Detect exit intent during Stripe checkout only, show WhatsApp downsell
+  const isInCheckout = showStripeCheckout;
   useExitIntent({
     onExitIntent: () => {
       if (isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent) {
-        setShowPhoneForm(false);
         setShowStripeCheckout(false);
         setShowExitIntent(true);
         setExitIntentShown(true);
