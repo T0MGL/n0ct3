@@ -37,6 +37,27 @@ const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
 const StripeCheckoutModal = lazy(() => import("@/components/checkout/StripeCheckoutModal"));
 const ExitIntentModal = lazy(() => import("@/components/checkout/ExitIntentModal"));
 
+// Preload checkout chunks during idle time so the first buy click is instant.
+// The hero CTA itself lives in the main bundle (HeroSection is a synchronous
+// import), so the button renders as soon as React mounts. This prewarms the
+// modal bundles in the background without blocking initial paint.
+const preloadCheckoutChunks = () => {
+  void import("@/components/checkout/PhoneNameForm");
+  void import("@/components/checkout/StripeCheckoutModal");
+};
+
+if (typeof window !== "undefined") {
+  const schedule = (cb: () => void) => {
+    const ric = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+    if (typeof ric === "function") {
+      ric(cb);
+    } else {
+      setTimeout(cb, 1500);
+    }
+  };
+  schedule(preloadCheckoutChunks);
+}
+
 
 const defaultBundle = BUNDLES[DEFAULT_BUNDLE_INDEX];
 
@@ -448,6 +469,9 @@ const Index = () => {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
             <button
               onClick={handleBuyClick}
+              onMouseEnter={preloadCheckoutChunks}
+              onFocus={preloadCheckoutChunks}
+              onTouchStart={preloadCheckoutChunks}
               className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight"
             >
               Comprar Ahora
