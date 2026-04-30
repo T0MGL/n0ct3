@@ -41,5 +41,5 @@ export const BUNDLES: readonly Bundle[] = [
   },
 ];
 
-export const DEFAULT_BUNDLE_INDEX = 0; // Personal (least price shock)
+export const DEFAULT_BUNDLE_INDEX = 1; // Pack Pareja (highest AOV, most sold)
 export const ORIGINAL_UNIT_PRICE = 279000; // Crossed-out reference price per unit
