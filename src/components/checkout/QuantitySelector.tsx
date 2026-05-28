@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { XMarkIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
-import { BUNDLES } from "@/lib/bundles";
+import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 interface QuantitySelectorProps {
@@ -12,7 +12,7 @@ interface QuantitySelectorProps {
 }
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
-  const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
+  const [selectedBundleIndex, setSelectedBundleIndex] = useState(DEFAULT_BUNDLE_INDEX);
   const [showWhatsAppOffer, setShowWhatsAppOffer] = useState(false);
   const [hasShownOffer, setHasShownOffer] = useState(false);
 
