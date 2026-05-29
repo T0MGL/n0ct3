@@ -2,16 +2,16 @@ import { motion } from "framer-motion";
 import { CheckIcon, MinusIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
-// Honest comparison vs the closest local competitor and generic blue-light
-// glasses. Specific competitor numbers are framed as "aprox" because we do
-// not control their public claims and they change. NOCTE column reflects the
-// product as currently sold (3 variants, 30 day guarantee, 229k starting).
+// Honest comparison vs other blue-light brands and generic glasses. Competitor
+// numbers are framed as "aprox" because we do not control their public claims
+// and they change. NOCTE column reflects the product as currently sold
+// (3 variants, 30 day guarantee, 229k starting).
 
 type CellTone = "good" | "weak" | "neutral";
 
 interface ComparisonRow {
   feature: string;
-  somnix: { text: string; tone: CellTone };
+  competidor: { text: string; tone: CellTone };
   generico: { text: string; tone: CellTone };
   nocte: { text: string; tone: CellTone };
   highlight?: boolean;
@@ -20,53 +20,47 @@ interface ComparisonRow {
 const ROWS: ReadonlyArray<ComparisonRow> = [
   {
     feature: "Bloqueo luz azul (lente nocturno)",
-    somnix: { text: "Aprox 99%", tone: "good" },
+    competidor: { text: "Aprox 99%", tone: "good" },
     generico: { text: "20 a 30%", tone: "weak" },
     nocte: { text: "99%", tone: "good" },
   },
   {
     feature: "Variantes por momento del día",
-    somnix: { text: "1 sola", tone: "weak" },
+    competidor: { text: "1 sola", tone: "weak" },
     generico: { text: "No", tone: "weak" },
     nocte: { text: "3 (Día, Tarde, Noche)", tone: "good" },
     highlight: true,
   },
   {
     feature: "Garantía devolución",
-    somnix: { text: "7 días", tone: "neutral" },
+    competidor: { text: "7 días", tone: "neutral" },
     generico: { text: "0 días", tone: "weak" },
     nocte: { text: "30 días", tone: "good" },
     highlight: true,
   },
   {
     feature: "Envío Asunción y Central",
-    somnix: { text: "Variable", tone: "neutral" },
+    competidor: { text: "Variable", tone: "neutral" },
     generico: { text: "Pago", tone: "weak" },
     nocte: { text: "Gratis 24 a 48hs", tone: "good" },
   },
   {
     feature: "Estuche y accesorios incluidos",
-    somnix: { text: "Basico", tone: "neutral" },
+    competidor: { text: "Básico", tone: "neutral" },
     generico: { text: "No", tone: "weak" },
     nocte: { text: "Estuche, paño y bolsa", tone: "good" },
     highlight: true,
   },
   {
     feature: "Modos día, tarde, noche en mismo pack",
-    somnix: { text: "No", tone: "weak" },
+    competidor: { text: "No", tone: "weak" },
     generico: { text: "No", tone: "weak" },
     nocte: { text: "Sí, mezclás libre", tone: "good" },
     highlight: true,
   },
   {
-    feature: "Certificación del marco",
-    somnix: { text: "No publicado", tone: "neutral" },
-    generico: { text: "Genérico", tone: "weak" },
-    nocte: { text: "Marco TR90", tone: "good" },
-  },
-  {
     feature: "Precio desde",
-    somnix: { text: "197.000 Gs", tone: "neutral" },
+    competidor: { text: "Aprox 197.000 Gs", tone: "neutral" },
     generico: { text: "180k a 250k", tone: "neutral" },
     nocte: { text: "229.000 Gs", tone: "neutral" },
   },
@@ -99,12 +93,12 @@ export const ComparisonTable = () => {
             id="comparison-title"
             className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[1.05] tracking-tighter text-foreground"
           >
-            Somnix es <span className="text-muted-foreground/70">más barato.</span>
+            Otras marcas son <span className="text-muted-foreground/70">más baratas.</span>
             <br />
             NOCTE es <span className="text-variant-active">más completo.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Somnix arranca en 197.000 Gs y está bien si querés lo más básico. Si dormís mal en serio, esto es lo que cambia con NOCTE: tres lentes para tres momentos del día, treinta días de garantía y respaldo científico real.
+            Hay opciones más baratas y están bien si querés lo más básico. Si dormís mal en serio, esto es lo que cambia con NOCTE: tres lentes para tres momentos del día, treinta días de garantía y respaldo científico real.
           </p>
         </motion.header>
 
@@ -117,7 +111,7 @@ export const ComparisonTable = () => {
         >
           <div
             role="table"
-            aria-label="Comparación entre NOCTE, Somnix y lentes genéricos"
+            aria-label="Comparación entre NOCTE, otras marcas y lentes genéricos"
             className="w-full text-sm"
           >
             <div role="rowgroup">
@@ -131,7 +125,7 @@ export const ComparisonTable = () => {
                   scope="col"
                   className="bg-secondary/20 px-3 py-5 text-center"
                 >
-                  <p className="text-sm font-bold text-foreground/70">Somnix</p>
+                  <p className="text-sm font-bold text-foreground/70">Otras marcas</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Competencia
                   </p>
@@ -179,7 +173,7 @@ export const ComparisonTable = () => {
                   >
                     {row.feature}
                   </div>
-                  <ComparisonCell value={row.somnix} />
+                  <ComparisonCell value={row.competidor} />
                   <ComparisonCell value={row.generico} />
                   <ComparisonCell value={row.nocte} highlight nocte />
                 </motion.div>

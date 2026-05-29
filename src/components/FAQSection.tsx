@@ -27,16 +27,16 @@ const FAQS: ReadonlyArray<FaqEntry> = [
     a: "Tu cerebro se adapta en 5 a 10 minutos. Pasado ese tiempo ves todo normal porque tu cerebro reinterpreta los colores. El amarillo casi no distorsiona, perfecto si te molesta el tinte fuerte.",
   },
   {
-    q: "¿Por qué elegir NOCTE si Somnix es más barato?",
-    a: "Honestidad primero: Somnix arranca en 197.000 Gs y NOCTE en 229.000 Gs. Pagás un poco más, sí. ¿Qué te llevás a cambio? Tres lentes para tres momentos del día (Somnix vende solo el rojo), 30 días de garantía (vs. 7), respaldo científico citado y estuche premium completo. Si querés lo más básico, Somnix está bien. Si dormís mal en serio y querés un sistema completo, NOCTE.",
+    q: "¿Por qué elegir NOCTE si hay opciones más baratas?",
+    a: "Honestidad primero: hay marcas más baratas y NOCTE arranca en 229.000 Gs. Pagás un poco más, sí. ¿Qué te llevás a cambio? Tres lentes para tres momentos del día (la mayoría vende solo el rojo), 30 días de garantía, respaldo científico citado y estuche premium completo. Si querés lo más básico, otra marca está bien. Si dormís mal en serio y querés un sistema completo, NOCTE.",
   },
   {
     q: "¿Cuánto tarda el envío en Paraguay?",
     a: "Asunción y Departamento Central: gratis, 24 a 48 horas. Resto del país: tarifa estándar según zona, 2 a 4 días hábiles. Tracking incluido en todos los pedidos.",
   },
   {
-    q: "¿Cómo pago? ¿Puedo en cuotas?",
-    a: "Tarjeta de crédito o débito (cuotas disponibles según banco), transferencia bancaria, o contraentrega en Asunción y Central. Pago seguro vía Stripe.",
+    q: "¿Cómo pago?",
+    a: "Tarjeta de crédito o débito, transferencia bancaria, o contraentrega en Asunción y Central. Pago seguro vía Stripe.",
   },
   {
     q: "¿Sirven sobre lentes recetados?",
