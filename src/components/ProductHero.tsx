@@ -5,14 +5,8 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  type PanInfo,
-} from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { VARIANT_IDS, VARIANTS, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
@@ -81,11 +75,6 @@ const SHARED_SLIDES: readonly SharedSlide[] = [
 // bounds and aria labels all derive from this, never a hardcoded literal.
 const SLIDE_COUNT = SHARED_SLIDES.length + 1;
 
-// Release thresholds for committing a swipe. Either a clear drag distance or a
-// quick flick will advance the slide; anything softer snaps back.
-const DRAG_OFFSET_THRESHOLD = 60;
-const DRAG_VELOCITY_THRESHOLD = 400;
-
 const IMAGE_TRANSITION = {
   duration: 0.28,
   ease: [0.16, 1, 0.3, 1] as const,
@@ -94,13 +83,6 @@ const IMAGE_TRANSITION = {
 const HALO_TRANSITION = {
   duration: 0.6,
   ease: [0.16, 1, 0.3, 1] as const,
-};
-
-const TRACK_TRANSITION = {
-  type: "spring" as const,
-  stiffness: 320,
-  damping: 36,
-  mass: 0.7,
 };
 
 export const ProductHero = ({
@@ -114,55 +96,68 @@ export const ProductHero = ({
   const source = VARIANT_SOURCES[activeVariant];
 
   const [slide, setSlide] = useState(0);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const dragX = useMotionValue(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Native horizontal scroll-snap owns the motion. The browser handles the
+  // touch physics, momentum and snapping, so there is no drag motion value
+  // fighting an animated transform: the swipe is smooth and the slide commits
+  // on the platform's own snap threshold. We only observe which slide is
+  // centered to light up the matching dot.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const index = slideRefs.current.indexOf(
+            entry.target as HTMLDivElement,
+          );
+          if (index !== -1) setSlide(index);
+        }
+      },
+      { root: track, threshold: 0.6 },
+    );
+
+    for (const node of slideRefs.current) {
+      if (node) observer.observe(node);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  // Scroll the track to a slide. Smooth for taps and keyboard; the caller asks
+  // for an instant jump when the lens color changes so the reset to slide 0 is
+  // not a visible scroll animation.
+  const scrollToSlide = useCallback(
+    (next: number, behavior: ScrollBehavior) => {
+      const track = trackRef.current;
+      if (!track) return;
+      const clamped = Math.max(0, Math.min(SLIDE_COUNT - 1, next));
+      track.scrollTo({ left: clamped * track.clientWidth, behavior });
+    },
+    [],
+  );
 
   // Changing the lens color resets the gallery to slide 0 so the freshly chosen
   // color photo is what the customer sees, not the (unchanged) science slide.
   useEffect(() => {
     setSlide(0);
-  }, [activeVariant]);
-
-  // Track the viewport width so the swipe drag distance maps to real pixels and
-  // the slide offset stays exact on resize.
-  useEffect(() => {
-    const node = viewportRef.current;
-    if (!node) return;
-    const measure = () => setViewportWidth(node.clientWidth);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  const goTo = useCallback((next: number) => {
-    setSlide(Math.max(0, Math.min(SLIDE_COUNT - 1, next)));
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (_event: ReactPointerEvent | PointerEvent, info: PanInfo) => {
-      const movedFarEnough = Math.abs(info.offset.x) > DRAG_OFFSET_THRESHOLD;
-      const flickedHard = Math.abs(info.velocity.x) > DRAG_VELOCITY_THRESHOLD;
-      if (movedFarEnough || flickedHard) {
-        goTo(slide + (info.offset.x < 0 ? 1 : -1));
-      }
-      dragX.set(0);
-    },
-    [slide, goTo, dragX],
-  );
+    scrollToSlide(0, "auto");
+  }, [activeVariant, scrollToSlide]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        goTo(slide + 1);
+        scrollToSlide(slide + 1, "smooth");
       } else if (event.key === "ArrowLeft") {
         event.preventDefault();
-        goTo(slide - 1);
+        scrollToSlide(slide - 1, "smooth");
       }
     },
-    [slide, goTo],
+    [slide, scrollToSlide],
   );
 
   const altText = useMemo(
@@ -192,35 +187,31 @@ export const ProductHero = ({
         />
 
         {/* Swipeable image stage. Slide 0 is the active color photo, followed by
-            the shared slides (science, lifestyle, and social proof once added).
-            Drag is locked to the X axis with touch-action pan-y, so vertical page
-            scroll stays intact. */}
-        <div
-          ref={viewportRef}
-          role="group"
-          aria-roledescription="carousel"
-          aria-label="Galeria del producto"
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
-          className="relative aspect-square w-full select-none overflow-hidden rounded-2xl bg-black/40 ring-1 ring-white/5 outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-        >
-          <motion.div
-            className="flex h-full w-full"
-            style={{ x: dragX, touchAction: "pan-y" }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.18}
-            dragMomentum={false}
-            onDragEnd={handleDragEnd}
-            animate={{ x: -slide * viewportWidth }}
-            transition={TRACK_TRANSITION}
+            the shared slides (science, ritmo del dia, lifestyle). Motion is
+            native CSS scroll-snap: the track is a horizontal scroller with
+            mandatory snap on each slide, so touch swipes are as smooth as the
+            OS allows and a short flick commits reliably. touch-action pan-x
+            keeps vertical page scroll intact. */}
+        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black/40 ring-1 ring-white/5">
+          <div
+            ref={trackRef}
+            role="group"
+            aria-roledescription="carousel"
+            aria-label="Galeria del producto"
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth outline-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
+            style={{ touchAction: "pan-x" }}
           >
             {/* Slide 0: active color photo. */}
             <div
+              ref={(node) => {
+                slideRefs.current[0] = node;
+              }}
               role="group"
               aria-roledescription="slide"
               aria-label={`1 de ${SLIDE_COUNT}: foto del producto`}
-              className="relative h-full w-full shrink-0"
+              className="relative h-full w-full shrink-0 snap-start"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.img
@@ -266,17 +257,20 @@ export const ProductHero = ({
               </AnimatePresence>
             </div>
 
-            {/* Shared slides (science, lifestyle, social proof). Identical for
+            {/* Shared slides (ciencia, ritmo del dia, lifestyle). Identical for
                 every color and rendered straight from SHARED_SLIDES, so the
                 count stays in lockstep with the dots and navigation bounds. */}
             {SHARED_SLIDES.map((shared, index) => (
               <div
                 key={shared.src}
+                ref={(node) => {
+                  slideRefs.current[index + 1] = node;
+                }}
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${index + 2} de ${SLIDE_COUNT}: ${shared.alt}`}
                 className={cn(
-                  "relative h-full w-full shrink-0",
+                  "relative h-full w-full shrink-0 snap-start",
                   shared.background,
                 )}
               >
@@ -295,7 +289,7 @@ export const ProductHero = ({
                 />
               </div>
             ))}
-          </motion.div>
+          </div>
 
           {/* Page indicators. Clickable, keyboard reachable, and the live label
               announces the active slide for assistive tech. */}
@@ -306,7 +300,7 @@ export const ProductHero = ({
                 <button
                   key={index}
                   type="button"
-                  onClick={() => goTo(index)}
+                  onClick={() => scrollToSlide(index, "smooth")}
                   aria-label={`Ir a la imagen ${index + 1} de ${SLIDE_COUNT}`}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
