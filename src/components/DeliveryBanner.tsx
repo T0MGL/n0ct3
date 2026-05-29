@@ -18,7 +18,13 @@ const messages = [
 
 export const DeliveryBanner = () => {
   return (
-    <div className="fixed top-0 left-0 w-full bg-gradient-to-r from-[#EF4444] to-[#DC2626] text-white z-[60] overflow-hidden h-9 md:h-10 flex items-center">
+    <div
+      className="fixed top-0 left-0 w-full text-white z-[60] overflow-hidden h-9 md:h-10 flex items-center transition-[background] duration-500"
+      style={{
+        background:
+          "linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.78))",
+      }}
+    >
       <div className="absolute inset-0 flex items-center w-full">
         {/* We need multiple copies to ensure seamless loop on large screens */}
         <motion.div

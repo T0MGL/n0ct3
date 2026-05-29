@@ -23,7 +23,7 @@ export const CheckoutProgressBar = ({ currentStep }: CheckoutProgressBarProps) =
             <div key={step.id} className="flex items-center gap-2">
               <div
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  isActive ? 'bg-primary' : 'bg-border'
+                  isActive ? 'bg-variant-active' : 'bg-border'
                 }`}
               />
               <span
@@ -44,7 +44,7 @@ export const CheckoutProgressBar = ({ currentStep }: CheckoutProgressBarProps) =
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className="absolute inset-y-0 left-0 bg-primary"
+          className="absolute inset-y-0 left-0 bg-variant-active"
         />
       </div>
     </div>

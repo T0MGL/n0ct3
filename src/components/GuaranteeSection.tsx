@@ -1,74 +1,141 @@
-import { ShieldCheckIcon } from "@heroicons/react/24/outline";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { CheckIcon } from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/button";
 
 interface GuaranteeSectionProps {
   onBuyClick: () => void;
 }
 
+const SEAL_TEXT =
+  "DORMÍ MEJOR EN 30 DÍAS · O DEVOLVEMOS TU DINERO · SIN PREGUNTAS · ";
+
+const TRUST_POINTS: ReadonlyArray<string> = [
+  "Los lentes los quedás vos, no los tenés que devolver",
+  "Reembolso en 48 horas por la misma vía de pago",
+  "Vos asumís cero riesgo, la garantía es nuestra",
+];
+
+const TRUST_BADGES: ReadonlyArray<string> = [
+  "Envío gratis Asunción y Central",
+  "Garantía 1 año fábrica",
+  "Soporte directo por WhatsApp",
+];
+
 export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
   return (
-    <>
-      <section className="py-8 md:py-16 px-4 md:px-6 bg-black relative overflow-hidden" id="comprar">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
+    <section
+      id="garantia"
+      aria-labelledby="guarantee-title"
+      className="relative overflow-hidden bg-gradient-to-b from-black to-[#0a0000] px-4 py-20 md:px-6 md:py-28"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.1),transparent_60%)]"
+      />
 
-        <div className="container max-w-[900px] mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center space-y-8 md:space-y-12"
+      <div className="container relative z-10 mx-auto grid max-w-[1000px] items-center gap-12 md:grid-cols-[1fr_1.4fr] md:gap-14">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative mx-auto"
+        >
+          <RotatingSeal />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
+            Riesgo cero
+          </p>
+          <h2
+            id="guarantee-title"
+            className="mb-5 text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-tighter text-foreground"
           >
-            <div className="flex justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl" />
-                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-black border border-primary/30 rounded-full flex items-center justify-center">
-                  <ShieldCheckIcon className="w-8 h-8 md:w-10 md:h-10 text-primary" strokeWidth={1.5} />
-                </div>
-              </div>
-            </div>
+            Probalos 30 noches.
+            <br />
+            Si no dormís mejor, te devolvemos cada Guaraní.
+          </h2>
+          <p className="mb-7 text-base leading-relaxed text-muted-foreground md:text-lg">
+            Sin formularios. Sin preguntas. Sin letra chica. Si después de 30 noches usándolos no notás cambios en tu sueño, escribinos por WhatsApp y te devolvemos el cien por ciento.
+          </p>
 
-            <div className="space-y-4 md:space-y-6">
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
-                Garantía 30 Días
-              </h2>
-              <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground font-light px-4">
-                O Dinero de Vuelta. Sin sorpresas.
-              </p>
-            </div>
-
-            <div className="max-w-2xl mx-auto space-y-6 md:space-y-8 py-4 md:py-8">
-              <p className="text-base md:text-lg text-foreground/80 leading-relaxed font-light px-4">
-                Prueba NOCTE<sup className="text-[0.3em]">®</sup> durante 30 días completos. Si no notas mejora en tu sueño,
-                te devolvemos el 100% de tu dinero. Sin preguntas, sin complicaciones.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-                <Button
-                  data-guarantee-cta
-                  variant="hero"
-                  size="xl"
-                  className="w-full sm:w-auto sm:min-w-[300px] shadow-[0_0_50px_rgba(239,68,68,0.4)] text-base md:text-lg h-14 md:h-16"
-                  onClick={onBuyClick}
+          <ul className="mb-8 flex flex-col gap-3">
+            {TRUST_POINTS.map((point) => (
+              <li key={point} className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full bg-variant-active"
                 >
-                  Comprar Ahora
-                </Button>
-              </div>
+                  <CheckIcon className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                </span>
+                <span className="text-sm text-foreground md:text-[15px]">{point}</span>
+              </li>
+            ))}
+          </ul>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs md:text-sm text-muted-foreground font-light pt-4">
-                <span>Envío GRATIS</span>
-                <span className="hidden sm:inline">•</span>
-                <span>1-2 días</span>
-                <span className="hidden sm:inline">•</span>
-                <span>Garantía 30 días</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    </>
+          <Button
+            data-guarantee-cta
+            variant="hero"
+            size="xl"
+            className="w-full sm:w-auto sm:min-w-[280px] shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+            onClick={onBuyClick}
+          >
+            Probarlos sin riesgo
+          </Button>
+
+          <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+            {TRUST_BADGES.map((badge, i) => (
+              <li key={badge} className="flex items-center gap-2">
+                {i > 0 && (
+                  <span aria-hidden="true" className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+                )}
+                <span>{badge}</span>
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      </div>
+    </section>
   );
 };
+
+const RotatingSeal = () => (
+  <div className="relative mx-auto flex h-[260px] w-[260px] items-center justify-center md:h-[280px] md:w-[280px]">
+    <motion.div
+      aria-hidden="true"
+      className="absolute inset-0 rounded-full border-[3px] border-variant-active"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
+    >
+      <svg viewBox="0 0 280 280" className="absolute inset-0 h-full w-full">
+        <defs>
+          <path
+            id="guarantee-seal-path"
+            d="M 140,140 m -120,0 a 120,120 0 1,1 240,0 a 120,120 0 1,1 -240,0"
+          />
+        </defs>
+        <text fill="hsl(var(--variant-active))" fontSize={13} fontWeight={700} letterSpacing={6}>
+          <textPath href="#guarantee-seal-path">{SEAL_TEXT.repeat(2)}</textPath>
+        </text>
+      </svg>
+    </motion.div>
+
+    <div className="absolute inset-[30px] flex flex-col items-center justify-center rounded-full border border-variant-active/40 bg-gradient-to-br from-variant-active/20 to-variant-active/5">
+      <span className="text-[64px] font-extrabold leading-none tracking-tighter text-variant-active">
+        30
+      </span>
+      <span className="mt-1 text-[12px] tracking-[0.2em] text-foreground/70">DÍAS</span>
+      <span className="mt-1 text-[11px] tracking-[0.15em] text-muted-foreground">
+        GARANTÍA TOTAL
+      </span>
+    </div>
+  </div>
+);
 
 export default GuaranteeSection;

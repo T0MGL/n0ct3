@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { buildWhatsAppUrl } from "@/lib/contact";
 
 interface SuccessPageProps {
   isOpen: boolean;
@@ -19,8 +20,6 @@ interface SuccessPageProps {
 
 export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) => {
   const handleWhatsApp = () => {
-    const adminPhoneNumber = "595991893587";
-
     // Build location line based on available data (priority: GPS > Manual Address > City)
     let locationLine = '';
     if (orderData.googleMapsLink) {
@@ -34,8 +33,7 @@ export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) =>
       locationLine = `📍 ${orderData.location}`;
     }
 
-    const message = encodeURIComponent(
-      `Hola *NOCTE®* 👋
+    const message = `Hola *NOCTE®* 👋
 
 Acabo de completar mi pedido!
 
@@ -48,9 +46,8 @@ Mis datos:
 📞 ${orderData.phone}
 ${locationLine}
 
-Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
-    );
-    window.open(`https://wa.me/${adminPhoneNumber}?text=${message}`, "_blank");
+Quedo atento a la confirmación de envío. ¡Gracias! 🙌`;
+    window.open(buildWhatsAppUrl(message), "_blank");
   };
 
   return (
@@ -105,7 +102,7 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`
 
                 <div className="flex justify-between items-center gap-3">
                   <span className="text-xs md:text-sm text-muted-foreground">Total:</span>
-                  <span className="text-sm md:text-base font-bold text-primary whitespace-nowrap">{orderData.total}</span>
+                  <span className="text-sm md:text-base font-bold text-variant-active whitespace-nowrap">{orderData.total}</span>
                 </div>
 
                 <div className="flex justify-between items-center gap-3">

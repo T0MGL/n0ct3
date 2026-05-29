@@ -498,45 +498,165 @@ function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, 
   };
 }
 
-/**
- * Calculate unit price based on quantity
- */
-function getUnitPrice(quantity, total) {
-  // Known pricing structure
-  const prices = {
-    1: 229000,
-    2: 349000,
-    3: 489000,
-  };
+// ==================== ORDEFY SKU CONTRACT ====================
+//
+// Single source of truth, validated E2E against prod store
+// 1eeaf2c7-2cd2-4257-8213-d90b1280a19d. Ordefy decrements stock per color
+// variant. Sending a parent SKU (NOCTE-GLASSES-PERSONAL etc) is rejected with
+// AMBIGUOUS_PARENT_SKU and the whole order fails, so we always resolve to a
+// variant SKU (single lens) or a pack SKU (container) per the rules below.
+//
+// quantity in each Ordefy line item is the number of PACKS, not lenses. The
+// line price is the pack price. For a mixed-color pack the pack SKU is just a
+// price container and the real composition lives in bundle_selections, whose
+// physical-unit quantities must sum to packs * unitsPerPack or Ordefy aborts.
 
-  // If total matches known price, calculate unit price
-  if (prices[quantity] === total) {
-    return Math.round(total / quantity);
+const TIER = {
+  1: 'suelto',
+  2: 'pareja',
+  3: 'oficina',
+};
+
+const UNITS_PER_PACK = {
+  suelto: 1,
+  pareja: 2,
+  oficina: 3,
+};
+
+// Per-color single-lens SKU. Used for 1-lens orders and inside
+// bundle_selections of a mixed pack.
+const LENS_SKU = {
+  rojo: 'NOCTE-GLASSES-ROJO',
+  naranja: 'NOCTE-GLASSES-NARANJA',
+  amarillo: 'NOCTE-GLASSES-AMARILLO',
+};
+
+const LENS_NAME = {
+  rojo: 'NOCTE Lente Rojo (Noche)',
+  naranja: 'NOCTE Lente Naranja (Tarde)',
+  amarillo: 'NOCTE Lente Amarillo (Dia)',
+};
+
+const LENS_VARIANT_LABEL = {
+  rojo: 'Rojo',
+  naranja: 'Naranja',
+  amarillo: 'Amarillo',
+};
+
+// Mono-color pack SKU. Ordefy autocompletes the default composition for these,
+// so they must NOT carry bundle_selections.
+const PACK_SKU = {
+  pareja: {
+    rojo: 'NOCTE-GLASSES-PAREJA',
+    naranja: 'NOCTE-OGLASSES-PAREJA',
+    amarillo: 'NOCTE-YGLASSES-PAREJA',
+  },
+  oficina: {
+    rojo: 'NOCTE-GLASSES-OFICINA',
+    naranja: 'NOCTE-OGLASSES-OFICINA',
+    amarillo: 'NOCTE-YGLASSES-OFICINA',
+  },
+};
+
+// Canonical container SKU for a mixed pack (the Rojo-tier pack SKU). The real
+// composition is defined by bundle_selections, not by this SKU.
+const MIXED_CONTAINER_SKU = {
+  pareja: 'NOCTE-GLASSES-PAREJA',
+  oficina: 'NOCTE-GLASSES-OFICINA',
+};
+
+/**
+ * Normalize a raw cart color to a contract color key. Accepts es/en spellings.
+ * Unknown colors fall back to rojo with a warning so a rebrand or typo never
+ * silently ships the wrong stock pool, while the order still lands.
+ */
+function normalizeColor(rawColor) {
+  const key = String(rawColor || '').trim().toLowerCase();
+  if (key === 'rojo' || key === 'red') return 'rojo';
+  if (key === 'naranja' || key === 'orange') return 'naranja';
+  if (key === 'amarillo' || key === 'yellow') return 'amarillo';
+  console.warn(`⚠️ Unknown lens color "${rawColor}" - defaulting to rojo`);
+  return 'rojo';
+}
+
+/**
+ * Resolve the tier name (suelto/pareja/oficina) from the pack quantity. Any
+ * quantity at or above 3 is treated as the Oficina tier (3 lenses).
+ */
+function resolveTier(quantity) {
+  const qty = Math.max(1, Math.floor(quantity || 1));
+  return TIER[qty] || 'oficina';
+}
+
+/**
+ * Collapse the per-unit colors array into normalized color keys clamped to the
+ * tier size, padding with rojo when the cart sent fewer colors than lenses.
+ */
+function resolveColors(tier, colors) {
+  const size = UNITS_PER_PACK[tier];
+  const list = (Array.isArray(colors) ? colors : [])
+    .filter((c) => typeof c === 'string' && c.length > 0)
+    .slice(0, size)
+    .map(normalizeColor);
+  while (list.length < size) list.push('rojo');
+  return list;
+}
+
+/**
+ * Build the single Ordefy product line item from the resolved tier and the
+ * per-unit colors. Returns the line ready to push into the items array.
+ *
+ *   - 1 lens          -> single-lens variant SKU for that color.
+ *   - mono-color pack -> the color's pack SKU, NO bundle_selections.
+ *   - mixed pack      -> canonical container SKU + bundle_selections summing
+ *                        to units_per_pack physical lenses.
+ */
+function buildProductLineItem(tier, colors, productPrice) {
+  const resolved = resolveColors(tier, colors);
+
+  if (tier === 'suelto') {
+    const color = resolved[0];
+    return {
+      sku: LENS_SKU[color],
+      name: LENS_NAME[color],
+      quantity: 1,
+      price: productPrice,
+    };
   }
 
-  // Otherwise, calculate from total
-  return Math.round(total / quantity);
-}
+  const allSame = resolved.every((c) => c === resolved[0]);
 
-/**
- * Get SKU based on pack type
- * - 1 unit: Personal pack
- * - 2 units: Couple pack
- * - 3+ units: Office pack (bulk pricing)
- */
-function getSku(quantity) {
-  if (quantity === 1) return 'NOCTE-GLASSES-PERSONAL';
-  if (quantity === 2) return 'NOCTE-GLASSES-PAREJA';
-  return 'NOCTE-GLASSES-OFICINA'; // 3+ units
-}
+  if (allSame) {
+    const color = resolved[0];
+    const tierLabel = tier === 'pareja' ? 'Pareja' : 'Oficina';
+    return {
+      sku: PACK_SKU[tier][color],
+      name: `NOCTE Pack ${tierLabel} (${LENS_VARIANT_LABEL[color]})`,
+      quantity: 1,
+      price: productPrice,
+    };
+  }
 
-/**
- * Get product name based on quantity
- */
-function getProductName(quantity) {
-  if (quantity === 1) return 'NOCTE® Glasses - Personal';
-  if (quantity === 2) return 'NOCTE® Glasses - Pack Pareja';
-  return `NOCTE® Glasses - Pack Oficina (x${quantity})`;
+  // Mixed pack: aggregate per-color physical-unit counts for bundle_selections.
+  const counts = resolved.reduce((acc, color) => {
+    acc[color] = (acc[color] || 0) + 1;
+    return acc;
+  }, {});
+
+  const bundleSelections = Object.keys(counts).map((color) => ({
+    sku: LENS_SKU[color],
+    variant_name: LENS_VARIANT_LABEL[color],
+    quantity: counts[color],
+  }));
+
+  const tierLabel = tier === 'pareja' ? 'Pareja' : 'Oficina';
+  return {
+    sku: MIXED_CONTAINER_SKU[tier],
+    name: `NOCTE Pack ${tierLabel} (Mixto)`,
+    quantity: 1,
+    price: productPrice,
+    bundle_selections: bundleSelections,
+  };
 }
 
 /**
@@ -559,6 +679,7 @@ async function sendToOrdefy(orderData) {
     isPaid,
     deliveryType,
     ruc,
+    colors,
   } = orderData;
 
   // Check if Ordefy is configured
@@ -571,14 +692,11 @@ async function sendToOrdefy(orderData) {
   const priorityCost = isPriority ? 10000 : 0;
   const productPrice = total - priorityCost;
 
-  const items = [
-    {
-      sku: getSku(quantity || 1),
-      name: getProductName(quantity || 1),
-      quantity: 1,  // Always 1 bundle - SKU identifies the pack type
-      price: productPrice,
-    },
-  ];
+  // One product line per order: a single lens, a mono-color pack, or a mixed
+  // pack with bundle_selections. The SKU resolves to the right color variant
+  // so Ordefy decrements stock from the matching pool.
+  const tier = resolveTier(quantity || 1);
+  const items = [buildProductLineItem(tier, colors, productPrice)];
 
   // Add priority shipping as a line item if selected
   if (isPriority) {
@@ -685,7 +803,8 @@ app.post('/api/send-order', async (req, res) => {
       paymentType,
       isPaid,
       deliveryType,
-      ruc
+      ruc,
+      colors
     } = req.body;
 
     // Validation
@@ -694,6 +813,12 @@ app.post('/api/send-order', async (req, res) => {
         error: 'Name, phone, and location are required'
       });
     }
+
+    // Per-unit lens colors, one entry per lens in display order. Trust strings
+    // only, clamp to quantity. Empty or missing means the legacy red default.
+    const normalizedColors = Array.isArray(colors)
+      ? colors.filter((c) => typeof c === 'string' && c.length > 0).slice(0, quantity || 1)
+      : [];
 
     // Prepare payload for n8n
     const webhookPayload = {
@@ -714,7 +839,8 @@ app.post('/api/send-order', async (req, res) => {
         quantity: quantity || 1,
         product: 'NOCTE® Red Light Blocking Glasses',
         total: total || (quantity === 2 ? 349000 : 229000),
-        currency: 'PYG'
+        currency: 'PYG',
+        colors: normalizedColors
       },
       payment: {
         method: paymentType || 'stripe',
@@ -758,6 +884,7 @@ app.post('/api/send-order', async (req, res) => {
         isPaid,
         deliveryType,
         ruc,
+        colors: normalizedColors,
       }),
     ]);
 
@@ -822,11 +949,15 @@ app.post('/api/send-order', async (req, res) => {
  */
 app.post('/api/checkout-started', async (req, res) => {
   try {
-    const { name, phone, location, address, lat, long, bundleLabel, quantity, price } = req.body;
+    const { name, phone, location, address, lat, long, bundleLabel, quantity, price, colors } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ error: 'Name and phone are required' });
     }
+
+    const normalizedColors = Array.isArray(colors)
+      ? colors.filter((c) => typeof c === 'string' && c.length > 0).slice(0, quantity || 1)
+      : [];
 
     res.json({ success: true });
 
@@ -841,7 +972,7 @@ app.post('/api/checkout-started', async (req, res) => {
           timestamp: new Date().toISOString(),
           customer: { name, phone },
           location: { city: location || '', address: address || '', lat: lat || null, long: long || null },
-          bundle: { label: bundleLabel || '', quantity: quantity || 1, price: price || 0 },
+          bundle: { label: bundleLabel || '', quantity: quantity || 1, price: price || 0, colors: normalizedColors },
           source: 'nocte-landing-page'
         })
       }).catch(err => {
@@ -939,6 +1070,24 @@ app.use((err, req, res, next) => {
 
 // ==================== SERVER START ====================
 
+// Export the pure SKU-contract builders so a verification harness can assert
+// the payload shape without booting the server or hitting Ordefy. Guarded by
+// require.main below so requiring this file never opens the port.
+module.exports = {
+  resolveTier,
+  resolveColors,
+  normalizeColor,
+  buildProductLineItem,
+  TIER,
+  UNITS_PER_PACK,
+  LENS_SKU,
+  PACK_SKU,
+  MIXED_CONTAINER_SKU,
+};
+
+// Only boot the HTTP server when run directly (node server.js). When this file
+// is required by the verification harness the port stays closed.
+if (require.main === module) {
 const server = app.listen(PORT, () => {
   console.log('');
   console.log('═══════════════════════════════════════════');
@@ -991,3 +1140,4 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   }
 });
+}

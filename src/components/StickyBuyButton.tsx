@@ -131,7 +131,7 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
                 className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
                 onClick={onBuyClick}
               >
-                Comprar Ahora - Gs. {selectedPrice.toLocaleString('es-PY')}
+                Comprar Ahora · Gs. {selectedPrice.toLocaleString('es-PY')}
               </Button>
             </motion.div>
           </div>

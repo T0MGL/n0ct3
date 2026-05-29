@@ -8,7 +8,7 @@ interface TimeLeft {
 
 // Memoized digit component to prevent unnecessary re-renders
 const TimerDigit = memo(({ value }: { value: string }) => (
-  <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary tabular-nums">
+  <span className="text-lg sm:text-xl md:text-2xl font-bold text-variant-active tabular-nums">
     {value}
   </span>
 ));
@@ -90,7 +90,7 @@ export const CountdownTimer = memo(() => {
   const formatNumber = (num: number) => String(num).padStart(2, '0');
 
   return (
-    <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-primary/10 border border-primary/30 px-4 sm:px-5 py-3 backdrop-blur-sm w-full sm:w-auto">
+    <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-variant-active/10 border border-variant-active/30 px-4 sm:px-5 py-3 backdrop-blur-sm w-full sm:w-auto">
       <span className="text-[10px] sm:text-xs text-foreground/70 font-medium uppercase tracking-wider">
         Oferta termina en
       </span>
@@ -98,11 +98,11 @@ export const CountdownTimer = memo(() => {
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
           <TimerDigit value={formatNumber(timeLeft.hours)} />
         </div>
-        <span className="text-primary/50 font-bold text-base sm:text-lg">:</span>
+        <span className="text-variant-active/50 font-bold text-base sm:text-lg">:</span>
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
           <TimerDigit value={formatNumber(timeLeft.minutes)} />
         </div>
-        <span className="text-primary/50 font-bold text-base sm:text-lg">:</span>
+        <span className="text-variant-active/50 font-bold text-base sm:text-lg">:</span>
         <div className="flex flex-col items-center min-w-[32px] sm:min-w-[36px]">
           <TimerDigit value={formatNumber(timeLeft.seconds)} />
         </div>

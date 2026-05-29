@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { WHATSAPP_DISPLAY } from "@/lib/contact";
 
 const TerminosCondiciones = () => {
   return (
@@ -43,7 +44,7 @@ const TerminosCondiciones = () => {
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li><strong>Nombre comercial:</strong> NOCTE® Paraguay</li>
               <li><strong>Domicilio:</strong> Asunción, Paraguay</li>
-              <li><strong>Contacto:</strong> WhatsApp +595 991 893587 | Instagram @noctepy</li>
+              <li><strong>Contacto:</strong> WhatsApp {WHATSAPP_DISPLAY} | Instagram @noctepy</li>
             </ul>
           </section>
 
@@ -252,7 +253,7 @@ const TerminosCondiciones = () => {
               Para consultas, reclamos o ejercer sus derechos como consumidor:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li><strong>WhatsApp:</strong> +595 991 893587</li>
+              <li><strong>WhatsApp:</strong> {WHATSAPP_DISPLAY}</li>
               <li><strong>Instagram:</strong> @noctepy</li>
               <li><strong>Horario de atención:</strong> Lunes a Viernes de 9:00 a 18:00</li>
             </ul>

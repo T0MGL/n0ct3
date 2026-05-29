@@ -9,13 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-b from-[#EF4444] to-[#DC2626] text-primary-foreground shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-lg hover:from-[#DC2626] hover:to-[#B91C1C] active:scale-[0.98]",
+        default:
+          "bg-[linear-gradient(180deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.78))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-lg active:scale-[0.98]",
         destructive: "bg-destructive text-destructive-foreground shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-destructive/90 hover:shadow-lg",
         outline: "border border-gold/30 bg-transparent hover:bg-gold/10 hover:border-gold/50 shadow-sm",
         secondary: "bg-secondary text-secondary-foreground shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-secondary/80 hover:shadow-lg",
         ghost: "hover:bg-muted/50 hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline hover:text-primary/80",
-        hero: "bg-gradient-to-r from-[#EF4444] via-[#DC2626] to-[#EF4444] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(239,68,68,0.3)] active:scale-[0.98] font-semibold animate-gradient-shift animate-shine",
+        link: "text-variant-active underline-offset-4 hover:underline hover:text-variant-active/80",
+        hero:
+          "bg-[linear-gradient(90deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.82),hsl(var(--variant-active)))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_hsl(var(--variant-active)/0.35)] active:scale-[0.98] font-semibold animate-gradient-shift animate-shine",
         premium: "bg-secondary/50 text-card-foreground border border-gold/30 shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:border-gold/50 hover:bg-secondary/70 hover:shadow-lg",
       },
       size: {

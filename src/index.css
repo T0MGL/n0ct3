@@ -41,6 +41,15 @@ All colors MUST be HSL.
     --gold: 43 74% 66%;
     --neon: 190 100% 50%;
 
+    /* Variant tokens. Each lens variant has its own HSL hue.
+       --variant-active mirrors one of the three at any time. Sections can
+       override --variant-active locally with a [data-variant=naranja] selector
+       or via inline style on a wrapper, no JS color math needed downstream. */
+    --variant-rojo: 0 84% 60%;
+    --variant-naranja: 25 95% 53%;
+    --variant-amarillo: 48 96% 53%;
+    --variant-active: var(--variant-rojo);
+
     --gradient-red: linear-gradient(135deg, hsl(0 86% 20% / 0.4), transparent);
     --gradient-red-strong: linear-gradient(180deg, hsl(0 0% 0%), hsl(0 30% 5%), hsl(0 0% 0%));
     --glow-red: 0 0 80px hsl(0 86% 54% / 0.3);
@@ -48,11 +57,26 @@ All colors MUST be HSL.
 
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  [data-variant="rojo"] {
+    --variant-active: var(--variant-rojo);
+  }
+  [data-variant="naranja"] {
+    --variant-active: var(--variant-naranja);
+  }
+  [data-variant="amarillo"] {
+    --variant-active: var(--variant-amarillo);
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html, body {
+    overflow-x: clip;
+    max-width: 100vw;
   }
 
   body {

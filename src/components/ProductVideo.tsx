@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import productVideo from "@/assets/nocteglasses.mp4";
+import videoPoster from "@/assets/nocte-video-poster.webp";
 import { useRef, useEffect } from "react";
 
 export const ProductVideo = () => {
@@ -17,9 +18,10 @@ export const ProductVideo = () => {
       try {
         await videoElement.play();
       } catch (error) {
-        // Solo logueamos si el componente sigue montado
-        if (isMounted) {
-          console.log("Autoplay bloqueado por el navegador:", error);
+        // Autoplay puede ser bloqueado por el navegador. No es un error accionable:
+        // el usuario reproduce manualmente con los controles.
+        if (isMounted && import.meta.env.DEV) {
+          console.warn("Autoplay bloqueado por el navegador:", error);
         }
       }
     };
@@ -73,13 +75,13 @@ export const ProductVideo = () => {
             <video
               ref={videoRef}
               src={productVideo}
-              autoPlay
+              poster={videoPoster}
               controls
               loop
               muted
               playsInline
               className="w-full h-auto relative z-10 rounded-lg"
-              preload="auto"
+              preload="metadata"
             >
               Tu navegador no soporta el elemento de video.
             </video>

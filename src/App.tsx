@@ -9,6 +9,7 @@ import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
 import TerminosCondiciones from "./pages/TerminosCondiciones";
 import { RouteTracker } from "@/components/RouteTracker";
 import { useDisableDevTools } from "@/hooks/useDisableDevTools";
+import { VariantProvider } from "@/lib/variant-context";
 
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
@@ -31,20 +32,22 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <RouteTracker />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
-            <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <VariantProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <RouteTracker />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
+              <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </VariantProvider>
     </QueryClientProvider>
   );
 };

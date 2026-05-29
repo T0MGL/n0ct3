@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { buildWhatsAppUrl } from "@/lib/contact";
 
 export const WhatsAppButton = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -34,8 +35,7 @@ export const WhatsAppButton = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const message = encodeURIComponent("Hola Nocte, vi los lentes en la web y tengo una consulta...");
-  const whatsappUrl = `https://wa.me/595991893587?text=${message}`;
+  const whatsappUrl = buildWhatsAppUrl("Hola Nocte, vi los lentes en la web y tengo una consulta...");
 
   return (
     <a

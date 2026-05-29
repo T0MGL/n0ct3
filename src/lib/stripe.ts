@@ -3,8 +3,8 @@ import { loadStripe, Stripe } from '@stripe/stripe-js';
 // Get Stripe publishable key from environment variables
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-if (!stripePublishableKey) {
-  console.warn('⚠️ Stripe publishable key not found. Payment functionality will be disabled.');
+if (!stripePublishableKey && import.meta.env.DEV) {
+  console.warn('Stripe publishable key not found. Payment functionality will be disabled.');
 }
 
 // Singleton pattern for Stripe instance

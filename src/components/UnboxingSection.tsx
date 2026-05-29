@@ -57,7 +57,7 @@ export const UnboxingSection = () => {
               <motion.div
                 key={item.title}
                 variants={staggerItemVariants}
-                className="group relative bg-secondary/20 border border-border/20 rounded-lg overflow-hidden hover:border-primary/30 transition-all duration-300"
+                className="group relative bg-secondary/20 border border-border/20 rounded-lg overflow-hidden hover:border-variant-active/30 transition-all duration-300"
               >
                 {/* Product image */}
                 <div className="relative aspect-square overflow-hidden">
@@ -74,8 +74,8 @@ export const UnboxingSection = () => {
                 {/* Text content */}
                 <div className="p-5 md:p-6 space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex items-center justify-center bg-primary/10 rounded-md border border-primary/20">
-                      <Icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                    <div className="w-9 h-9 flex items-center justify-center bg-variant-active/10 rounded-md border border-variant-active/20">
+                      <Icon className="w-5 h-5 text-variant-active" strokeWidth={1.5} />
                     </div>
                     <h3 className="text-lg md:text-xl font-bold tracking-tight">
                       {item.title}

@@ -110,7 +110,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     const newValue = e.target.value;
 
     if (customPrefix) {
-      // Free editing mode — just ensure "+" at start
+      // Free editing mode: just ensure "+" at start.
       if (!newValue.startsWith("+")) {
         setPhone("+" + newValue.replace(/[^0-9]/g, ""));
       } else {
@@ -121,7 +121,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       return;
     }
 
-    // Default Paraguay mode — lock +595 prefix
+    // Default Paraguay mode: lock +595 prefix.
     if (!newValue.startsWith("+595")) {
       setPhone("+595 ");
       return;
@@ -218,7 +218,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
         } catch (err) {
           if (!isMountedRef.current || controller.signal.aborted) return;
 
-          console.error("Location processing error:", err);
+          if (import.meta.env.DEV) {
+            console.error("Location processing error:", err);
+          }
           setDetectedLocation("Paraguay (coordenadas GPS obtenidas)");
           setLocationCoords({ lat: latitude, long: longitude });
           setIsLoadingLocation(false);
@@ -227,7 +229,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       (err) => {
         if (!isMountedRef.current) return;
 
-        console.error("Geolocation error:", err);
+        if (import.meta.env.DEV) {
+          console.error("Geolocation error:", err);
+        }
         setLocationError("Permiso denegado para acceder a tu ubicación");
         setDetectedLocation(null);
         setIsLoadingLocation(false);
@@ -251,13 +255,13 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
 
     // Validate phone
     if (customPrefix) {
-      // Custom country code — just check minimum length (code + number)
+      // Custom country code: just check minimum length (code + number).
       const allDigits = phone.replace(/\D/g, "");
       if (allDigits.length < 10) {
         newErrors.phone = "Número inválido (incluí código de país + número)";
       }
     } else {
-      // Paraguay mode — digits after "+595 "
+      // Paraguay mode: digits after "+595 ".
       const afterPrefix = phone.slice(5);
       const phoneDigits = afterPrefix.replace(/\D/g, "");
       if (phoneDigits.length < 8 || phoneDigits.length > 10) {
@@ -353,7 +357,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-primary rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto overscroll-contain touch-auto"
+            className="relative w-full max-w-[500px] bg-gradient-to-b from-secondary to-black border-2 border-variant-active rounded-2xl p-6 md:p-8 shadow-[0_20px_25px_-5px_rgba(239,68,68,0.2)] max-h-[90dvh] overflow-y-auto overscroll-contain touch-auto"
           >
             <div className="space-y-6">
               {/* Header with Progress Bar and Close Button */}
@@ -402,7 +406,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       }}
                       placeholder="Ej: Juan López"
                       maxLength={60}
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-primary"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -432,7 +436,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       onFocus={handlePhoneFocus}
                       onClick={handlePhoneClick}
                       placeholder="Ej: +595 971 234567"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-primary"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -486,7 +490,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   >
                     <div
                       className={`w-5 h-5 rounded-[4px] border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${needsInvoice
-                        ? "bg-primary border-primary"
+                        ? "bg-variant-active border-variant-active"
                         : "border-muted-foreground/50 bg-transparent"
                         }`}
                     >
@@ -530,7 +534,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               maxLength={120}
                               autoComplete="email"
                               inputMode="email"
-                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-primary"}`}
+                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"}`}
                             />
                           </div>
                           {errors.email && (
@@ -562,7 +566,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               placeholder="Ej: 80012345-6"
                               maxLength={12}
                               inputMode="numeric"
-                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-primary"}`}
+                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"}`}
                             />
                           </div>
                           {errors.ruc && (
@@ -583,7 +587,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 {/* LOCATION SECTION */}
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-2 pb-2 border-b border-border/30">
-                    <MapPinIcon className="w-5 h-5 text-primary" />
+                    <MapPinIcon className="w-5 h-5 text-variant-active" />
                     <label className="block text-sm font-semibold text-foreground">
                       Ubicación de entrega
                     </label>
@@ -594,11 +598,11 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-primary/10 border border-primary/30 rounded-lg"
+                      className="p-4 bg-variant-active/10 border border-variant-active/30 rounded-lg"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <CheckIcon className="w-5 h-5 text-primary" />
+                          <CheckIcon className="w-5 h-5 text-variant-active" />
                           <p className="text-sm font-semibold text-foreground">
                             {detectedLocation}
                           </p>
@@ -630,7 +634,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   )}
 
 
-                  {/* Manual Location Entry — City autocomplete + Address */}
+                  {/* Manual Location Entry: City autocomplete + Address */}
                   {showManualLocation && !detectedLocation && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -676,7 +680,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             }}
                             placeholder="Ej: Asunción, Luque, CDE..."
                             autoComplete="off"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-primary"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                           {/* Suggestions dropdown */}
                           {showCitySuggestions && filteredCities.length > 0 && (
@@ -690,7 +694,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                                     setShowCitySuggestions(false);
                                     setErrors((prev) => ({ ...prev, city: undefined }));
                                   }}
-                                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 transition-colors"
+                                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-variant-active/10 transition-colors"
                                 >
                                   {suggestion}
                                 </button>
@@ -724,7 +728,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               setErrors((prev) => ({ ...prev, address: undefined }));
                             }}
                             placeholder="Ej: Av. Mariscal López 1234"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-primary"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                         </div>
                         {errors.address && (
@@ -750,7 +754,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     rel="noopener noreferrer"
                     className="underline hover:text-foreground transition-colors"
                   >
-                    Terminos y Condiciones
+                    Términos y Condiciones
                   </a>{" "}
                   y la{" "}
                   <a
@@ -759,7 +763,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     rel="noopener noreferrer"
                     className="underline hover:text-foreground transition-colors"
                   >
-                    Politica de Privacidad
+                    Política de Privacidad
                   </a>
                 </p>
 
