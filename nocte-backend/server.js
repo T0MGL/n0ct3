@@ -1070,10 +1070,11 @@ app.use((err, req, res, next) => {
 
 // ==================== SERVER START ====================
 
-// Export the pure SKU-contract builders so a verification harness can assert
-// the payload shape without booting the server or hitting Ordefy. Guarded by
-// require.main below so requiring this file never opens the port.
-module.exports = {
+// Vercel's @vercel/node runtime imports this file and expects the Express app
+// as the request handler. Export the app itself and hang the pure SKU-contract
+// builders off it as properties so the verification harness can still
+// destructure them via require('./server') without booting the HTTP server.
+Object.assign(app, {
   resolveTier,
   resolveColors,
   normalizeColor,
@@ -1083,7 +1084,9 @@ module.exports = {
   LENS_SKU,
   PACK_SKU,
   MIXED_CONTAINER_SKU,
-};
+});
+
+module.exports = app;
 
 // Only boot the HTTP server when run directly (node server.js). When this file
 // is required by the verification harness the port stays closed.
