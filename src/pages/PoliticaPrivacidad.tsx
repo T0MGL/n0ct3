@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { WHATSAPP_DISPLAY } from "@/lib/contact";
 
 const PoliticaPrivacidad = () => {
   return (
@@ -48,7 +49,7 @@ const PoliticaPrivacidad = () => {
               Para cualquier consulta relacionada con el tratamiento de sus datos personales, puede contactarnos a través de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>WhatsApp: +595 991 893587</li>
+              <li>WhatsApp: {WHATSAPP_DISPLAY}</li>
               <li>Instagram: @noctepy</li>
             </ul>
           </section>
@@ -210,7 +211,7 @@ const PoliticaPrivacidad = () => {
               puede contactarnos a través de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>WhatsApp: +595 991 893587</li>
+              <li>WhatsApp: {WHATSAPP_DISPLAY}</li>
               <li>Instagram: @noctepy</li>
             </ul>
           </section>

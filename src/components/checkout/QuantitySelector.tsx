@@ -2,8 +2,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { XMarkIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
-import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
+import { BUNDLES } from "@/lib/bundles";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { buildWhatsAppUrl } from "@/lib/contact";
 
 interface QuantitySelectorProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface QuantitySelectorProps {
 }
 
 export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelectorProps) => {
-  const [selectedBundleIndex, setSelectedBundleIndex] = useState(DEFAULT_BUNDLE_INDEX);
+  const [selectedBundleIndex, setSelectedBundleIndex] = useState(1);
   const [showWhatsAppOffer, setShowWhatsAppOffer] = useState(false);
   const [hasShownOffer, setHasShownOffer] = useState(false);
 
@@ -35,11 +36,10 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
   };
 
   const handleWhatsAppContact = () => {
-    const phone = "595991893587";
-    const message = encodeURIComponent(
+    const url = buildWhatsAppUrl(
       "Hola! Estaba viendo los lentes NOCTE y tengo algunas dudas antes de comprar."
     );
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    window.open(url, '_blank');
     setShowWhatsAppOffer(false);
   };
 
@@ -119,13 +119,13 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         relative w-full p-5 rounded-lg border-2 transition-all duration-300
                         ${isSelected
                           ? bundle.highlighted
-                            ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                            : 'border-primary bg-primary/5'
+                            ? 'border-variant-active bg-variant-active/10 shadow-lg shadow-variant-active/20'
+                            : 'border-variant-active bg-variant-active/5'
                           : bundle.highlighted
-                            ? 'border-primary/40 bg-secondary/20 hover:border-primary/60'
+                            ? 'border-variant-active/40 bg-secondary/20 hover:border-variant-active/60'
                             : 'border-border/30 bg-secondary/10 hover:border-border/50'
                         }
-                        ${bundle.highlighted ? 'ring-2 ring-primary/30' : ''}
+                        ${bundle.highlighted ? 'ring-2 ring-variant-active/30' : ''}
                       `}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -135,7 +135,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         <div className={`
                           absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap
                           ${bundle.highlighted
-                            ? 'bg-gradient-to-r from-primary to-[#DC2626] text-white shadow-lg'
+                            ? 'bg-gradient-to-r from-variant-active to-[#DC2626] text-white shadow-lg'
                             : 'bg-gold text-black'
                           }
                         `}>
@@ -147,13 +147,13 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         <div className="flex items-center gap-4">
                           <div className={`
                             w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
-                            ${isSelected ? 'border-primary' : 'border-border/50'}
+                            ${isSelected ? 'border-variant-active' : 'border-border/50'}
                           `}>
                             {isSelected && (
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="w-3 h-3 rounded-full bg-primary"
+                                className="w-3 h-3 rounded-full bg-variant-active"
                               />
                             )}
                           </div>
@@ -161,7 +161,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                           <div className="text-left">
                             <p className={`
                               text-lg font-bold
-                              ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
+                              ${bundle.highlighted ? 'text-variant-active' : 'text-foreground'}
                             `}>
                               {bundle.quantity} {bundle.quantity === 1 ? 'Unidad' : 'Unidades'}
                             </p>
@@ -177,7 +177,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                         <div className="text-right">
                           <p className={`
                             text-2xl font-bold
-                            ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
+                            ${bundle.highlighted ? 'text-variant-active' : 'text-foreground'}
                           `}>
                             {bundle.price.toLocaleString('es-PY')} Gs
                           </p>
@@ -194,10 +194,10 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
               </div>
 
               {/* Free Shipping Banner */}
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="p-4 bg-variant-active/5 border border-variant-active/20 rounded-lg">
                 <div className="flex items-center justify-center gap-2">
-                  <TruckIcon className="w-5 h-5 text-primary" />
-                  <p className="text-sm text-primary font-medium">
+                  <TruckIcon className="w-5 h-5 text-variant-active" />
+                  <p className="text-sm text-variant-active font-medium">
                     Envío gratis a todo el Paraguay 🇵🇾
                   </p>
                 </div>
@@ -268,7 +268,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                       <button
                         type="button"
                         onClick={handleContinueShopping}
-                        className="w-full text-sm font-medium text-foreground hover:text-primary transition-colors py-2 underline"
+                        className="w-full text-sm font-medium text-foreground hover:text-variant-active transition-colors py-2 underline"
                       >
                         Continuar eligiendo pack
                       </button>

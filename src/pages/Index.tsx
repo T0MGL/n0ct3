@@ -13,6 +13,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
+import { DEFAULT_VARIANT, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -22,7 +23,7 @@ getStripe();
 // Lazy load heavy sections that are below the fold
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
-const ScienceSection = lazy(() => import("@/components/ScienceSection"));
+const ScienceDemo = lazy(() => import("@/components/ScienceDemo"));
 const UnboxingSection = lazy(() => import("@/components/UnboxingSection"));
 const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
 const LifestyleSection = lazy(() => import("@/components/LifestyleSection"));
@@ -82,10 +83,15 @@ const Index = () => {
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [exitIntentShown, setExitIntentShown] = useState(false);
 
+  // Per-unit color picks. Length stays in sync with selectedQuantity (see effect below).
+  const [picks, setPicks] = useState<VariantId[]>(() =>
+    Array.from({ length: defaultBundle.quantity }, () => DEFAULT_VARIANT),
+  );
+
   const [checkoutData, setCheckoutData] = useState({
     quantity: defaultBundle.quantity,
     totalPrice: defaultBundle.price,
-    colors: null as [string, string] | null,
+    colors: null as string[] | null,
     location: "",
     name: "",
     phone: "",
@@ -118,7 +124,7 @@ const Index = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (checkoutInProgress && !showSuccess) {
         e.preventDefault();
-        e.returnValue = "Tienes un pedido en proceso. Si sales ahora, perderás tu progreso.";
+        e.returnValue = "Tenés un pedido en proceso. Si salís ahora, perdés tu progreso.";
         return e.returnValue;
       }
     };
@@ -136,6 +142,29 @@ const Index = () => {
       }));
     }
   }, [checkoutData.orderNumber]);
+
+  // Keep picks array sized to selectedQuantity. Preserve any colors already chosen,
+  // pad with the first pick (or DEFAULT_VARIANT) when growing.
+  useEffect(() => {
+    setPicks((prev) => {
+      if (prev.length === selectedQuantity) return prev;
+      if (prev.length > selectedQuantity) return prev.slice(0, selectedQuantity);
+      const fill = prev[0] ?? DEFAULT_VARIANT;
+      return [
+        ...prev,
+        ...Array.from({ length: selectedQuantity - prev.length }, () => fill),
+      ];
+    });
+  }, [selectedQuantity]);
+
+  const handlePickChange = useCallback((unitIndex: number, next: VariantId) => {
+    setPicks((prev) => {
+      if (prev[unitIndex] === next) return prev;
+      const copy = prev.slice();
+      copy[unitIndex] = next;
+      return copy;
+    });
+  }, []);
 
   // Track InitiateCheckout when phone form opens
   useEffect(() => {
@@ -177,16 +206,26 @@ const Index = () => {
     setSelectedBundleIndex(index);
   }, [selectedBundleIndex]);
 
-  const handleBuyClick = useCallback(() => {
-    const bundle = BUNDLES[selectedBundleIndex];
+  const startBuyFlow = useCallback((bundleIndex: number, hasAtcFired: boolean) => {
+    const bundle = BUNDLES[bundleIndex];
+
+    // Snapshot the per-unit colors at the moment of buy so the checkout payload
+    // stays stable even if the user reopens the picker afterwards.
+    const colorsSnapshot = Array.from(
+      { length: bundle.quantity },
+      (_, i) => picks[i] ?? picks[0] ?? DEFAULT_VARIANT,
+    );
 
     setCheckoutInProgress(true);
-    setCheckoutData((prev) => ({ ...prev, quantity: bundle.quantity, totalPrice: bundle.price }));
+    setSelectedBundleIndex(bundleIndex);
+    setCheckoutData((prev) => ({
+      ...prev,
+      quantity: bundle.quantity,
+      totalPrice: bundle.price,
+      colors: colorsSnapshot,
+    }));
 
-    // Fallback ATC: fires only if the user never interacted with the pack
-    // selector, i.e. accepted the default Personal pack and went straight to
-    // checkout. Meta's funnel needs ATC before IC so we guarantee one fires.
-    if (!atcFired) {
+    if (!hasAtcFired) {
       trackAddToCart({
         content_name: bundle.quantity === 1
           ? 'NOCTE® Red Light Blocking Glasses'
@@ -201,13 +240,15 @@ const Index = () => {
       setAtcFired(true);
     }
 
-    // Go directly to phone form (skip QuantitySelector)
     setShowPhoneForm(true);
 
-    // Preload Stripe checkout and exit intent modal
     import("@/components/checkout/StripeCheckoutModal");
     import("@/components/checkout/ExitIntentModal");
-  }, [selectedBundleIndex, atcFired]);
+  }, [picks]);
+
+  const handleBuyClick = useCallback(() => {
+    startBuyFlow(selectedBundleIndex, atcFired);
+  }, [startBuyFlow, selectedBundleIndex, atcFired]);
 
   const handlePaymentSuccess = useCallback((result: {
     paymentIntentId: string;
@@ -241,6 +282,7 @@ const Index = () => {
         paymentType: result.paymentType,
         isPaid: result.isPaid,
         deliveryType: result.deliveryType,
+        colors: prev.colors ?? undefined,
       });
 
       const purchaseParams = {
@@ -283,7 +325,9 @@ const Index = () => {
             fbp: getFbp(),
           }, prev.orderNumber);
         } catch (err) {
-          console.error('[Meta] hash/track failed, firing without user_data', err);
+          if (import.meta.env.DEV) {
+            console.error('[Meta] hash/track failed, firing without user_data', err);
+          }
           trackPurchase(purchaseParams);
         }
       })();
@@ -347,6 +391,10 @@ const Index = () => {
     }));
 
     const bundle = BUNDLES[selectedBundleIndex];
+    const colorsSnapshot = Array.from(
+      { length: bundle.quantity },
+      (_, i) => picks[i] ?? picks[0] ?? DEFAULT_VARIANT,
+    );
     notifyCheckoutStarted({
       name: data.name,
       phone: data.phone,
@@ -357,11 +405,12 @@ const Index = () => {
       bundleLabel: bundle.label,
       quantity: bundle.quantity,
       price: bundle.price,
+      colors: colorsSnapshot,
     });
 
     setShowPhoneForm(false);
     setShowStripeCheckout(true); // Show payment with all info collected
-  }, [selectedBundleIndex]);
+  }, [selectedBundleIndex, picks]);
 
   const handlePhoneFormClose = useCallback(() => {
     if (!exitIntentShown) {
@@ -466,13 +515,13 @@ const Index = () => {
         {/* We want the header to be transparent. bg-transparent. */}
         <div className="w-full">
           <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</h1>
+            <span className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
             <button
               onClick={handleBuyClick}
               onMouseEnter={preloadCheckoutChunks}
               onFocus={preloadCheckoutChunks}
               onTouchStart={preloadCheckoutChunks}
-              className="text-primary hover:text-primary/80 font-medium text-sm md:text-base transition-colors tracking-tight"
+              className="text-variant-active hover:text-variant-active/80 font-medium text-sm md:text-base transition-colors tracking-tight"
             >
               Comprar Ahora
             </button>
@@ -488,6 +537,8 @@ const Index = () => {
           onBundleSelect={handleBundleSelect}
           selectedPrice={selectedPrice}
           selectedQuantity={selectedQuantity}
+          picks={picks}
+          onPickChange={handlePickChange}
         />
 
         <Suspense fallback={null}>
@@ -503,7 +554,7 @@ const Index = () => {
         </Suspense>
 
         <Suspense fallback={null}>
-          <ScienceSection />
+          <ScienceDemo />
         </Suspense>
 
         <Suspense fallback={null}>

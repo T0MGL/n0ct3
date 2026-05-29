@@ -1,13 +1,13 @@
-// Framer Motion animation variants — premium, deliberate reveal animations
-// Respects user preferences for reduced motion
-// Note: For reactive reduced motion detection in components, use useReducedMotion hook
+// Framer Motion animation variants for premium, deliberate reveal animations.
+// Respects user preferences for reduced motion.
+// Note: for reactive reduced motion detection in components, use useReducedMotion hook.
 
 import { REDUCED_MOTION } from '@/hooks/useReducedMotion';
 
-// Premium easing — slow start, confident settle (Apple-style ease-out)
+// Premium easing: slow start, confident settle (Apple-style ease-out).
 export const EASING = [0.16, 1, 0.3, 1] as const;
 
-// Durations — slow enough to feel intentional, fast enough to not drag
+// Durations: slow enough to feel intentional, fast enough to not drag.
 export const DURATION = {
   fast: 0.5,
   normal: 0.7,

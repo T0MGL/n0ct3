@@ -22,6 +22,8 @@ export interface OrderData {
   paymentType: 'COD' | 'Cash' | 'Card';
   isPaid?: boolean;
   deliveryType: 'común' | 'premium';
+  /** Lens color per unit in display order. Length should match quantity. */
+  colors?: string[];
 }
 
 export interface GeocodeResponse {
@@ -69,7 +71,9 @@ export async function getGoogleMapsLink(
     const data: GeocodeResponse = await response.json();
     return data;
   } catch (error) {
-    console.error('Error getting Google Maps link:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error getting Google Maps link:', error);
+    }
 
     // Fallback: generate simple link on client side
     const fullAddress = address ? `${address}, ${city}` : city;
@@ -93,19 +97,14 @@ export async function sendOrderToN8N(
   orderData: OrderData
 ): Promise<SendOrderResponse> {
   try {
-    console.log('📦 Sending order to backend...', orderData);
-
     // Generate Google Maps link (more precise version)
     let googleMapsLink: string | null = null;
 
     // Only generate Google Maps link from actual GPS coordinates (browser geolocation).
-    // Never geocode manual text addresses into coordinates — that creates
+    // Never geocode manual text addresses into coordinates: that creates
     // fake GPS links that confuse downstream systems (n8n bot sends wrong template).
     if (orderData.lat && orderData.long) {
       googleMapsLink = `https://www.google.com/maps?q=${orderData.lat},${orderData.long}`;
-      console.log('📍 Google Maps link from GPS coordinates:', googleMapsLink);
-    } else {
-      console.log('ℹ️ No GPS coordinates, sending text address only (no googleMapsLink).');
     }
 
     // Send to backend (which handles n8n and Ordefy)
@@ -126,13 +125,14 @@ export async function sendOrderToN8N(
     }
 
     const result: SendOrderResponse = await response.json();
-    console.log('✅ Order sent successfully:', result);
 
     return result;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to send order';
-    console.error('❌ Error sending order:', errorMessage);
+    if (import.meta.env.DEV) {
+      console.error('Error sending order:', errorMessage);
+    }
 
     return {
       success: false,
@@ -153,7 +153,9 @@ export function sendOrderInBackground(orderData: OrderData): void {
   // This makes the UI transition instant
   setTimeout(() => {
     sendOrderToN8N(orderData).catch((error) => {
-      console.error('❌ Background order send failed:', error);
+      if (import.meta.env.DEV) {
+        console.error('Background order send failed:', error);
+      }
     });
   }, 0);
 }
@@ -172,6 +174,7 @@ export interface CheckoutStartedData {
   bundleLabel: string;
   quantity: number;
   price: number;
+  colors?: string[];
 }
 
 /**

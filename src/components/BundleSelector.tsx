@@ -1,123 +1,192 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { BUNDLES, ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
+import { VariantPicker } from "@/components/VariantPicker";
+import { VARIANTS, type VariantId } from "@/lib/variants";
 
 interface BundleSelectorProps {
   selectedIndex: number;
   onSelect: (index: number) => void;
+  picks: VariantId[];
+  onPickChange: (unitIndex: number, next: VariantId) => void;
 }
 
-export const BundleSelector = ({ selectedIndex, onSelect }: BundleSelectorProps) => {
+const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
+
+export const BundleSelector = ({
+  selectedIndex,
+  onSelect,
+  picks,
+  onPickChange,
+}: BundleSelectorProps) => {
   return (
-    <div className="space-y-3 w-full">
+    <div className="w-full space-y-2.5">
       {BUNDLES.map((bundle, index) => {
         const isSelected = selectedIndex === index;
+        const isHighlighted = !!bundle.highlighted;
+        const isExpanded = isSelected;
 
         return (
-          <motion.button
+          <motion.div
             key={bundle.id}
-            onClick={() => onSelect(index)}
-            className={`
-              relative w-full p-4 rounded-lg border-2 transition-all duration-300 text-left
-              ${isSelected
-                ? bundle.highlighted
-                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                  : 'border-primary bg-primary/5'
-                : bundle.highlighted
-                  ? 'border-primary/40 bg-secondary/20 hover:border-primary/60'
-                  : 'border-border/30 bg-secondary/10 hover:border-border/50'
-              }
-            `}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            layout
+            transition={EXPAND}
+            className={[
+              "relative w-full overflow-hidden rounded-xl border transition-[border-color,background-color,box-shadow] duration-300",
+              isSelected
+                ? "border-variant-active bg-[hsl(var(--variant-active)/0.025)] shadow-[0_8px_22px_-16px_hsl(var(--variant-active)/0.35)]"
+                : isHighlighted
+                  ? "border-variant-active/25 bg-transparent hover:border-variant-active/50"
+                  : "border-white/8 bg-transparent hover:border-white/15",
+            ].join(" ")}
           >
-            {/* Subtle pulse on highlighted card when not selected */}
-            {bundle.highlighted && !isSelected && (
-              <motion.div
-                className="absolute inset-0 rounded-lg border-2 border-primary/30 pointer-events-none"
-                initial={{ opacity: 0.6 }}
-                animate={{ opacity: [0.6, 0.15, 0.6] }}
-                transition={{ duration: 2, repeat: 1, ease: "easeInOut" }}
+            {isSelected && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-variant-active z-10"
               />
             )}
 
-            {/* Badge */}
-            {bundle.badge && (
-              <div className={`
-                absolute -top-3 right-4 px-3 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase
-                ${bundle.highlighted
-                  ? 'bg-gradient-to-r from-primary to-[#DC2626] text-white'
-                  : 'bg-gold text-black'
-                }
-              `}>
-                {bundle.highlighted && <span className="mr-1">🔥</span>}{bundle.badge}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => onSelect(index)}
+              aria-pressed={isSelected}
+              className="block w-full px-4 py-3.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-variant-active focus-visible:ring-inset"
+            >
+              {bundle.badge && (
+                <div className="mb-2 flex">
+                  <span
+                    className={[
+                      "inline-flex items-center gap-1 rounded-md px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.16em]",
+                      isHighlighted ? "text-white" : "bg-gold/90 text-black",
+                    ].join(" ")}
+                    style={
+                      isHighlighted
+                        ? {
+                            background:
+                              "linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.7))",
+                          }
+                        : undefined
+                    }
+                  >
+                    {bundle.badge}
+                  </span>
+                </div>
+              )}
 
-            <div className="flex items-center justify-between gap-3">
-              {/* Radio + Info */}
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Radio indicator */}
-                <div className={`
-                  w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
-                  ${isSelected ? 'border-primary' : 'border-border/50'}
-                `}>
-                  {isSelected && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      className="w-2.5 h-2.5 rounded-full bg-primary"
-                    />
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span
+                      className={[
+                        "text-[15px] font-semibold leading-none tracking-tight",
+                        isSelected || isHighlighted ? "text-white" : "text-white/85",
+                      ].join(" ")}
+                    >
+                      {bundle.quantity} {bundle.quantity === 1 ? "Unidad" : "Unidades"}
+                    </span>
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+                      {bundle.label}
+                    </span>
+                  </div>
+
+                  {bundle.quantity > 1 ? (
+                    <p className="mt-1.5 text-[12px] text-white/55">
+                      <span className="line-through mr-1.5 text-white/30">
+                        Gs. {ORIGINAL_UNIT_PRICE.toLocaleString("es-PY")}
+                      </span>
+                      <span className="font-semibold text-white/75">
+                        Gs. {bundle.unitPrice.toLocaleString("es-PY")}
+                      </span>
+                      <span className="text-white/45"> c/u</span>
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-[12px] text-white/55">Para probar el efecto</p>
                   )}
                 </div>
 
-                {/* Bundle info */}
-                <div className="min-w-0">
-                  <p className={`
-                    text-sm font-bold leading-tight
-                    ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
-                  `}>
-                    {bundle.quantity} {bundle.quantity === 1 ? 'Unidad' : 'Unidades'} — {bundle.label}
-                  </p>
-                  {bundle.quantity > 1 && (
-                    <p className={`mt-0.5 ${bundle.highlighted ? 'text-sm font-semibold text-primary/80' : 'text-xs text-muted-foreground'}`}>
-                      {bundle.highlighted && (
-                        <span className="line-through text-muted-foreground/50 font-normal mr-1">
-                          {ORIGINAL_UNIT_PRICE.toLocaleString('es-PY')}
-                        </span>
-                      )}
-                      {bundle.unitPrice.toLocaleString('es-PY')} Gs c/u
-                    </p>
-                  )}
-                  {bundle.highlighted && (
-                    <span className="text-[11px] text-primary/60 mt-0.5 block">
-                      2 lentes, pagas menos por cada uno
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="text-[18px] font-bold leading-none text-white tracking-tight">
+                    Gs. {bundle.price.toLocaleString("es-PY")}
+                  </span>
+                  {bundle.savings && (
+                    <span
+                      className={[
+                        "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] px-1.5 py-0.5 rounded",
+                        isHighlighted
+                          ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                          : "bg-emerald-500/15 text-emerald-400",
+                      ].join(" ")}
+                    >
+                      − Gs. {bundle.savings.toLocaleString("es-PY")}
                     </span>
                   )}
                 </div>
               </div>
+            </button>
 
-              {/* Price */}
-              <div className="text-right flex-shrink-0">
-                <p className={`
-                  text-lg font-bold leading-tight
-                  ${bundle.highlighted ? 'text-primary' : 'text-foreground'}
-                `}>
-                  {bundle.price.toLocaleString('es-PY')} Gs
-                </p>
-                {bundle.savings && (
-                  <p className={`font-medium mt-0.5 ${
-                    bundle.highlighted
-                      ? 'text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full inline-block'
-                      : 'text-[11px] text-gold'
-                  }`}>
-                    Ahorrás {bundle.savings.toLocaleString('es-PY')} Gs
-                  </p>
-                )}
-              </div>
-            </div>
-          </motion.button>
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  key="picks"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={EXPAND}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4">
+                    <div className="h-px bg-white/8 mb-3" />
+                    <p className="mb-2.5 text-[10px] uppercase tracking-[0.2em] text-white/45">
+                      {bundle.quantity === 1
+                        ? "Elegí el color del lente"
+                        : "Elegí el color de cada lente"}
+                    </p>
+                    <ul className="space-y-2">
+                      {Array.from({ length: bundle.quantity }).map((_, unitIdx) => {
+                        const pick = picks[unitIdx] ?? picks[0];
+                        const v = VARIANTS[pick];
+                        return (
+                          <li
+                            key={unitIdx}
+                            className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.02] px-3 py-2"
+                          >
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              {bundle.quantity > 1 && (
+                                <span
+                                  aria-hidden="true"
+                                  className="grid h-5 w-5 place-items-center rounded-full bg-white/5 text-[10px] font-bold text-white/75 ring-1 ring-white/10"
+                                >
+                                  {unitIdx + 1}
+                                </span>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[12px] font-medium leading-none text-white/85 capitalize">
+                                  {pick}
+                                </p>
+                                <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/40">
+                                  Modo {v.moment}
+                                </p>
+                              </div>
+                            </div>
+                            <VariantPicker
+                              value={pick}
+                              onChange={(next) => onPickChange(unitIdx, next)}
+                              size="sm"
+                              label={
+                                bundle.quantity === 1
+                                  ? "Color del lente"
+                                  : `Color de la unidad ${unitIdx + 1}`
+                              }
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         );
       })}
     </div>

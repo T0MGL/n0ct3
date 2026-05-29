@@ -49,6 +49,13 @@ export default {
         },
         gold: "hsl(var(--gold))",
         neon: "hsl(var(--neon))",
+        variant: {
+          rojo: "hsl(var(--variant-rojo))",
+          naranja: "hsl(var(--variant-naranja))",
+          amarillo: "hsl(var(--variant-amarillo))",
+          active: "hsl(var(--variant-active))",
+          "active-glow": "hsl(var(--variant-active) / 0.55)",
+        },
       },
       spacing: {
         'xs': '8px',

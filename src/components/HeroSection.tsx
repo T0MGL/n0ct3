@@ -9,17 +9,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import hero1Image from "@/assets/hero1.webp";
-import heroImage from "@/assets/nocte-hero-lifestyle.webp";
-import productImage3 from "@/assets/productimage3.webp";
-import productImage2 from "@/assets/productimage2.webp";
-import productImage1 from "@/assets/productimage1.webp";
 import tarjetasImage from "@/assets/tarjetas.webp";
 import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
 import { BundleSelector } from "@/components/BundleSelector";
+import { ProductHero } from "@/components/ProductHero";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
+import { VARIANTS, type VariantId } from "@/lib/variants";
+import { useActiveVariant } from "@/lib/variant-context";
 
 interface HeroSectionProps {
   onBuyClick: () => void;
@@ -27,6 +25,8 @@ interface HeroSectionProps {
   onBundleSelect: (index: number) => void;
   selectedPrice: number;
   selectedQuantity: number;
+  picks: VariantId[];
+  onPickChange: (unitIndex: number, next: VariantId) => void;
 }
 
 export const HeroSection = ({
@@ -35,17 +35,32 @@ export const HeroSection = ({
   onBundleSelect,
   selectedPrice,
   selectedQuantity,
+  picks,
+  onPickChange,
 }: HeroSectionProps) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const hasInteractedRef = useRef(false);
-  const hasPeekedRef = useRef(false);
+  const { activeVariant, setActiveVariant } = useActiveVariant();
+
+  // Cart unit 1 nudges the hero image once on mount so the initial frame matches
+  // the default cart color. Afterwards the image follows the explicit color
+  // thumbnails in ProductHero (preview) and the picks change handler below.
+  const didSyncInitialPick = useRef(false);
+  useEffect(() => {
+    if (didSyncInitialPick.current) return;
+    didSyncInitialPick.current = true;
+    const unitOne = picks[0];
+    if (unitOne && unitOne !== activeVariant) setActiveVariant(unitOne);
+  }, [picks, activeVariant, setActiveVariant]);
+
+  const handlePickChange = (unitIndex: number, next: VariantId) => {
+    onPickChange(unitIndex, next);
+    if (unitIndex === 0) setActiveVariant(next);
+  };
   const [badgeCollapsed, setBadgeCollapsed] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { amount: 0.5 });
+  const variant = VARIANTS[activeVariant];
 
-  // Auto-collapse the authority badge once, 2s after mount — never expands again
+  // Auto-collapse the authority badge once, 2s after mount, never expands again.
   useEffect(() => {
     const timer = setTimeout(() => setBadgeCollapsed(true), 2000);
     return () => clearTimeout(timer);
@@ -88,14 +103,6 @@ export const HeroSection = ({
   const [displayStock, setDisplayStock] = useState(stockLeft);
   const [stockAnimating, setStockAnimating] = useState(false);
 
-  const slides = [
-    { image: hero1Image, alt: "NOCTE - Lentes Rojos Anti-Luz Azul" },
-    { image: productImage3, alt: "NOCTE Kit Completo - Lentes, Estuche y Bolsa" },
-    { image: productImage2, alt: "NOCTE Estuche Abierto con Lentes" },
-    { image: productImage1, alt: "NOCTE Estuche Premium" },
-    { image: heroImage, alt: "Persona usando lentes NOCTE" },
-  ];
-
   // Track ViewContent when hero section is viewed
   useEffect(() => {
     trackViewContent();
@@ -108,53 +115,6 @@ export const HeroSection = ({
 
     return () => clearTimeout(preloadTimer);
   }, []);
-
-  // Carousel peek animation - hints that carousel is scrollable
-  useEffect(() => {
-    if (hasPeekedRef.current || hasInteracted || currentSlide !== 0) return;
-
-    let returnTimer: ReturnType<typeof setTimeout>;
-    let snapTimer: ReturnType<typeof setTimeout>;
-
-    const peekTimer = setTimeout(() => {
-      if (!carouselRef.current || hasInteractedRef.current) return;
-
-      const carousel = carouselRef.current;
-
-      // Temporarily disable scroll-snap for smooth peek animation
-      carousel.style.scrollSnapType = 'none';
-      // Move further (120px) to make peek more noticeable
-      carousel.scrollTo({ left: 120, behavior: 'smooth' });
-
-      // Hold the peek position longer (1 second) before returning
-      returnTimer = setTimeout(() => {
-        if (carousel && !hasInteractedRef.current) {
-          carousel.scrollTo({ left: 0, behavior: 'smooth' });
-        } else if (carousel) {
-          // User interacted during peek - just restore snap
-          carousel.style.scrollSnapType = 'x mandatory';
-          return;
-        }
-
-        // Re-enable scroll-snap after scroll-back animation fully completes
-        snapTimer = setTimeout(() => {
-          if (carousel) {
-            // Force position to 0 before re-enabling snap to prevent mid-snap
-            carousel.scrollLeft = 0;
-            carousel.style.scrollSnapType = 'x mandatory';
-          }
-        }, 800);
-      }, 1000);
-
-      hasPeekedRef.current = true;
-    }, 2000);
-
-    return () => {
-      clearTimeout(peekTimer);
-      clearTimeout(returnTimer);
-      clearTimeout(snapTimer);
-    };
-  }, [hasInteracted, currentSlide]);
 
   // Live purchase notification - shows once per session after 8 seconds
   useEffect(() => {
@@ -203,23 +163,35 @@ export const HeroSection = ({
   const originalPrice = ORIGINAL_UNIT_PRICE * selectedQuantity;
 
   return (
-    <section className="relative min-h-[85vh] lg:min-h-screen flex items-start lg:items-center overflow-x-hidden bg-black">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
+    <section
+      data-variant={activeVariant}
+      className="relative min-h-[85vh] lg:min-h-screen flex items-start lg:items-center overflow-x-hidden bg-black transition-colors duration-500"
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+        style={{
+          background: `radial-gradient(ellipse 60% 40% at 50% 30%, hsl(var(--variant-active) / 0.035), transparent 65%)`,
+        }}
+      />
 
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 relative z-10 pt-[80px] md:pt-[88px] pb-6 md:pb-12">
         {/* Mobile-First Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-4 md:gap-8 lg:gap-14 items-start lg:items-center">
 
-          {/* Image Slider - Order 1 on mobile (shows first) */}
+          {/* Product Hero - Order 1 on mobile (shows first) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-1 w-full lg:self-center lg:-mt-10"
           >
-            {/* Authority Badge — auto-collapses to the left after 2s, one-way */}
+            {/* Authority Badge, auto-collapses to the left after 2s, one-way. */}
             <motion.div
-              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 bg-gradient-to-r from-primary to-red-600 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
+              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
+              style={{
+                background: `linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))`,
+              }}
               initial={false}
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -248,61 +220,7 @@ export const HeroSection = ({
               </AnimatePresence>
             </motion.div>
 
-            {/* Image Carousel with scroll-snap */}
-            <div className="relative w-full sm:max-w-[500px] lg:max-w-[560px] mx-auto">
-              <div
-                ref={carouselRef}
-                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-lg"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                onScroll={(e) => {
-                  const scrollLeft = e.currentTarget.scrollLeft;
-                  const slideWidth = e.currentTarget.offsetWidth;
-                  const newSlide = Math.round(scrollLeft / slideWidth);
-                  setCurrentSlide(newSlide);
-                }}
-                onTouchStart={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
-                onMouseDown={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
-              >
-                {slides.map((slide, index) => (
-                  <div
-                    key={index}
-                    className="flex-shrink-0 w-full snap-center"
-                  >
-                    <div className="relative w-full aspect-[4/5] overflow-hidden rounded-lg">
-                      <img
-                        src={slide.image}
-                        alt={slide.alt}
-                        loading={index === 0 ? "eager" : "lazy"}
-                        fetchPriority={index === 0 ? "high" : "auto"}
-                        className="w-full h-full object-cover drop-shadow-[0_8px_16px_rgba(239,68,68,0.25)]"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Carousel Indicators */}
-              <div className="flex justify-center lg:justify-start gap-2 mt-4 lg:ml-1">
-                {slides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      if (carouselRef.current) {
-                        carouselRef.current.scrollTo({
-                          left: index * carouselRef.current.clientWidth,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === index
-                      ? 'bg-primary w-6'
-                      : 'bg-white/30'
-                      }`}
-                    aria-label={`Ir a imagen ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
+            <ProductHero activeVariant={activeVariant} />
           </motion.div>
 
           {/* Content - Order 2 on mobile */}
@@ -314,9 +232,67 @@ export const HeroSection = ({
           >
             {/* Main Title */}
             <div className="space-y-3">
+              {/* Variant-aware eyebrow with blocked percent badge. */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-white/[0.04] px-2.5 py-1.5 text-[12px] font-semibold text-white"
+                  style={{ borderColor: `${variant.accent}66` }}
+                >
+                  <ShieldCheckIcon
+                    className="h-4 w-4"
+                    style={{ color: variant.accent }}
+                  />
+                  Bloquea{" "}
+                  <span style={{ color: variant.accent }}>
+                    {variant.blockedPercent}%
+                  </span>{" "}
+                  <span className="font-medium text-white/70">luz azul</span>
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                  Modo {variant.moment}
+                </span>
+              </div>
+
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                Lentes Rojos<br />Anti-Luz Azul
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={variant.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                    className="block"
+                  >
+                    {variant.displayTitle}
+                  </motion.span>
+                </AnimatePresence>
               </h1>
+
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p
+                  key={`tagline-${variant.id}`}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-base md:text-lg font-medium text-white/80"
+                >
+                  {variant.tagline}
+                </motion.p>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p
+                  key={`desc-${variant.id}`}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-sm md:text-base text-white/70 max-w-md"
+                >
+                  {variant.description}
+                </motion.p>
+              </AnimatePresence>
 
               {/* Star Rating + Social Proof */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -341,35 +317,37 @@ export const HeroSection = ({
             {/* Benefits Grid - 2x2 Icons */}
             <div className="grid grid-cols-2 gap-3 md:gap-4 py-1">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <ComputerDesktopIcon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-variant-active/10 flex items-center justify-center flex-shrink-0">
+                  <ComputerDesktopIcon className="w-6 h-6 text-variant-active" />
                 </div>
                 <span className="text-sm md:text-base font-medium text-white">Trabaja en Pantallas</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheckIcon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-variant-active/10 flex items-center justify-center flex-shrink-0">
+                  <ShieldCheckIcon className="w-6 h-6 text-variant-active" />
                 </div>
                 <span className="text-sm md:text-base font-medium text-white">Bloquea Luz Azul</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FaceSmileIcon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-variant-active/10 flex items-center justify-center flex-shrink-0">
+                  <FaceSmileIcon className="w-6 h-6 text-variant-active" />
                 </div>
                 <span className="text-sm md:text-base font-medium text-white">Cero Migrañas</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <MoonIcon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-variant-active/10 flex items-center justify-center flex-shrink-0">
+                  <MoonIcon className="w-6 h-6 text-variant-active" />
                 </div>
                 <span className="text-sm md:text-base font-medium text-white">Dormí Profundo</span>
               </div>
             </div>
 
-            {/* Bundle Selector */}
+            {/* Bundle Selector with inline per-unit color picker */}
             <BundleSelector
               selectedIndex={selectedBundleIndex}
               onSelect={onBundleSelect}
+              picks={picks}
+              onPickChange={handlePickChange}
             />
 
             {/* Price */}
@@ -388,23 +366,31 @@ export const HeroSection = ({
               animate={{
                 opacity: 1,
                 scale: stockAnimating ? [1, 1.08, 1] : 1,
-                boxShadow: stockAnimating
-                  ? ['0 0 0px rgba(239,68,68,0)', '0 0 20px rgba(239,68,68,0.6)', '0 0 0px rgba(239,68,68,0)']
-                  : '0 0 0px rgba(239,68,68,0)',
               }}
               transition={{
                 delay: stockAnimating ? 0 : 0.3,
                 duration: stockAnimating ? 0.6 : 0.4,
                 repeat: stockAnimating ? 2 : 0,
               }}
-              style={{ willChange: 'transform, box-shadow' }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg"
+              style={{
+                willChange: 'transform, box-shadow',
+                backgroundColor: `${variant.accent}10`,
+                borderColor: `${variant.accent}33`,
+                boxShadow: stockAnimating ? `0 0 14px -2px ${variant.lensGlow}` : 'none',
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors duration-300"
             >
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ backgroundColor: variant.accent }}
+                />
+                <span
+                  className="relative inline-flex rounded-full h-2.5 w-2.5"
+                  style={{ backgroundColor: variant.accent }}
+                />
               </span>
-              <span className="text-sm font-semibold text-primary">
+              <span className="text-sm font-semibold" style={{ color: variant.accent }}>
                 Solo quedan{" "}
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -440,10 +426,11 @@ export const HeroSection = ({
                   data-hero-cta
                   variant="hero"
                   size="xl"
-                  className="w-full h-14 md:h-16 text-base md:text-lg font-bold shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+                  className="w-full h-14 md:h-16 text-base md:text-lg font-bold transition-shadow duration-300"
+                  style={{ boxShadow: `0 10px 28px -12px ${variant.lensGlow}` }}
                   onClick={onBuyClick}
                 >
-                  COMPRAR AHORA - Gs. {selectedPrice.toLocaleString('es-PY')}
+                  COMPRAR AHORA · Gs. {selectedPrice.toLocaleString('es-PY')}
                 </Button>
               </motion.div>
 

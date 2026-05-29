@@ -5,18 +5,18 @@ import { staggerContainerVariants, staggerItemVariants } from "@/lib/animations"
 const benefits = [
   {
     icon: EyeIcon,
-    title: "Trabaja sin fatiga ocular",
-    description: "Úsalos durante tus sesiones nocturnas de trabajo. Bloquean la luz azul (400-550nm) que quema tus ojos después de 8+ horas de pantalla. Termina tu día sin ojos rojos ni cansancio visual.",
+    title: "Trabajá sin fatiga ocular",
+    description: "Usalos durante tus sesiones nocturnas de trabajo. Bloquean la luz azul (400-550nm) que quema tus ojos después de 8+ horas de pantalla. Terminá tu día sin ojos rojos ni cansancio visual.",
   },
   {
     icon: ShieldCheckIcon,
     title: "Cero dolores de cabeza",
-    description: "La luz azul de las pantallas causa tensión que termina en migrañas. Con NOCTE, trabajas tranquilo. El 70% de nuestros usuarios reportan eliminación total de dolores de cabeza nocturnos.",
+    description: "La luz azul de las pantallas causa tensión que termina en migrañas. Con NOCTE, trabajás tranquilo. El 70% de nuestros usuarios reportan eliminación total de dolores de cabeza nocturnos.",
   },
   {
     icon: MoonIcon,
     title: "Dormí profundo (el beneficio real)",
-    description: "Úsalos mientras trabajas o scrolleas de noche. Tu cerebro producirá melatonina naturalmente como si fuera de noche. Resultado: te dormís más rápido y despiertas descansado. No magic pills, solo ciencia.",
+    description: "Usalos mientras trabajás o scrolleás de noche. Tu cerebro producirá melatonina naturalmente como si fuera de noche. Resultado: te dormís más rápido y despertás descansado. Sin pastillas mágicas, solo ciencia.",
   },
 ];
 
@@ -54,13 +54,13 @@ export const BenefitsSection = () => {
               <motion.div
                 key={index}
                 variants={staggerItemVariants}
-                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/50 transition-all duration-300"
+                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-variant-active/50 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-b from-variant-active/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 <div className="relative space-y-5 md:space-y-6">
                   <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
-                    <Icon className="w-9 h-9 md:w-10 md:h-10 text-primary" strokeWidth={1.5} />
+                    <Icon className="w-9 h-9 md:w-10 md:h-10 text-variant-active" strokeWidth={1.5} />
                   </div>
 
                   <h3 className="text-xl md:text-2xl font-bold tracking-tight">

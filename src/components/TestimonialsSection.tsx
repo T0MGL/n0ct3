@@ -15,7 +15,7 @@ const testimonials = [
     rating: 5,
     date: "Hace 2 semanas",
     verified: true,
-    quote: "Literal me quedaba hasta las 3am laburando y despues no podia pegar un ojo hasta las 6. Ahora me los pongo tipo 10 y a las 2 ya estoy durmiendo tranquilo. No se como pero funciona.",
+    quote: "Literal me quedaba hasta las 3am laburando y después no podía pegar un ojo hasta las 6. Ahora me los pongo tipo 10 y a las 2 ya estoy durmiendo tranquilo. No sé cómo pero funciona.",
     image: testimonial1,
   },
   {
@@ -24,7 +24,7 @@ const testimonials = [
     rating: 5,
     date: "Hace 1 mes",
     verified: true,
-    quote: "Al principio era medio esceptica pero bueno los probe. Laburo de 8 a 1am todos los dias y ahora cuando apago la compu me duermo en nada. Antes estaba 2 horas mirando el techo.",
+    quote: "Al principio era medio escéptica pero bueno los probé. Laburo de 8 a 1am todos los días y ahora cuando apago la compu me duermo en nada. Antes estaba 2 horas mirando el techo.",
     image: testimonial2,
   },
   {
@@ -42,7 +42,7 @@ const testimonials = [
     rating: 5,
     date: "Hace 1 semana",
     verified: true,
-    quote: "Pense que era puro marketing nomas pero mi novia me regalo uno y la verdad que despues de unas semanas se nota bastante la diferencia. Duermo profundo de verdad.",
+    quote: "Pensé que era puro marketing nomás pero mi novia me regaló uno y la verdad que después de unas semanas se nota bastante la diferencia. Duermo profundo de verdad.",
     image: testimonial4,
   },
   {
@@ -51,7 +51,7 @@ const testimonials = [
     rating: 4,
     date: "Hace 2 meses",
     verified: true,
-    quote: "Soy diseñador asi que estoy toda la noche en la pantalla. Funcionan bien, duermo mejor. Lo unico es que al principio cuesta acostumbrarse a ver todo rojo, pero despues ni lo notas.",
+    quote: "Soy diseñador así que estoy toda la noche en la pantalla. Funcionan bien, duermo mejor. Lo único es que al principio cuesta acostumbrarse a ver todo rojo, pero después ni lo notás.",
     image: testimonial5,
   },
 ];
@@ -105,7 +105,7 @@ export const TestimonialsSection = () => {
             <motion.div
               key={index}
               variants={itemVariants}
-              className="group p-5 md:p-6 bg-gradient-to-b from-card to-black border border-border/50 hover:border-primary/30 transition-all duration-300"
+              className="group p-5 md:p-6 bg-gradient-to-b from-card to-black border border-border/50 hover:border-variant-active/30 transition-all duration-300"
             >
               <div className="space-y-4 md:space-y-5">
                 <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export const TestimonialsSection = () => {
                         {testimonial.name}
                       </p>
                       {testimonial.verified && (
-                        <CheckBadgeIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                        <CheckBadgeIcon className="w-4 h-4 text-variant-active flex-shrink-0" />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground font-light">

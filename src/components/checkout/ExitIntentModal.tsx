@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { XMarkIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { buildWhatsAppUrl } from "@/lib/contact";
 
 interface ExitIntentModalProps {
   isOpen: boolean;
@@ -17,10 +18,9 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
     return () => { unlockScroll(); };
   }, [isOpen]);
 
-  const message = encodeURIComponent(
+  const whatsappUrl = buildWhatsAppUrl(
     "Hola, estaba por comprar los lentes NOCTE pero tengo una consulta..."
   );
-  const whatsappUrl = `https://wa.me/595991893587?text=${message}`;
 
   return (
     <AnimatePresence>
@@ -39,7 +39,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[420px] bg-gradient-to-b from-secondary to-black border border-primary/30 rounded-xl p-8 shadow-[0_20px_60px_-15px_rgba(239,68,68,0.3)]"
+            className="relative w-full max-w-[420px] bg-gradient-to-b from-secondary to-black border border-variant-active/30 rounded-xl p-8 shadow-[0_20px_60px_-15px_rgba(239,68,68,0.3)]"
           >
             {/* Close Button */}
             <button

@@ -100,7 +100,6 @@ export const initMetaPixel = (pixelId: string): void => {
   if (typeof window === 'undefined') return;
 
   if (window.fbq) {
-    console.log('Meta Pixel already initialized');
     return;
   }
 
@@ -139,8 +138,6 @@ export const initMetaPixel = (pixelId: string): void => {
   document.head.appendChild(script);
 
   window.fbq('init', pixelId);
-
-  console.log('Meta Pixel initialized:', pixelId);
 };
 
 const NOCTE_CONTENT_NAME = 'NOCTE® Red Light Blocking Glasses';
@@ -186,7 +183,6 @@ export const trackPageView = (user_data?: MetaUserData, event_id?: string): void
 
   window.fbq('track', 'PageView', payload, { eventID: eventId });
   mirrorToCapi('PageView', eventId, enriched, undefined);
-  console.log('Meta Pixel: PageView tracked', { hasUserData: Boolean(userData), eventID: eventId });
 };
 
 /**
@@ -221,7 +217,6 @@ export const trackViewContent = (params?: {
 
   window.fbq('track', 'ViewContent', payload, { eventID: eventId });
   mirrorToCapi('ViewContent', eventId, enriched, customData);
-  console.log('Meta Pixel: ViewContent tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -257,7 +252,6 @@ export const trackInitiateCheckout = (params?: {
 
   window.fbq('track', 'InitiateCheckout', payload, { eventID: eventId });
   mirrorToCapi('InitiateCheckout', eventId, enriched, customData);
-  console.log('Meta Pixel: InitiateCheckout tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -292,7 +286,6 @@ export const trackAddToCart = (params: {
 
   window.fbq('track', 'AddToCart', payload, { eventID: eventId });
   mirrorToCapi('AddToCart', eventId, enriched, customData);
-  console.log('Meta Pixel: AddToCart tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -327,7 +320,6 @@ export const trackAddPaymentInfo = (params: {
 
   window.fbq('track', 'AddPaymentInfo', payload, { eventID: eventId });
   mirrorToCapi('AddPaymentInfo', eventId, enriched, customData);
-  console.log('Meta Pixel: AddPaymentInfo tracked', { ...payload, eventID: eventId });
 };
 
 /**
@@ -372,11 +364,6 @@ export const trackPurchase = (
   window.fbq('track', 'Purchase', payload, { eventID: finalEventId });
   mirrorToCapi('Purchase', finalEventId, enriched, customData);
 
-  console.log('Meta Pixel: Purchase tracked (CONVERSION)', {
-    payloadKeys: Object.keys(payload),
-    matchedKeys: user_data ? Object.keys(user_data) : [],
-    eventID: finalEventId,
-  });
 };
 
 /**
@@ -387,5 +374,4 @@ export const trackCustomEvent = (eventName: string, parameters?: Record<string, 
   if (typeof window === 'undefined' || !window.fbq) return;
 
   window.fbq('trackCustom', eventName, parameters);
-  console.log(`Meta Pixel: Custom event "${eventName}" tracked`, parameters);
 };

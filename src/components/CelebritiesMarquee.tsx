@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import robertDowney from "@/assets/Robert-Downey-Jr-Glasses-5.jpg";
-import lewisHamilton from "@/assets/lewis-hamilton-great-britain-mercedes-955639803.png";
+import lewisHamilton from "@/assets/lewis-hamilton.webp";
 import cbum from "@/assets/cbum.jpeg";
 import selenaGomez from "@/assets/selena-gomez-sunglasses-tint-bb13-2017-billboard-1548.jpeg";
 import tomHolland from "@/assets/tumblr_880f0d056d244f576f1dc8c30b9fab6e_16c94225_1280.jpg";

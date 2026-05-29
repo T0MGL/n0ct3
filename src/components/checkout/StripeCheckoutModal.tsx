@@ -10,6 +10,7 @@ import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { isGranAsuncion } from '@/data/paraguayCities';
+import { buildWhatsAppUrl } from '@/lib/contact';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
@@ -251,7 +252,9 @@ const CheckoutForm = ({
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error('[Payment] Exception during payment:', error);
+      if (import.meta.env.DEV) {
+        console.error('[Payment] Exception during payment:', error);
+      }
       const message = error instanceof Error ? error.message : 'Error al procesar el pago';
       setErrorMessage(message);
       setIsProcessing(false);
@@ -295,15 +298,15 @@ const CheckoutForm = ({
             className={`
               relative p-4 rounded-lg border-2 transition-all duration-300
               ${paymentMethod === 'cash_on_delivery'
-                ? 'border-primary bg-primary/10 shadow-lg'
+                ? 'border-variant-active bg-variant-active/10 shadow-lg'
                 : 'border-border/50 bg-secondary/30 hover:border-border hover:bg-secondary/50'
               }
             `}
           >
             <div className="flex flex-col items-center gap-2 text-center">
-              <BanknotesIcon className="w-6 h-6 text-primary" />
+              <BanknotesIcon className="w-6 h-6 text-variant-active" />
               <div>
-                <p className={`text-sm font-semibold ${paymentMethod === 'cash_on_delivery' ? 'text-primary' : 'text-foreground'}`}>
+                <p className={`text-sm font-semibold ${paymentMethod === 'cash_on_delivery' ? 'text-variant-active' : 'text-foreground'}`}>
                   Pagar al Recibir
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -312,7 +315,7 @@ const CheckoutForm = ({
               </div>
             </div>
             {paymentMethod === 'cash_on_delivery' && (
-              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+              <div className="absolute top-2 right-2 w-5 h-5 bg-variant-active rounded-full flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -348,18 +351,18 @@ const CheckoutForm = ({
               className={`
                 relative w-full p-4 rounded-lg transition-colors duration-300
                 ${paymentMethod === 'card'
-                  ? 'border-2 border-primary bg-primary/10 shadow-lg'
+                  ? 'border-2 border-variant-active bg-variant-active/10 shadow-lg'
                   : 'border border-border/30 bg-secondary/30 hover:bg-secondary/50'
                 }
               `}
             >
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-2">
-                  <CreditCardIcon className="w-5 h-5 text-primary" />
-                  <DevicePhoneMobileIcon className="w-5 h-5 text-primary" />
+                  <CreditCardIcon className="w-5 h-5 text-variant-active" />
+                  <DevicePhoneMobileIcon className="w-5 h-5 text-variant-active" />
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-primary' : 'text-foreground'}`}>
+                  <p className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-variant-active' : 'text-foreground'}`}>
                     Tarjeta de Crédito / Débito
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -368,7 +371,7 @@ const CheckoutForm = ({
                 </div>
               </div>
               {paymentMethod === 'card' && (
-                <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                <div className="absolute top-2 right-2 w-5 h-5 bg-variant-active rounded-full flex items-center justify-center">
                   <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
@@ -405,7 +408,7 @@ const CheckoutForm = ({
                 autoComplete="email"
                 inputMode="email"
                 aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-primary'}`}
+                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
               />
             </div>
             {emailError && (
@@ -462,9 +465,9 @@ const CheckoutForm = ({
 
       {/* Cash on Delivery Info */}
       {paymentMethod === 'cash_on_delivery' && (
-        <div className="p-5 bg-primary/5 rounded-lg border border-primary/20">
+        <div className="p-5 bg-variant-active/5 rounded-lg border border-variant-active/20">
           <div className="flex items-start gap-3">
-            <BanknotesIcon className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
+            <BanknotesIcon className="w-6 h-6 text-variant-active flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">
                 Pagas recién cuando tienes el producto en mano
@@ -512,7 +515,7 @@ const CheckoutForm = ({
           <div className="flex items-center gap-2">
             <p className="text-sm text-foreground">Delivery</p>
             {isFreeDelivery && (
-              <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-xs font-semibold text-primary">
+              <span className="px-2 py-0.5 bg-variant-active/10 border border-variant-active/20 rounded text-xs font-semibold text-variant-active">
                 GRATIS
               </span>
             )}
@@ -534,7 +537,7 @@ const CheckoutForm = ({
           className={`
             relative p-4 rounded-xl border cursor-pointer transition-all duration-300 group
             ${isPriorityShipping
-              ? 'bg-primary/5 border-primary/40 shadow-[0_0_20px_-10px_rgba(239,68,68,0.3)]'
+              ? 'bg-variant-active/5 border-variant-active/40 shadow-[0_0_20px_-10px_rgba(239,68,68,0.3)]'
               : 'bg-secondary/30 border-border/40 hover:bg-secondary/50 hover:border-border/60'
             }
           `}
@@ -544,8 +547,8 @@ const CheckoutForm = ({
             <div className={`
               w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0 mt-0.5
               ${isPriorityShipping
-                ? 'bg-primary border-primary scale-110'
-                : 'border-muted-foreground/40 group-hover:border-primary/50'
+                ? 'bg-variant-active border-variant-active scale-110'
+                : 'border-muted-foreground/40 group-hover:border-variant-active/50'
               }
             `}>
               {isPriorityShipping && <CheckIcon className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
@@ -556,12 +559,12 @@ const CheckoutForm = ({
               {/* Title Row */}
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <p className={`text-sm font-bold ${isPriorityShipping ? 'text-primary' : 'text-foreground'}`}>
+                  <p className={`text-sm font-bold ${isPriorityShipping ? 'text-variant-active' : 'text-foreground'}`}>
                     Envío Prioritario VIP
                   </p>
-                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground/70'}`} />
+                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground/70'}`} />
                 </div>
-                <p className={`text-sm font-bold whitespace-nowrap ml-2 ${isPriorityShipping ? 'text-primary' : 'text-muted-foreground'}`}>
+                <p className={`text-sm font-bold whitespace-nowrap ml-2 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`}>
                   + Gs. 10.000
                 </p>
               </div>
@@ -577,7 +580,7 @@ const CheckoutForm = ({
         {/* Total */}
         <div className="flex justify-between items-center gap-3 pt-3 border-t border-border/50">
           <span className="text-base md:text-lg font-bold text-foreground">Total a pagar</span>
-          <span className="text-xl md:text-2xl font-bold text-primary whitespace-nowrap">
+          <span className="text-xl md:text-2xl font-bold text-variant-active whitespace-nowrap">
             {formatPrice(finalTotal, currency)}
           </span>
         </div>
@@ -656,11 +659,10 @@ export const StripeCheckoutModal = ({
 
   // User contacts via WhatsApp
   const handleWhatsAppContact = () => {
-    const phone = "595991893587";
-    const message = encodeURIComponent(
+    const url = buildWhatsAppUrl(
       `Hola! Estaba por comprar NOCTE pero tengo algunas dudas. Mi orden: ${customerData.orderNumber}`
     );
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    window.open(url, '_blank');
     setShowExitConfirm(false);
   };
 
@@ -781,8 +783,8 @@ export const StripeCheckoutModal = ({
               <CheckoutProgressBar currentStep={2} />
 
               <div>
-                <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
-                  <p className="text-xs font-semibold text-primary tracking-wide">
+                <div className="inline-block px-3 py-1 bg-variant-active/10 border border-variant-active/20 rounded-md mb-4">
+                  <p className="text-xs font-semibold text-variant-active tracking-wide">
                     PAGO SEGURO
                   </p>
                 </div>
@@ -798,7 +800,7 @@ export const StripeCheckoutModal = ({
             {/* Loading or Error State */}
             {isInitializing && (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <div className="w-12 h-12 border-4 border-variant-active/30 border-t-primary rounded-full animate-spin" />
                 <p className="text-sm text-muted-foreground">
                   Preparando método de pago...
                 </p>
@@ -918,7 +920,7 @@ export const StripeCheckoutModal = ({
                       <button
                         type="button"
                         onClick={handleContinueCheckout}
-                        className="w-full text-sm font-medium text-foreground hover:text-primary transition-colors py-2 underline"
+                        className="w-full text-sm font-medium text-foreground hover:text-variant-active transition-colors py-2 underline"
                       >
                         Continuar sin ayuda
                       </button>
@@ -946,7 +948,7 @@ export const StripeCheckoutModal = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="text-center space-y-4 max-w-sm w-full">
-                    <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+                    <div className="w-16 h-16 border-4 border-variant-active/30 border-t-primary rounded-full animate-spin mx-auto" />
                     <h3 className="text-xl md:text-2xl font-bold text-white">Procesando tu pedido...</h3>
                     <p className="text-sm text-gray-400 leading-relaxed">
                       Estamos confirmando tu orden y enviando los detalles. Esto tomará solo unos segundos.
