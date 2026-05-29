@@ -38,7 +38,7 @@ export const SuccessPage = ({ isOpen, orderData, onClose }: SuccessPageProps) =>
 Acabo de completar mi pedido!
 
 Orden: ${orderData.orderNumber}
-🔴 ${orderData.products}
+${orderData.products}
 💰 ${orderData.total}
 
 Mis datos:
@@ -97,7 +97,7 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`;
 
                 <div className="flex justify-between items-start gap-3">
                   <span className="text-xs md:text-sm text-muted-foreground flex-shrink-0">Productos:</span>
-                  <span className="text-xs md:text-sm font-semibold text-foreground text-right">{orderData.products}</span>
+                  <span className="text-xs md:text-sm font-semibold text-foreground text-right whitespace-pre-line">{orderData.products}</span>
                 </div>
 
                 <div className="flex justify-between items-center gap-3">

@@ -5,6 +5,10 @@ export type VariantMoment = "NOCHE" | "TARDE" | "DÍA";
 export interface Variant {
   id: VariantId;
   name: string;
+  /** Full product title used in order confirmations (WhatsApp, success screen). */
+  productName: string;
+  /** Colored circle that prefixes the variant in the WhatsApp order breakdown. */
+  emoji: string;
   displayTitle: string;
   moment: VariantMoment;
   momentTimeWindow: string;
@@ -27,6 +31,8 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
   rojo: {
     id: "rojo",
     name: "NOCTE Rojo",
+    productName: "NOCTE® Lentes Rojos",
+    emoji: "🔴",
     displayTitle: "Lentes Rojos Anti-Luz Azul",
     moment: "NOCHE",
     momentTimeWindow: "20:00 a 03:00",
@@ -50,6 +56,8 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
   naranja: {
     id: "naranja",
     name: "NOCTE Naranja",
+    productName: "NOCTE® Lentes Naranjas",
+    emoji: "🟠",
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
@@ -73,6 +81,8 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
   amarillo: {
     id: "amarillo",
     name: "NOCTE Amarillo",
+    productName: "NOCTE® Lentes Amarillos",
+    emoji: "🟡",
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
@@ -105,4 +115,26 @@ export function isVariantId(value: string): value is VariantId {
 
 export function getVariant(id: VariantId): Variant {
   return VARIANTS[id];
+}
+
+export interface VariantCount {
+  variant: Variant;
+  count: number;
+}
+
+/**
+ * Collapse a per-unit picks array (e.g. ["amarillo", "rojo"]) into one entry
+ * per distinct variant with its quantity, ordered by the canonical variant
+ * order so the breakdown is stable. Unknown ids are skipped defensively.
+ */
+export function summarizeVariantCounts(picks: readonly VariantId[]): VariantCount[] {
+  const counts = picks.reduce<Partial<Record<VariantId, number>>>((acc, id) => {
+    if (isVariantId(id)) acc[id] = (acc[id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return VARIANT_IDS.flatMap((id) => {
+    const count = counts[id];
+    return count ? [{ variant: VARIANTS[id], count }] : [];
+  });
 }

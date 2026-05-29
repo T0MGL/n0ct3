@@ -13,7 +13,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { DEFAULT_VARIANT, type VariantId } from "@/lib/variants";
+import { DEFAULT_VARIANT, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -440,9 +440,22 @@ const Index = () => {
       googleMapsLink = `https://www.google.com/maps?q=${checkoutData.lat},${checkoutData.long}`;
     }
 
+    // Break the order down per chosen color so a mixed pack (e.g. 1 amarillo +
+    // 1 rojo) lists each variant with its own emoji and count, instead of
+    // collapsing everything into one generic line. Falls back to the default
+    // variant filled to quantity when no explicit picks were captured.
+    const picks: VariantId[] =
+      (checkoutData.colors as VariantId[] | null)?.length
+        ? (checkoutData.colors as VariantId[])
+        : Array.from({ length: checkoutData.quantity }, () => DEFAULT_VARIANT);
+
+    const products = summarizeVariantCounts(picks)
+      .map(({ variant, count }) => `${variant.emoji} ${count}x ${variant.productName}`)
+      .join('\n');
+
     return {
       orderNumber: checkoutData.orderNumber,
-      products: `${checkoutData.quantity}x NOCTE® Red Light Blocking Glasses`,
+      products,
       total: `${checkoutData.totalPrice.toLocaleString('es-PY')} Gs`,
       location: checkoutData.location,
       phone: checkoutData.phone,
