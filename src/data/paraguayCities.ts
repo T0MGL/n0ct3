@@ -164,8 +164,21 @@ export const GRAN_ASUNCION_CITIES: string[] = [
 const normalizeStr = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
+/**
+ * Shorthands customers type for Gran Asunción cities that do not contain the
+ * full canonical name, so the substring check below would miss them. Keys are
+ * normalized (lowercase, no accents). Kept small and Gran Asunción only.
+ */
+const GRAN_ASUNCION_SHORTHANDS: Record<string, true> = {
+  "fdo de la mora": true,
+  "fdo. de la mora": true,
+  "mra": true,
+  "v elisa": true,
+};
+
 /** Returns true if the given city/location string belongs to Gran Asunción. */
 export const isGranAsuncion = (cityOrLocation: string): boolean => {
   const n = normalizeStr(cityOrLocation);
+  if (GRAN_ASUNCION_SHORTHANDS[n]) return true;
   return GRAN_ASUNCION_CITIES.some((c) => normalizeStr(c) === n || n.includes(normalizeStr(c)));
 };
