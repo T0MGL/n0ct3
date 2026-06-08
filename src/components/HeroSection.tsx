@@ -188,20 +188,24 @@ export const HeroSection = ({
           >
             {/* Authority Badge, auto-collapses to the left after 2s, one-way. */}
             <motion.div
+              layout
               className="absolute top-4 left-2 md:top-2 md:left-4 z-20 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
               style={{
                 background: `linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))`,
+                willChange: "width, transform",
               }}
+              transition={{ layout: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }}
               initial={false}
             >
-              <AnimatePresence mode="wait" initial={false}>
+              <AnimatePresence mode="popLayout" initial={false}>
                 {!badgeCollapsed ? (
                   <motion.p
                     key="full"
-                    initial={{ opacity: 0, x: 0 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, x: -24 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
                   >
                     #1 Lentes Anti-Luz Azul en Paraguay 🇵🇾
@@ -209,9 +213,10 @@ export const HeroSection = ({
                 ) : (
                   <motion.p
                     key="short"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                     className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
                   >
                     #1 🇵🇾
