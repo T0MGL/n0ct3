@@ -186,43 +186,34 @@ export const HeroSection = ({
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-1 w-full lg:self-center lg:-mt-10"
           >
-            {/* Authority Badge, auto-collapses to the left after 2s, one-way. */}
+            {/* Authority Badge, auto-collapses to the left after 2s, one-way.
+                #1 and the flag stay mounted; only the middle copy collapses. */}
             <motion.div
               layout
-              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 px-3 py-1.5 rounded-md shadow-lg overflow-hidden"
+              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-lg overflow-hidden text-white text-xs md:text-sm font-semibold whitespace-nowrap"
               style={{
                 background: `linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))`,
                 willChange: "width, transform",
               }}
-              transition={{ layout: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }}
+              transition={{ layout: { duration: 0.85, ease: [0.22, 0.61, 0.36, 1] } }}
               initial={false}
             >
+              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>#1</motion.span>
               <AnimatePresence mode="popLayout" initial={false}>
-                {!badgeCollapsed ? (
-                  <motion.p
-                    key="full"
+                {!badgeCollapsed && (
+                  <motion.span
+                    key="mid"
                     layout="position"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
                   >
-                    #1 Lentes Anti-Luz Azul en Paraguay 🇵🇾
-                  </motion.p>
-                ) : (
-                  <motion.p
-                    key="short"
-                    layout="position"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-                    className="text-white text-xs md:text-sm font-semibold whitespace-nowrap"
-                  >
-                    #1 🇵🇾
-                  </motion.p>
+                    Lentes Anti-Luz Azul en Paraguay
+                  </motion.span>
                 )}
               </AnimatePresence>
+              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>🇵🇾</motion.span>
             </motion.div>
 
             <ProductHero activeVariant={activeVariant} />

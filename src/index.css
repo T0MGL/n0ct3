@@ -204,6 +204,53 @@ All colors MUST be HSL.
     from { stroke-dashoffset: 0; }
     to { stroke-dashoffset: -412; }
   }
+
+}
+
+/* Premium laser border beam. A conic gradient rotates around the element and
+   is masked to a thin ring, so a glowing beam with a fading tail sweeps the
+   border. Pure rotation, so it never stutters at the corners. Color follows
+   the active lens variant. */
+@property --laser-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.laser-border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--laser-angle),
+    transparent 0deg,
+    transparent 295deg,
+    hsl(var(--variant-active) / 0.15) 320deg,
+    hsl(var(--variant-active)) 352deg,
+    hsl(var(--variant-active)) 358deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 5px hsl(var(--variant-active) / 0.85))
+    drop-shadow(0 0 12px hsl(var(--variant-active) / 0.45));
+  animation: laser-spin 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes laser-spin {
+  to { --laser-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .laser-border { animation: none; }
 }
 
 /* Hide Stripe Dev Tools widget in development */

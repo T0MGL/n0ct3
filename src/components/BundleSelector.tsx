@@ -46,6 +46,8 @@ export const BundleSelector = ({
               />
             )}
 
+            {isSelected && <span aria-hidden="true" className="laser-border z-10" />}
+
             <button
               type="button"
               onClick={() => onSelect(index)}
