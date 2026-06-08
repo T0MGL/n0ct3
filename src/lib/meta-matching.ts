@@ -63,6 +63,26 @@ export const getFbc = (): string | undefined => readCookie(FBC_COOKIE);
 export const getFbp = (): string | undefined => readCookie(FBP_COOKIE);
 
 /**
+ * Ensures a _fbp cookie exists in Meta's documented format
+ * (fb.1.<unix_ms>.<10_digits>). fbevents.js normally writes this, but when the
+ * pixel script is blocked or slow the cookie is missing and browser/server
+ * events fall back to different identifiers, breaking dedup. Generating it here
+ * guarantees getFbp() returns the same value on both channels. Idempotent: never
+ * overwrites an existing _fbp.
+ */
+export const ensureFbp = (): void => {
+  if (!isBrowser()) return;
+  try {
+    if (readCookie(FBP_COOKIE)) return;
+    const random = Math.floor(1000000000 + Math.random() * 9000000000);
+    const fbpValue = `fb.1.${Date.now()}.${random}`;
+    setCookie(FBP_COOKIE, fbpValue, COOKIE_MAX_AGE_DAYS);
+  } catch {
+    // ignore, non critical
+  }
+};
+
+/**
  * SHA-256 hex via SubtleCrypto. Returns undefined if the API is unavailable
  * (ancient browsers, non secure contexts) so callers can skip user_data gracefully.
  */
