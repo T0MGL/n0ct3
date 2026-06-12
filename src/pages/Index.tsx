@@ -23,6 +23,7 @@ getStripe();
 // Lazy load heavy sections that are below the fold
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
+const BlueLightMorph = lazy(() => import("@/components/BlueLightMorph"));
 const ScienceDemo = lazy(() => import("@/components/ScienceDemo"));
 const UnboxingSection = lazy(() => import("@/components/UnboxingSection"));
 const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
@@ -564,6 +565,10 @@ const Index = () => {
 
         <Suspense fallback={null}>
           <UnboxingSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <BlueLightMorph />
         </Suspense>
 
         <Suspense fallback={null}>
