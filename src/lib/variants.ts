@@ -61,7 +61,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
-    blockedPercent: 85,
+    blockedPercent: 95,
     spectrumRange: [400, 500],
     spectrumLabel: "400 a 500nm",
     accent: "#F97316",
@@ -73,7 +73,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     description:
       "Bloqueo intermedio. Ideal para la transición tarde a noche cuando todavía necesitás distinguir colores con precisión.",
     benefits: [
-      "Bloquea 85% de luz azul",
+      "Bloquea 95% de luz azul",
       "Sin distorsión cromática extrema",
       "Fatiga ocular reducida un 70%",
     ],
@@ -86,7 +86,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
-    blockedPercent: 50,
+    blockedPercent: 75,
     spectrumRange: [400, 450],
     spectrumLabel: "400 a 450nm",
     accent: "#EAB308",
@@ -98,7 +98,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     description:
       "Para 8 horas o más frente a pantallas. Reduce fatiga sin alterar los colores. Trabajás todo el día sin migrañas.",
     benefits: [
-      "Bloquea 50% de luz azul HEV",
+      "Bloquea 75% de luz azul HEV",
       "Colores prácticamente naturales",
       "Cero fatiga al final del día",
     ],

@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 86% 54%;
+    --primary: 0 95% 46%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 8%;
@@ -34,7 +34,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 0 86% 54%;
+    --ring: 0 95% 46%;
 
     --radius: 0.75rem;
 
@@ -45,7 +45,7 @@ All colors MUST be HSL.
        --variant-active mirrors one of the three at any time. Sections can
        override --variant-active locally with a [data-variant=naranja] selector
        or via inline style on a wrapper, no JS color math needed downstream. */
-    --variant-rojo: 0 84% 60%;
+    --variant-rojo: 0 95% 46%;
     --variant-naranja: 25 95% 53%;
     --variant-amarillo: 48 96% 53%;
     --variant-active: var(--variant-rojo);
