@@ -14,6 +14,8 @@ interface PhoneNameFormProps {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// RUC paraguayo: dígitos del documento, opcionalmente seguidos de guión y dígito verificador (ej: 5712264-4)
+const RUC_REGEX = /^\d{5,9}(-\d)?$/;
 
 export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps) => {
   const [name, setName] = useState("");
@@ -293,7 +295,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       const rucTrimmed = ruc.trim();
       if (!rucTrimmed) {
         newErrors.ruc = "RUC requerido para la factura";
-      } else if (rucTrimmed.length < 6) {
+      } else if (!RUC_REGEX.test(rucTrimmed)) {
         newErrors.ruc = "RUC inválido";
       }
     }
@@ -565,7 +567,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               }}
                               placeholder="Ej: 80012345-6"
                               maxLength={12}
-                              inputMode="numeric"
+                              inputMode="tel"
                               className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"}`}
                             />
                           </div>
