@@ -712,14 +712,14 @@ async function sendToOrdefy(orderData) {
   // Card payments are always paid, COD is pending payment
   const paymentStatus = isPaid === true || paymentType === 'Card' ? 'paid' : 'pending';
 
-  // Parse RUC: "80012345-6" → customer_ruc: "80012345", customer_ruc_dv: 6
+  // Parse RUC: "80012345-6" → ruc: "80012345", ruc_dv: 6 (Ordefy reads these nested under customer)
   let parsedRuc = {};
   if (ruc) {
     const rucParts = ruc.split('-');
     if (rucParts.length === 2 && rucParts[0] && rucParts[1]) {
       parsedRuc = {
-        customer_ruc: rucParts[0],
-        customer_ruc_dv: parseInt(rucParts[1], 10),
+        ruc: rucParts[0],
+        ruc_dv: parseInt(rucParts[1], 10),
       };
     }
   }
@@ -732,8 +732,8 @@ async function sendToOrdefy(orderData) {
       name,
       phone: phone || undefined,
       email: email || undefined,
+      ...parsedRuc,
     },
-    ...parsedRuc,
     shipping_address: buildOrdefyShippingAddress({
       lat,
       long,
