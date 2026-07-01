@@ -24,7 +24,6 @@ getStripe();
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
 const BlueLightMorph = lazy(() => import("@/components/BlueLightMorph"));
-const ScienceDemo = lazy(() => import("@/components/ScienceDemo"));
 const UnboxingSection = lazy(() => import("@/components/UnboxingSection"));
 const BenefitsSection = lazy(() => import("@/components/BenefitsSection"));
 const LifestyleSection = lazy(() => import("@/components/LifestyleSection"));
@@ -574,9 +573,7 @@ const Index = () => {
           <BlueLightMorph />
         </Suspense>
 
-        <Suspense fallback={null}>
-          <ScienceDemo />
-        </Suspense>
+        {/* ScienceDemo oculto: duplica el demo de espectro por color de BlueLightMorph. */}
 
         <Suspense fallback={null}>
           <BenefitsSection />
