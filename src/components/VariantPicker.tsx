@@ -1,7 +1,8 @@
 import { useCallback, useId, useRef } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { VARIANT_IDS, VARIANTS, isVariantSoldOut, type VariantId } from "@/lib/variants";
+import { useSoldOutFeedback } from "@/lib/use-soldout-feedback";
 
 interface VariantPickerProps {
   value: VariantId;
@@ -27,6 +28,7 @@ export const VariantPicker = ({
 }: VariantPickerProps) => {
   const groupId = useId();
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const soldOutFeedback = useSoldOutFeedback();
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>, currentId: VariantId) => {
@@ -72,9 +74,8 @@ export const VariantPicker = ({
             aria-checked={selected}
             aria-label={soldOut ? `${v.name}, agotado` : v.name}
             aria-disabled={soldOut || undefined}
-            disabled={soldOut}
             tabIndex={soldOut ? -1 : selected ? 0 : -1}
-            onClick={() => { if (!soldOut) onChange(id); }}
+            onClick={() => (soldOut ? soldOutFeedback.show() : onChange(id))}
             onKeyDown={(e) => handleKeyDown(e, id)}
             data-variant={id}
             className={cn(
@@ -95,6 +96,23 @@ export const VariantPicker = ({
                 aria-hidden="true"
                 className="pointer-events-none absolute left-1/2 top-1/2 h-px w-[130%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-white/70"
               />
+            )}
+            {soldOut && (
+              <AnimatePresence>
+                {soldOutFeedback.visible && (
+                  <motion.span
+                    role="status"
+                    aria-live="polite"
+                    initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 4 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 ring-1 ring-red-500/40"
+                  >
+                    Rojo agotado
+                  </motion.span>
+                )}
+              </AnimatePresence>
             )}
             {selected && (
               <motion.span
