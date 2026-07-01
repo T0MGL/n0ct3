@@ -1,7 +1,7 @@
 import { useCallback, useId, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { VARIANT_IDS, VARIANTS, type VariantId } from "@/lib/variants";
+import { VARIANT_IDS, VARIANTS, isVariantSoldOut, type VariantId } from "@/lib/variants";
 
 interface VariantPickerProps {
   value: VariantId;
@@ -12,6 +12,11 @@ interface VariantPickerProps {
 }
 
 const SPRING = { type: "spring" as const, stiffness: 420, damping: 32 };
+
+// Selectable colors only. Sold-out variants still render (disabled) but never
+// enter roving focus or arrow-key navigation, so keyboard users cannot land a
+// selection on them.
+const SELECTABLE_IDS = VARIANT_IDS.filter((id) => !isVariantSoldOut(id));
 
 export const VariantPicker = ({
   value,
@@ -24,18 +29,22 @@ export const VariantPicker = ({
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
+    (event: React.KeyboardEvent<HTMLButtonElement>, currentId: VariantId) => {
       const key = event.key;
       if (key !== "ArrowRight" && key !== "ArrowLeft" && key !== "Home" && key !== "End") return;
       event.preventDefault();
+      if (SELECTABLE_IDS.length === 0) return;
+
+      const currentIndex = Math.max(0, SELECTABLE_IDS.indexOf(currentId));
       let nextIndex = currentIndex;
-      if (key === "ArrowRight") nextIndex = (currentIndex + 1) % VARIANT_IDS.length;
-      if (key === "ArrowLeft") nextIndex = (currentIndex - 1 + VARIANT_IDS.length) % VARIANT_IDS.length;
+      if (key === "ArrowRight") nextIndex = (currentIndex + 1) % SELECTABLE_IDS.length;
+      if (key === "ArrowLeft") nextIndex = (currentIndex - 1 + SELECTABLE_IDS.length) % SELECTABLE_IDS.length;
       if (key === "Home") nextIndex = 0;
-      if (key === "End") nextIndex = VARIANT_IDS.length - 1;
-      const nextId = VARIANT_IDS[nextIndex];
+      if (key === "End") nextIndex = SELECTABLE_IDS.length - 1;
+
+      const nextId = SELECTABLE_IDS[nextIndex];
       onChange(nextId);
-      refs.current[nextIndex]?.focus();
+      refs.current[VARIANT_IDS.indexOf(nextId)]?.focus();
     },
     [onChange],
   );
@@ -52,7 +61,8 @@ export const VariantPicker = ({
     >
       {VARIANT_IDS.map((id, index) => {
         const v = VARIANTS[id];
-        const selected = value === id;
+        const soldOut = isVariantSoldOut(id);
+        const selected = value === id && !soldOut;
         return (
           <button
             key={id}
@@ -60,15 +70,18 @@ export const VariantPicker = ({
             role="radio"
             type="button"
             aria-checked={selected}
-            aria-label={v.name}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onChange(id)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
+            aria-label={soldOut ? `${v.name}, agotado` : v.name}
+            aria-disabled={soldOut || undefined}
+            disabled={soldOut}
+            tabIndex={soldOut ? -1 : selected ? 0 : -1}
+            onClick={() => { if (!soldOut) onChange(id); }}
+            onKeyDown={(e) => handleKeyDown(e, id)}
             data-variant={id}
             className={cn(
               "relative grid place-items-center rounded-full transition-[transform] duration-200",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "focus-visible:ring-white/40",
+              soldOut && "cursor-not-allowed opacity-40",
               btn,
             )}
           >
@@ -77,6 +90,12 @@ export const VariantPicker = ({
               className={cn("block rounded-full", dot)}
               style={{ backgroundColor: v.lensColor }}
             />
+            {soldOut && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-1/2 h-px w-[130%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-white/70"
+              />
+            )}
             {selected && (
               <motion.span
                 layoutId={`vp-ring-${groupId}`}

@@ -23,6 +23,12 @@ export interface Variant {
   use: string;
   description: string;
   benefits: readonly string[];
+  /**
+   * Manual out-of-stock flag. When true the color still renders but cannot be
+   * selected or added to cart. This is a hand-set inventory gate, NOT read from
+   * Ordefy. Flip back to false (or drop the field) when stock returns.
+   */
+  soldOut?: boolean;
 }
 
 // Source of truth for the three NOCTE lens variants. Single product, three tints.
@@ -52,6 +58,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Melatonina natural en 30 minutos",
       "Sueño REM profundo",
     ],
+    soldOut: true,
   },
   naranja: {
     id: "naranja",
@@ -107,14 +114,34 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
 
 export const VARIANT_IDS = ["rojo", "naranja", "amarillo"] as const satisfies readonly VariantId[];
 
-export const DEFAULT_VARIANT: VariantId = "rojo";
-
 export function isVariantId(value: string): value is VariantId {
   return value === "rojo" || value === "naranja" || value === "amarillo";
 }
 
 export function getVariant(id: VariantId): Variant {
   return VARIANTS[id];
+}
+
+/** True when a color is manually flagged out of stock and must not be sellable. */
+export function isVariantSoldOut(id: VariantId): boolean {
+  return VARIANTS[id].soldOut === true;
+}
+
+/**
+ * First in-stock color in canonical order. Derived so the default follows the
+ * soldOut flags: mark a color sold out and the default skips it automatically,
+ * flip it back and the default returns without touching this file.
+ */
+export const DEFAULT_VARIANT: VariantId =
+  VARIANT_IDS.find((id) => !isVariantSoldOut(id)) ?? VARIANT_IDS[0];
+
+/**
+ * Force any candidate id onto a sellable color. Sold-out picks (stale state,
+ * deep links, resized packs) collapse to DEFAULT_VARIANT so a gated color can
+ * never end up active or in the cart.
+ */
+export function resolveSelectableVariant(id: VariantId): VariantId {
+  return isVariantSoldOut(id) ? DEFAULT_VARIANT : id;
 }
 
 export interface VariantCount {

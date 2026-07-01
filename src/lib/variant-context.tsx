@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { DEFAULT_VARIANT, isVariantId, type VariantId } from "@/lib/variants";
+import { DEFAULT_VARIANT, isVariantId, resolveSelectableVariant, type VariantId } from "@/lib/variants";
 
 interface VariantContextValue {
   activeVariant: VariantId;
@@ -27,7 +27,7 @@ interface VariantProviderProps {
 // need the typed value pull it via useActiveVariant().
 export const VariantProvider = ({ children, initial }: VariantProviderProps) => {
   const [activeVariant, setActiveVariantState] = useState<VariantId>(() => {
-    if (initial && isVariantId(initial)) return initial;
+    if (initial && isVariantId(initial)) return resolveSelectableVariant(initial);
     return DEFAULT_VARIANT;
   });
 
@@ -45,7 +45,8 @@ export const VariantProvider = ({ children, initial }: VariantProviderProps) => 
   }, [activeVariant]);
 
   const setActiveVariant = useCallback((next: VariantId) => {
-    setActiveVariantState((current) => (current === next ? current : next));
+    const sellable = resolveSelectableVariant(next);
+    setActiveVariantState((current) => (current === sellable ? current : sellable));
   }, []);
 
   const value = useMemo<VariantContextValue>(

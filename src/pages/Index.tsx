@@ -13,7 +13,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { DEFAULT_VARIANT, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { DEFAULT_VARIANT, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -212,9 +212,11 @@ const Index = () => {
 
     // Snapshot the per-unit colors at the moment of buy so the checkout payload
     // stays stable even if the user reopens the picker afterwards.
+    // resolveSelectableVariant is the final gate: a sold-out color can never
+    // reach the order payload, even if a stale pick slipped past the UI.
     const colorsSnapshot = Array.from(
       { length: bundle.quantity },
-      (_, i) => picks[i] ?? picks[0] ?? DEFAULT_VARIANT,
+      (_, i) => resolveSelectableVariant(picks[i] ?? picks[0] ?? DEFAULT_VARIANT),
     );
 
     setCheckoutInProgress(true);
@@ -394,7 +396,7 @@ const Index = () => {
     const bundle = BUNDLES[selectedBundleIndex];
     const colorsSnapshot = Array.from(
       { length: bundle.quantity },
-      (_, i) => picks[i] ?? picks[0] ?? DEFAULT_VARIANT,
+      (_, i) => resolveSelectableVariant(picks[i] ?? picks[0] ?? DEFAULT_VARIANT),
     );
     notifyCheckoutStarted({
       name: data.name,
@@ -445,10 +447,11 @@ const Index = () => {
     // 1 rojo) lists each variant with its own emoji and count, instead of
     // collapsing everything into one generic line. Falls back to the default
     // variant filled to quantity when no explicit picks were captured.
-    const picks: VariantId[] =
+    const picks: VariantId[] = (
       (checkoutData.colors as VariantId[] | null)?.length
         ? (checkoutData.colors as VariantId[])
-        : Array.from({ length: checkoutData.quantity }, () => DEFAULT_VARIANT);
+        : Array.from({ length: checkoutData.quantity }, () => DEFAULT_VARIANT)
+    ).map(resolveSelectableVariant);
 
     const products = summarizeVariantCounts(picks)
       .map(({ variant, count }) => `${variant.emoji} ${count}x ${variant.productName}`)

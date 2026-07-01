@@ -8,7 +8,7 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { VARIANT_IDS, VARIANTS, type VariantId } from "@/lib/variants";
+import { VARIANT_IDS, VARIANTS, isVariantSoldOut, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface ProductHeroProps {
@@ -339,20 +339,25 @@ export const ProductHero = ({
           {VARIANT_IDS.map((id) => {
             const v = VARIANTS[id];
             const src = VARIANT_SOURCES[id];
-            const selected = id === activeVariant;
+            const soldOut = isVariantSoldOut(id);
+            const selected = id === activeVariant && !soldOut;
             return (
               <button
                 key={id}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                aria-label={`Ver ${v.name}`}
-                onClick={() => setActiveVariant(id)}
+                aria-disabled={soldOut || undefined}
+                disabled={soldOut}
+                aria-label={soldOut ? `${v.name}, agotado` : `Ver ${v.name}`}
+                onClick={() => { if (!soldOut) setActiveVariant(id); }}
                 className={cn(
                   "group relative overflow-hidden rounded-lg aspect-square bg-black/40 transition-all duration-200",
-                  selected
-                    ? "ring-1 ring-white/70"
-                    : "ring-1 ring-white/8 opacity-70 hover:opacity-100 hover:ring-white/30",
+                  soldOut
+                    ? "ring-1 ring-white/8 opacity-45 cursor-not-allowed"
+                    : selected
+                      ? "ring-1 ring-white/70"
+                      : "ring-1 ring-white/8 opacity-70 hover:opacity-100 hover:ring-white/30",
                 )}
               >
                 <img
@@ -374,6 +379,14 @@ export const ProductHero = ({
                 >
                   {id}
                 </span>
+                {soldOut && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-1.5 top-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/90 ring-1 ring-white/15"
+                  >
+                    Agotado
+                  </span>
+                )}
                 {selected && (
                   <span
                     aria-hidden="true"

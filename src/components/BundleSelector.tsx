@@ -1,7 +1,14 @@
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BUNDLES, ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 import { VariantPicker } from "@/components/VariantPicker";
-import { VARIANTS, type VariantId } from "@/lib/variants";
+import {
+  VARIANTS,
+  VARIANT_IDS,
+  isVariantSoldOut,
+  resolveSelectableVariant,
+  type VariantId,
+} from "@/lib/variants";
 
 interface BundleSelectorProps {
   selectedIndex: number;
@@ -12,12 +19,32 @@ interface BundleSelectorProps {
 
 const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
 
+// Short color name of the gated variant, derived so the notice stays correct if
+// the sold-out flag ever moves to a different color. null when everything is in
+// stock (notice hidden).
+const SOLD_OUT_COLOR_NAME =
+  (() => {
+    const id = VARIANT_IDS.find(isVariantSoldOut);
+    return id ? VARIANTS[id].name.replace(/^NOCTE\s+/, "") : null;
+  })();
+
 export const BundleSelector = ({
   selectedIndex,
   onSelect,
   picks,
   onPickChange,
 }: BundleSelectorProps) => {
+  // Defense in depth: if any slot resolves to a sold-out color (deep link,
+  // stale localStorage, a flag flipped after the pick was made) correct it back
+  // to a sellable color so the checkout snapshot can never carry it.
+  useEffect(() => {
+    picks.forEach((pick, unitIndex) => {
+      if (isVariantSoldOut(pick)) {
+        onPickChange(unitIndex, resolveSelectableVariant(pick));
+      }
+    });
+  }, [picks, onPickChange]);
+
   return (
     <div className="w-full space-y-2.5">
       {BUNDLES.map((bundle, index) => {
@@ -143,9 +170,14 @@ export const BundleSelector = ({
                         ? "Elegí el color del lente"
                         : "Elegí el color de cada lente"}
                     </p>
+                    {SOLD_OUT_COLOR_NAME && (
+                      <p className="mb-2.5 text-[11px] font-medium text-white/60">
+                        {SOLD_OUT_COLOR_NAME} agotado, vuelve pronto.
+                      </p>
+                    )}
                     <ul className="space-y-2">
                       {Array.from({ length: bundle.quantity }).map((_, unitIdx) => {
-                        const pick = picks[unitIdx] ?? picks[0];
+                        const pick = resolveSelectableVariant(picks[unitIdx] ?? picks[0]);
                         const v = VARIANTS[pick];
                         return (
                           <li
