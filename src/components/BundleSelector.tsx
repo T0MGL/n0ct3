@@ -19,13 +19,19 @@ interface BundleSelectorProps {
 
 const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
 
-// Short color name of the gated variant, derived so the notice stays correct if
-// the sold-out flag ever moves to a different color. null when everything is in
-// stock (notice hidden).
-const SOLD_OUT_COLOR_NAME =
+// Notice text for every gated color, derived so it stays correct as sold-out
+// flags move or stack. Handles one color ("Rojo agotado, vuelve pronto.") and
+// several ("Rojo y Amarillo agotados, vuelven pronto."). null when everything
+// is in stock, which hides the notice.
+const SOLD_OUT_NOTICE =
   (() => {
-    const id = VARIANT_IDS.find(isVariantSoldOut);
-    return id ? VARIANTS[id].name.replace(/^NOCTE\s+/, "") : null;
+    const names = VARIANT_IDS.filter(isVariantSoldOut).map((id) =>
+      VARIANTS[id].name.replace(/^NOCTE\s+/, ""),
+    );
+    if (names.length === 0) return null;
+    if (names.length === 1) return `${names[0]} agotado, vuelve pronto.`;
+    const list = `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+    return `${list} agotados, vuelven pronto.`;
   })();
 
 export const BundleSelector = ({
@@ -170,9 +176,9 @@ export const BundleSelector = ({
                         ? "Elegí el color del lente"
                         : "Elegí el color de cada lente"}
                     </p>
-                    {SOLD_OUT_COLOR_NAME && (
+                    {SOLD_OUT_NOTICE && (
                       <p className="mb-2.5 text-[11px] font-medium text-white/60">
-                        {SOLD_OUT_COLOR_NAME} agotado, vuelve pronto.
+                        {SOLD_OUT_NOTICE}
                       </p>
                     )}
                     <ul className="space-y-2">

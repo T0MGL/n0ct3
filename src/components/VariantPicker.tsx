@@ -75,7 +75,7 @@ export const VariantPicker = ({
             aria-label={soldOut ? `${v.name}, agotado` : v.name}
             aria-disabled={soldOut || undefined}
             tabIndex={soldOut ? -1 : selected ? 0 : -1}
-            onClick={() => (soldOut ? soldOutFeedback.show() : onChange(id))}
+            onClick={() => (soldOut ? soldOutFeedback.show(id) : onChange(id))}
             onKeyDown={(e) => handleKeyDown(e, id)}
             data-variant={id}
             className={cn(
@@ -99,7 +99,7 @@ export const VariantPicker = ({
             )}
             {soldOut && (
               <AnimatePresence>
-                {soldOutFeedback.visible && (
+                {soldOutFeedback.shownId === id && (
                   <motion.span
                     role="status"
                     aria-live="polite"
@@ -109,7 +109,7 @@ export const VariantPicker = ({
                     transition={{ duration: 0.16, ease: "easeOut" }}
                     className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 ring-1 ring-red-500/40"
                   >
-                    Rojo agotado
+                    {`${id.charAt(0).toUpperCase()}${id.slice(1)} agotado`}
                   </motion.span>
                 )}
               </AnimatePresence>
