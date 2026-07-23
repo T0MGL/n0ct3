@@ -13,7 +13,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { DEFAULT_VARIANT, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -207,6 +207,10 @@ const Index = () => {
   }, [selectedBundleIndex]);
 
   const startBuyFlow = useCallback((bundleIndex: number, hasAtcFired: boolean) => {
+    // Hard gate: with every color sold out there is nothing sellable, so the
+    // checkout never opens no matter which CTA fired the click.
+    if (ALL_VARIANTS_SOLD_OUT) return;
+
     const bundle = BUNDLES[bundleIndex];
 
     // Snapshot the per-unit colors at the moment of buy so the checkout payload
@@ -532,15 +536,21 @@ const Index = () => {
         <div className="w-full">
           <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
             <span className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
-            <button
-              onClick={handleBuyClick}
-              onMouseEnter={preloadCheckoutChunks}
-              onFocus={preloadCheckoutChunks}
-              onTouchStart={preloadCheckoutChunks}
-              className="text-variant-active hover:text-variant-active/80 font-medium text-sm md:text-base transition-colors tracking-tight"
-            >
-              Comprar Ahora
-            </button>
+            {ALL_VARIANTS_SOLD_OUT ? (
+              <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
+                Agotado
+              </span>
+            ) : (
+              <button
+                onClick={handleBuyClick}
+                onMouseEnter={preloadCheckoutChunks}
+                onFocus={preloadCheckoutChunks}
+                onTouchStart={preloadCheckoutChunks}
+                className="text-variant-active hover:text-variant-active/80 font-medium text-sm md:text-base transition-colors tracking-tight"
+              >
+                Comprar Ahora
+              </button>
+            )}
           </div>
         </div>
       </header>

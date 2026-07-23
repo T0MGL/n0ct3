@@ -84,6 +84,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Sin distorsión cromática extrema",
       "Fatiga ocular reducida un 70%",
     ],
+    soldOut: true,
   },
   amarillo: {
     id: "amarillo",
@@ -135,6 +136,14 @@ export function isVariantSoldOut(id: VariantId): boolean {
  */
 export const DEFAULT_VARIANT: VariantId =
   VARIANT_IDS.find((id) => !isVariantSoldOut(id)) ?? VARIANT_IDS[0];
+
+/**
+ * True when every color is gated. The buy flow shuts down completely: CTAs
+ * render disabled as "Agotado" and startBuyFlow refuses to open the checkout,
+ * so no order can be placed through the site until at least one soldOut flag
+ * is flipped back in this file.
+ */
+export const ALL_VARIANTS_SOLD_OUT: boolean = VARIANT_IDS.every(isVariantSoldOut);
 
 /**
  * Force any candidate id onto a sellable color. Sold-out picks (stale state,

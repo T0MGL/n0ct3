@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
+import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 
 interface GuaranteeSectionProps {
   onBuyClick: () => void;
@@ -83,10 +84,15 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
             data-guarantee-cta
             variant="hero"
             size="xl"
-            className="w-full sm:w-auto sm:min-w-[280px] shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+            disabled={ALL_VARIANTS_SOLD_OUT}
+            className={
+              ALL_VARIANTS_SOLD_OUT
+                ? "w-full sm:w-auto sm:min-w-[280px]"
+                : "w-full sm:w-auto sm:min-w-[280px] shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
+            }
             onClick={onBuyClick}
           >
-            Probarlos sin riesgo
+            {ALL_VARIANTS_SOLD_OUT ? "Agotado · Reponemos pronto" : "Probarlos sin riesgo"}
           </Button>
 
           <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">

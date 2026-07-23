@@ -16,7 +16,7 @@ import { ProductHero } from "@/components/ProductHero";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
-import { VARIANTS, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, VARIANTS, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface HeroSectionProps {
@@ -116,8 +116,11 @@ export const HeroSection = ({
     return () => clearTimeout(preloadTimer);
   }, []);
 
-  // Live purchase notification - shows once per session after 8 seconds
+  // Live purchase notification - shows once per session after 8 seconds.
+  // Suppressed while everything is sold out: no fake purchases on a page
+  // that cannot sell.
   useEffect(() => {
+    if (ALL_VARIANTS_SOLD_OUT) return;
     if (hasShownPurchaseRef.current) return;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -356,7 +359,15 @@ export const HeroSection = ({
               </span>
             </div>
 
-            {/* Stock Urgency Indicator */}
+            {/* Stock Urgency Indicator (sold-out notice when nothing is sellable) */}
+            {ALL_VARIANTS_SOLD_OUT ? (
+              <div className="inline-flex items-center gap-2 px-4 py-2 border border-white/15 bg-white/[0.04] rounded-lg">
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white/40" />
+                <span className="text-sm font-semibold text-white/70">
+                  Stock agotado. Reponemos pronto.
+                </span>
+              </div>
+            ) : (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{
@@ -403,15 +414,16 @@ export const HeroSection = ({
                 {" "}unidades en stock
               </span>
             </motion.div>
+            )}
 
             {/* CTA Button */}
             <div className="space-y-3">
               <motion.div
                 ref={ctaRef}
-                animate={ctaInView ? {
+                animate={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
                   scale: [1, 1.02, 1],
                 } : { scale: 1 }}
-                transition={ctaInView ? {
+                transition={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
                   duration: 2,
                   repeat: Infinity,
                   repeatType: "loop",
@@ -422,18 +434,23 @@ export const HeroSection = ({
                   data-hero-cta
                   variant="hero"
                   size="xl"
+                  disabled={ALL_VARIANTS_SOLD_OUT}
                   className="w-full h-14 md:h-16 text-base md:text-lg font-bold transition-shadow duration-300"
-                  style={{ boxShadow: `0 10px 28px -12px ${variant.lensGlow}` }}
+                  style={ALL_VARIANTS_SOLD_OUT ? undefined : { boxShadow: `0 10px 28px -12px ${variant.lensGlow}` }}
                   onClick={onBuyClick}
                 >
-                  COMPRAR AHORA · Gs. {selectedPrice.toLocaleString('es-PY')}
+                  {ALL_VARIANTS_SOLD_OUT
+                    ? "AGOTADO · VUELVE PRONTO"
+                    : `COMPRAR AHORA · Gs. ${selectedPrice.toLocaleString('es-PY')}`}
                 </Button>
               </motion.div>
 
               {/* Dynamic Delivery Date */}
-              <p className="text-sm text-center lg:text-left text-accent font-medium">
-                📦 Pedí hoy y recibí entre el {deliveryDates.startDay} y {deliveryDates.endDay}
-              </p>
+              {!ALL_VARIANTS_SOLD_OUT && (
+                <p className="text-sm text-center lg:text-left text-accent font-medium">
+                  📦 Pedí hoy y recibí entre el {deliveryDates.startDay} y {deliveryDates.endDay}
+                </p>
+              )}
             </div>
 
             {/* Payment Methods */}

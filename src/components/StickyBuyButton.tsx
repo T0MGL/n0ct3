@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ShieldCheckIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { getDeliveryDates } from "@/lib/delivery-utils";
+import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 
 interface StickyBuyButtonProps {
   onBuyClick: () => void;
@@ -95,12 +96,14 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
                 <p className="text-xs md:text-sm text-muted-foreground">
                   <span className="text-xl md:text-2xl font-bold text-white">Gs. {selectedPrice.toLocaleString('es-PY')}</span>
                 </p>
-                <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                  <TruckIcon className="w-4 h-4 text-gold/90" />
-                  <p className="text-xs text-gold/90 font-medium">
-                    📦 Pedí hoy y recibí entre el {deliveryDates.startDay} y {deliveryDates.endDay}
-                  </p>
-                </div>
+                {!ALL_VARIANTS_SOLD_OUT && (
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                    <TruckIcon className="w-4 h-4 text-gold/90" />
+                    <p className="text-xs text-gold/90 font-medium">
+                      📦 Pedí hoy y recibí entre el {deliveryDates.startDay} y {deliveryDates.endDay}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Sellos de credibilidad */}
@@ -114,10 +117,10 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
 
             {/* Botón de compra - Only animate when visible */}
             <motion.div
-              animate={isVisible ? {
+              animate={isVisible && !ALL_VARIANTS_SOLD_OUT ? {
                 scale: [1, 1.02, 1],
               } : { scale: 1 }}
-              transition={isVisible ? {
+              transition={isVisible && !ALL_VARIANTS_SOLD_OUT ? {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "loop",
@@ -128,10 +131,13 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
               <Button
                 variant="hero"
                 size="lg"
+                disabled={ALL_VARIANTS_SOLD_OUT}
                 className="w-full h-12 md:h-14 text-sm md:text-base font-bold"
                 onClick={onBuyClick}
               >
-                Comprar Ahora · Gs. {selectedPrice.toLocaleString('es-PY')}
+                {ALL_VARIANTS_SOLD_OUT
+                  ? "Agotado · Reponemos pronto"
+                  : `Comprar Ahora · Gs. ${selectedPrice.toLocaleString('es-PY')}`}
               </Button>
             </motion.div>
           </div>
