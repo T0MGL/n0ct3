@@ -58,7 +58,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Melatonina natural en 30 minutos",
       "Sueño REM profundo",
     ],
-    soldOut: true,
+    soldOut: false,
   },
   naranja: {
     id: "naranja",
@@ -84,7 +84,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Sin distorsión cromática extrema",
       "Fatiga ocular reducida un 70%",
     ],
-    soldOut: true,
+    soldOut: false,
   },
   amarillo: {
     id: "amarillo",
@@ -110,7 +110,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Colores prácticamente naturales",
       "Cero fatiga al final del día",
     ],
-    soldOut: true,
+    soldOut: false,
   },
 } as const;
 
