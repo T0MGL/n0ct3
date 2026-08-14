@@ -15,7 +15,7 @@ const items = [
   {
     icon: EyeIcon,
     title: "Lentes NOCTE®",
-    description: "Lentes con filtro rojo de grado óptico que bloquean el 99.9% de luz azul y verde.",
+    description: "Lentes con filtro rojo de grado óptico que bloquean el 99% del espectro de 400 a 550nm.",
     image: productImage2,
   },
   {

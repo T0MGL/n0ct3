@@ -111,7 +111,13 @@ export const ScienceDemo = () => {
           className="rounded-2xl border border-variant-active/30 bg-secondary/10 p-5 transition-colors duration-500 md:p-8"
         >
           <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-10">
-            <SpectrumChart variantId={picked} accent={v.accent} blockedPercent={v.blockedPercent} block={block} />
+            <SpectrumChart
+              variantId={picked}
+              accent={v.accent}
+              blockedPercent={v.blockedPercent}
+              spectrumLabel={v.spectrumLabel}
+              block={block}
+            />
 
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-variant-active">
@@ -158,16 +164,23 @@ interface SpectrumChartProps {
   variantId: VariantId;
   accent: string;
   blockedPercent: number;
+  spectrumLabel: string;
   block: { x: number; w: number; labelCx: number };
 }
 
-const SpectrumChart = ({ variantId, accent, blockedPercent, block }: SpectrumChartProps) => {
+const SpectrumChart = ({
+  variantId,
+  accent,
+  blockedPercent,
+  spectrumLabel,
+  block,
+}: SpectrumChartProps) => {
   const gradientId = `block-grad-${variantId}`;
   return (
     <svg
       viewBox="0 0 500 280"
       role="img"
-      aria-label={`Diagrama del espectro de luz, ${blockedPercent} por ciento bloqueado por la variante ${variantId}`}
+      aria-label={`Diagrama del espectro de luz, ${blockedPercent} por ciento bloqueado en ${spectrumLabel} por la variante ${variantId}`}
       className="h-auto w-full"
     >
       <defs>
@@ -244,6 +257,9 @@ const SpectrumChart = ({ variantId, accent, blockedPercent, block }: SpectrumCha
         </text>
         <text x={250} y={100} fill="rgba(255,255,255,0.7)" fontSize={11} textAnchor="middle" letterSpacing={3}>
           BLOQUEADO
+        </text>
+        <text x={250} y={118} fill="rgba(255,255,255,0.45)" fontSize={10} textAnchor="middle" letterSpacing={1.5}>
+          {spectrumLabel}
         </text>
       </motion.g>
     </svg>

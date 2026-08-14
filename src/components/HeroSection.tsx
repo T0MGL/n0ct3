@@ -234,7 +234,7 @@ export const HeroSection = ({
               {/* Variant-aware eyebrow with blocked percent badge. */}
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-md border bg-white/[0.04] px-2.5 py-1.5 text-[12px] font-semibold text-white"
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border bg-white/[0.04] px-2.5 py-1.5 text-[12px] font-semibold text-white"
                   style={{ borderColor: `${variant.accent}66` }}
                 >
                   <ShieldCheckIcon
@@ -245,7 +245,9 @@ export const HeroSection = ({
                   <span style={{ color: variant.accent }}>
                     {variant.blockedPercent}%
                   </span>{" "}
-                  <span className="font-medium text-white/70">luz azul</span>
+                  <span className="font-medium text-white/70">
+                    en {variant.spectrumLabel}
+                  </span>
                 </span>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
                   Modo {variant.moment}

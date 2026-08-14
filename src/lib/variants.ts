@@ -54,7 +54,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     description:
       "El bloqueo más agresivo. Si trabajás de noche con pantallas y querés dormir profundo, este es el tuyo.",
     benefits: [
-      "Bloquea 99% de luz azul y verde",
+      "Bloquea 99% del espectro de 400 a 550nm",
       "Melatonina natural en 30 minutos",
       "Sueño REM profundo",
     ],
@@ -69,8 +69,8 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
     blockedPercent: 95,
-    spectrumRange: [400, 500],
-    spectrumLabel: "400 a 500nm",
+    spectrumRange: [400, 550],
+    spectrumLabel: "400 a 550nm",
     accent: "#F97316",
     lensColor: "#FF7A1A",
     lensGlow: "rgba(255,122,26,0.55)",
@@ -80,7 +80,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     description:
       "Bloqueo intermedio. Ideal para la transición tarde a noche cuando todavía necesitás distinguir colores con precisión.",
     benefits: [
-      "Bloquea 95% de luz azul",
+      "Bloquea 95% del espectro de 400 a 550nm",
       "Sin distorsión cromática extrema",
       "Fatiga ocular reducida un 70%",
     ],
@@ -94,9 +94,9 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
-    blockedPercent: 75,
-    spectrumRange: [400, 450],
-    spectrumLabel: "400 a 450nm",
+    blockedPercent: 68,
+    spectrumRange: [400, 550],
+    spectrumLabel: "400 a 550nm",
     accent: "#EAB308",
     lensColor: "#FFD11A",
     lensGlow: "rgba(255,209,26,0.45)",
@@ -106,7 +106,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     description:
       "Para 8 horas o más frente a pantallas. Reduce fatiga sin alterar los colores. Trabajás todo el día sin migrañas.",
     benefits: [
-      "Bloquea 75% de luz azul HEV",
+      "Bloquea 68% del espectro de 400 a 550nm",
       "Colores prácticamente naturales",
       "Cero fatiga al final del día",
     ],

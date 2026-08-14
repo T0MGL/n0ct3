@@ -162,8 +162,8 @@ export const ProductHero = ({
 
   const altText = useMemo(
     () =>
-      `Lentes NOCTE ${variant.id}, modo ${variant.moment.toLowerCase()}, ${variant.blockedPercent}% de bloqueo de luz azul`,
-    [variant.id, variant.moment, variant.blockedPercent],
+      `Lentes NOCTE ${variant.id}, modo ${variant.moment.toLowerCase()}, ${variant.blockedPercent}% de bloqueo en ${variant.spectrumLabel}`,
+    [variant.id, variant.moment, variant.blockedPercent, variant.spectrumLabel],
   );
 
   return (
