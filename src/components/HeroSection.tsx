@@ -41,8 +41,9 @@ export const HeroSection = ({
   const { activeVariant, setActiveVariant } = useActiveVariant();
 
   // Cart unit 1 nudges the hero image once on mount so the initial frame matches
-  // the default cart color. Afterwards the image follows the explicit color
-  // thumbnails in ProductHero (preview) and the picks change handler below.
+  // the default cart color. Afterwards image and cart move together: the
+  // ProductHero thumbnails and the unit-1 picker both go through
+  // handlePickChange, so what the customer sees is what the order carries.
   const didSyncInitialPick = useRef(false);
   useEffect(() => {
     if (didSyncInitialPick.current) return;
@@ -219,7 +220,10 @@ export const HeroSection = ({
               <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>🇵🇾</motion.span>
             </motion.div>
 
-            <ProductHero activeVariant={activeVariant} />
+            <ProductHero
+              activeVariant={activeVariant}
+              onVariantChange={(next) => handlePickChange(0, next)}
+            />
           </motion.div>
 
           {/* Content - Order 2 on mobile */}

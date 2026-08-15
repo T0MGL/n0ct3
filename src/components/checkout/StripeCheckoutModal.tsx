@@ -11,12 +11,37 @@ import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { isGranAsuncion } from '@/data/paraguayCities';
 import { buildWhatsAppUrl } from '@/lib/contact';
+import { isVariantId, summarizeVariantCounts } from '@/lib/variants';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
 const PRIORITY_SHIPPING_COST = 10000;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FALLBACK_EMAIL = 'noreply@nocte.studio';
+
+// The order summary must name the real lens colors. It used to hardcode
+// "Lentes Rojos", so an order carrying the wrong color looked correct on
+// screen and the customer had no way to catch it before paying.
+function describeProduct(colors: string[] | undefined, quantity: number): { title: string; breakdown: string | null } {
+  const picks = (colors ?? []).filter(isVariantId);
+  const packSuffix = quantity > 1 ? ` - Pack x${quantity}` : '';
+
+  if (picks.length === 0) {
+    return { title: `Lentes Premium Anti-Luz Azul${packSuffix}`, breakdown: null };
+  }
+
+  const counts = summarizeVariantCounts(picks);
+  if (counts.length === 1) {
+    return { title: `${counts[0].variant.displayTitle}${packSuffix}`, breakdown: null };
+  }
+
+  return {
+    title: `Lentes Premium Anti-Luz Azul${packSuffix}`,
+    breakdown: counts
+      .map(({ variant, count }) => `${count}x ${variant.id.charAt(0).toUpperCase()}${variant.id.slice(1)}`)
+      .join(', '),
+  };
+}
 
 export interface PaymentResult {
   paymentIntentId: string;
@@ -44,6 +69,8 @@ interface StripeCheckoutModalProps {
     orderNumber: string;
     quantity: number;
     email?: string;
+    /** Lens color per unit, same array the order payload carries. */
+    colors?: string[];
   };
 }
 
@@ -69,6 +96,8 @@ const CheckoutForm = ({
 
   // Determine if delivery is free (Gran Asunción only)
   const isFreeDelivery = isGranAsuncion(customerData.location);
+
+  const productSummary = describeProduct(customerData.colors, customerData.quantity);
 
   // Calculate final total including priority shipping
   const finalTotal = amount + (isPriorityShipping ? PRIORITY_SHIPPING_COST : 0);
@@ -497,12 +526,11 @@ const CheckoutForm = ({
         <div className="flex justify-between items-start gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground leading-tight">
-              {customerData.quantity > 1
-                ? `Lentes Rojos Premium Anti-Luz Azul - Pack x${customerData.quantity}`
-                : 'Lentes Rojos Premium Anti-Luz Azul'}
+              {productSummary.title}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Cantidad: {customerData.quantity}
+              {productSummary.breakdown ? ` (${productSummary.breakdown})` : ''}
             </p>
           </div>
           <p className="text-sm font-semibold whitespace-nowrap flex-shrink-0 text-foreground">
@@ -686,6 +714,8 @@ export const StripeCheckoutModal = ({
       setIsInitializing(true);
       setInitError(null);
 
+      const { title, breakdown } = describeProduct(customerData.colors, customerData.quantity);
+
       createPaymentIntent({
         amount,
         currency,
@@ -702,9 +732,7 @@ export const StripeCheckoutModal = ({
           deliveryLocation: customerData.location,
           deliveryAddress: customerData.address,
           quantity: customerData.quantity.toString(),
-          product: customerData.quantity === 2
-            ? 'Lentes Rojos Premium Anti-Luz Azul - Pack x2'
-            : 'Lentes Rojos Premium Anti-Luz Azul',
+          product: breakdown ? `${title} (${breakdown})` : title,
         },
       })
         .then((response) => {
