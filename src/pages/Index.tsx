@@ -482,7 +482,8 @@ const Index = () => {
     orderNumber: checkoutData.orderNumber,
     quantity: checkoutData.quantity,
     email: checkoutData.email,
-  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity, checkoutData.email]);
+    colors: checkoutData.colors ?? undefined,
+  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity, checkoutData.email, checkoutData.colors]);
 
   // Scroll detection for header - uses ref to avoid re-renders on every scroll
   const lastScrollYRef = useRef(0);

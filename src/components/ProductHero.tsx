@@ -87,11 +87,17 @@ const HALO_TRANSITION = {
 
 export const ProductHero = ({
   activeVariant: activeVariantProp,
+  onVariantChange,
   className,
 }: ProductHeroProps) => {
   const ctx = useActiveVariant();
   const activeVariant = activeVariantProp ?? ctx.activeVariant;
   const setActiveVariant = ctx.setActiveVariant;
+  // With onVariantChange wired, the thumbnails are a real purchase selection
+  // (they update the cart pick besides the preview). Without it they degrade
+  // to preview-only. Never leave this control visual-only on a selling page:
+  // customers picked their color here and every order shipped as Rojo.
+  const selectVariant = onVariantChange ?? setActiveVariant;
   const variant = VARIANTS[activeVariant];
   const source = VARIANT_SOURCES[activeVariant];
 
@@ -332,9 +338,9 @@ export const ProductHero = ({
           </span>
         </div>
 
-        {/* Image-only color thumbnails. Independent of cart selection and of the
-            gallery pagination above. Picking a color also resets the gallery to
-            its first slide via the activeVariant effect. */}
+        {/* Color thumbnails. Picking a color selects it for the order (via
+            onVariantChange) and resets the gallery to its first slide through
+            the activeVariant effect. */}
         <div className="mt-4 grid grid-cols-3 gap-2 px-1">
           {VARIANT_IDS.map((id) => {
             const v = VARIANTS[id];
@@ -350,7 +356,7 @@ export const ProductHero = ({
                 aria-disabled={soldOut || undefined}
                 disabled={soldOut}
                 aria-label={soldOut ? `${v.name}, agotado` : `Ver ${v.name}`}
-                onClick={() => { if (!soldOut) setActiveVariant(id); }}
+                onClick={() => { if (!soldOut) selectVariant(id); }}
                 className={cn(
                   "group relative overflow-hidden rounded-lg aspect-square bg-black/40 transition-all duration-200",
                   soldOut

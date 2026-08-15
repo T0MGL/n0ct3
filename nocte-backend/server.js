@@ -590,7 +590,9 @@ function resolveTier(quantity) {
 
 /**
  * Collapse the per-unit colors array into normalized color keys clamped to the
- * tier size, padding with rojo when the cart sent fewer colors than lenses.
+ * tier size. A short array pads with the FIRST chosen color, not rojo: if the
+ * cart said amarillo and lost a slot, the customer wanted amarillo. Rojo only
+ * when no color arrived at all.
  */
 function resolveColors(tier, colors) {
   const size = UNITS_PER_PACK[tier];
@@ -598,7 +600,7 @@ function resolveColors(tier, colors) {
     .filter((c) => typeof c === 'string' && c.length > 0)
     .slice(0, size)
     .map(normalizeColor);
-  while (list.length < size) list.push('rojo');
+  while (list.length < size) list.push(list[0] || 'rojo');
   return list;
 }
 
