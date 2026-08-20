@@ -384,7 +384,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   <CheckoutProgressBar currentStep={1} />
                   <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/40 py-1.5 pl-3 pr-3.5 text-[13px] text-foreground/85">
                     <span aria-hidden="true" className="leading-none">🇵🇾</span>
-                    +3.000 entregas realizadas
+                    5.000+ entregas
                   </p>
                 </div>
                 {onClose && (
