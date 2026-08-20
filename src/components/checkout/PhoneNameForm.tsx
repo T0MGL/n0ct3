@@ -14,8 +14,14 @@ interface PhoneNameFormProps {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// RUC paraguayo: dígitos del documento, opcionalmente seguidos de guión y dígito verificador (ej: 5712264-4)
-const RUC_REGEX = /^\d{5,9}(-\d)?$/;
+// Documento fiscal paraguayo: RUC con dígito verificador (4123456-7) o cédula sola (4123456)
+const DOCUMENT_REGEX = /^\d{5,9}(-\d)?$/;
+
+const normalizeDocument = (value: string) => {
+  const [base, ...verifier] = value.replace(/[^\d-]/g, "").split("-");
+  if (!base) return "";
+  return verifier.length ? `${base}-${verifier.join("").slice(0, 1)}` : base;
+};
 
 export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps) => {
   const [name, setName] = useState("");
@@ -23,7 +29,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [ruc, setRuc] = useState("");
-  const [needsInvoice, setNeedsInvoice] = useState(false);
   const [invoiceEmail, setInvoiceEmail] = useState("");
   const [customPrefix, setCustomPrefix] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -54,7 +59,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setCity("");
       setAddress("");
       setRuc("");
-      setNeedsInvoice(false);
       setInvoiceEmail("");
       setCustomPrefix(false);
       setShowCitySuggestions(false);
@@ -283,21 +287,19 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       }
     }
 
-    // Validate invoice fields only when the user explicitly opts in
-    if (needsInvoice) {
-      const emailTrimmed = invoiceEmail.trim();
-      if (!emailTrimmed) {
-        newErrors.email = "Email requerido para la factura";
-      } else if (!EMAIL_REGEX.test(emailTrimmed) || emailTrimmed.length > 120) {
-        newErrors.email = "Email inválido";
-      }
+    // Todo pedido se factura, así que el documento es obligatorio. La cédula
+    // alcanza para quien no tiene RUC.
+    const documentTrimmed = ruc.trim();
+    if (!documentTrimmed) {
+      newErrors.ruc = "Ingresá tu RUC o cédula";
+    } else if (!DOCUMENT_REGEX.test(documentTrimmed)) {
+      newErrors.ruc = "Documento inválido (ej: 4123456-7)";
+    }
 
-      const rucTrimmed = ruc.trim();
-      if (!rucTrimmed) {
-        newErrors.ruc = "RUC requerido para la factura";
-      } else if (!RUC_REGEX.test(rucTrimmed)) {
-        newErrors.ruc = "RUC inválido";
-      }
+    // El email solo sirve para mandar la copia de la factura: se valida si lo cargan.
+    const emailTrimmed = invoiceEmail.trim();
+    if (emailTrimmed && (!EMAIL_REGEX.test(emailTrimmed) || emailTrimmed.length > 120)) {
+      newErrors.email = "Email inválido";
     }
 
     setErrors(newErrors);
@@ -327,8 +329,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       isGeolocated: !!detectedLocation,
       lat: locationCoords.lat,
       long: locationCoords.long,
-      ruc: needsInvoice ? ruc.trim() || undefined : undefined,
-      email: needsInvoice ? invoiceEmail.trim() || undefined : undefined,
+      ruc: ruc.trim(),
+      email: invoiceEmail.trim() || undefined,
     });
 
     setLoading(false);
@@ -342,7 +344,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
         const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
         return phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && !isFakePhoneNumber(phoneDigitsOnly);
       })();
-  const isValid = name.trim().length >= 3 && isValidPhone && hasValidLocation;
+  const isValid = name.trim().length >= 3 && isValidPhone && hasValidLocation && DOCUMENT_REGEX.test(ruc.trim());
 
   return (
     <AnimatePresence>
@@ -471,119 +473,78 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   </button>
                 </div>
 
-                {/* Invoice toggle: checkbox opts into factura electrónica and
-                    reveals required email + RUC fields. Backward compatible:
-                    unchecked means the form behaves exactly like before. */}
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !needsInvoice;
-                      setNeedsInvoice(next);
-                      if (!next) {
-                        setInvoiceEmail("");
-                        setRuc("");
-                        setErrors((prev) => ({ ...prev, email: undefined, ruc: undefined }));
-                      }
-                    }}
-                    className="w-full flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-secondary/20 hover:bg-secondary/40 transition-colors text-left"
-                    aria-pressed={needsInvoice}
-                    aria-label="Necesito factura"
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-[4px] border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${needsInvoice
-                        ? "bg-variant-active border-variant-active"
-                        : "border-muted-foreground/50 bg-transparent"
+                {/* FIELD 3 - DOCUMENTO FISCAL (obligatorio: todo pedido se factura) */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    RUC o cédula
+                  </label>
+                  <div className="relative">
+                    <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={ruc}
+                      onChange={(e) => {
+                        setRuc(normalizeDocument(e.target.value));
+                        setErrors((prev) => ({ ...prev, ruc: undefined }));
+                      }}
+                      placeholder="Ej: 4123456-7"
+                      maxLength={12}
+                      inputMode="tel"
+                      autoComplete="off"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
+                    />
+                  </div>
+                  {errors.ruc ? (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs text-red-400"
                     >
-                      {needsInvoice && <CheckIcon className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">Necesito factura</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {needsInvoice
-                          ? "Enviaremos tu factura electrónica al email indicado."
-                          : "Igual recibirás la confirmación del pedido por WhatsApp."}
-                      </p>
-                    </div>
-                  </button>
+                      {errors.ruc}
+                    </motion.p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Facturamos todos los pedidos. Si no tenés RUC, poné tu cédula.
+                    </p>
+                  )}
+                </div>
 
-                  <AnimatePresence initial={false}>
-                    {needsInvoice && (
-                      <motion.div
-                        key="invoice-fields"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="space-y-3 overflow-hidden"
-                      >
-                        {/* Email for invoice */}
-                        <div className="space-y-1.5">
-                          <label className="block text-sm font-medium text-foreground">
-                            Email
-                          </label>
-                          <div className="relative">
-                            <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <input
-                              type="email"
-                              value={invoiceEmail}
-                              onChange={(e) => {
-                                setInvoiceEmail(e.target.value);
-                                setErrors((prev) => ({ ...prev, email: undefined }));
-                              }}
-                              placeholder="nombre@email.com"
-                              maxLength={120}
-                              autoComplete="email"
-                              inputMode="email"
-                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"}`}
-                            />
-                          </div>
-                          {errors.email && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="text-xs text-red-400"
-                            >
-                              {errors.email}
-                            </motion.p>
-                          )}
-                        </div>
-
-                        {/* RUC */}
-                        <div className="space-y-1.5">
-                          <label className="block text-sm font-medium text-foreground">
-                            RUC
-                          </label>
-                          <div className="relative">
-                            <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <input
-                              type="text"
-                              value={ruc}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/[^0-9-]/g, "");
-                                setRuc(val);
-                                setErrors((prev) => ({ ...prev, ruc: undefined }));
-                              }}
-                              placeholder="Ej: 80012345-6"
-                              maxLength={12}
-                              inputMode="tel"
-                              className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"}`}
-                            />
-                          </div>
-                          {errors.ruc && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="text-xs text-red-400"
-                            >
-                              {errors.ruc}
-                            </motion.p>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                {/* FIELD 4 - EMAIL (opcional, solo para la copia de la factura) */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    Email <span className="font-normal text-muted-foreground">(opcional)</span>
+                  </label>
+                  <div className="relative">
+                    <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={invoiceEmail}
+                      onChange={(e) => {
+                        setInvoiceEmail(e.target.value);
+                        setErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
+                      placeholder="nombre@email.com"
+                      maxLength={120}
+                      autoComplete="email"
+                      inputMode="email"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
+                        }`}
+                    />
+                  </div>
+                  {errors.email ? (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs text-red-400"
+                    >
+                      {errors.email}
+                    </motion.p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      La factura es electrónica. Dejá tu email si querés la copia.
+                    </p>
+                  )}
                 </div>
 
                 {/* LOCATION SECTION */}
@@ -680,7 +641,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             onFocus={() => {
                               if (city.trim().length >= 2) setShowCitySuggestions(true);
                             }}
-                            placeholder="Ej: Asunción, Luque, CDE..."
+                            placeholder="Ej: Asunción, Ciudad del Este..."
                             autoComplete="off"
                             className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
