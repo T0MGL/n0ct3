@@ -382,8 +382,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     porque el paso 2 lo necesita tal cual. */}
                 <div className="flex-1 min-w-0 space-y-3 [&>div:first-child]:mb-0">
                   <CheckoutProgressBar currentStep={1} />
-                  <p className="text-[13px] text-foreground/80">
-                    +1.000 entregas realizadas
+                  <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/40 py-1.5 pl-3 pr-3.5 text-[13px] text-foreground/85">
+                    <span aria-hidden="true" className="leading-none">🇵🇾</span>
+                    +3.000 entregas realizadas
                   </p>
                 </div>
                 {onClose && (
