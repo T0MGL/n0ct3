@@ -714,15 +714,18 @@ async function sendToOrdefy(orderData) {
   // Card payments are always paid, COD is pending payment
   const paymentStatus = isPaid === true || paymentType === 'Card' ? 'paid' : 'pending';
 
-  // Parse RUC: "80012345-6" → ruc: "80012345", ruc_dv: 6 (Ordefy reads these nested under customer)
+  // Documento fiscal (Ordefy lo lee anidado en customer): un RUC "4123456-7"
+  // viaja partido en ruc + ruc_dv y se factura como contribuyente. Una cédula
+  // sola ("4123456") va sin verificador, y sin DV Ordefy la factura como
+  // documento de identidad, que es lo correcto: nunca se inventa el DV.
   let parsedRuc = {};
   if (ruc) {
-    const rucParts = ruc.split('-');
-    if (rucParts.length === 2 && rucParts[0] && rucParts[1]) {
-      parsedRuc = {
-        ruc: rucParts[0],
-        ruc_dv: parseInt(rucParts[1], 10),
-      };
+    const [base, dv] = String(ruc).trim().split('-');
+    if (/^\d+$/.test(base || '')) {
+      // El DV viaja como string a propósito: Ordefy lo filtra por truthiness y
+      // un 0 numérico (RUC 4779240-0) se perdería, facturando al contribuyente
+      // como consumidor final.
+      parsedRuc = /^\d$/.test(dv || '') ? { ruc: base, ruc_dv: dv } : { ruc: base };
     }
   }
 
