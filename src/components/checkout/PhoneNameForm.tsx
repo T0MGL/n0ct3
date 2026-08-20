@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon, BuildingOfficeIcon, DocumentTextIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import { UserIcon, PhoneIcon, HomeIcon, XMarkIcon, MapPinIcon, CheckIcon, BuildingOfficeIcon, DocumentTextIcon, EnvelopeIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { CheckoutProgressBar } from "./CheckoutProgressBar";
 import { API_CONFIG } from "@/lib/stripe";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { PARAGUAY_CITIES } from "@/data/paraguayCities";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface PhoneNameFormProps {
   isOpen: boolean;
@@ -16,6 +17,11 @@ interface PhoneNameFormProps {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Documento fiscal paraguayo: RUC con dígito verificador (4123456-7) o cédula sola (4123456)
 const DOCUMENT_REGEX = /^\d{5,9}(-\d)?$/;
+
+// El email aparece recien cuando el documento ya tiene cuerpo. Seis digitos
+// es la cedula paraguaya mas corta en circulacion, asi que abajo de eso el
+// campo todavia no le dice nada al cliente.
+const DOCUMENT_DIGITS_TO_REVEAL_EMAIL = 6;
 
 const normalizeDocument = (value: string) => {
   const [base, ...verifier] = value.replace(/[^\d-]/g, "").split("-");
@@ -30,6 +36,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [address, setAddress] = useState("");
   const [ruc, setRuc] = useState("");
   const [invoiceEmail, setInvoiceEmail] = useState("");
+  const [emailRevealed, setEmailRevealed] = useState(false);
+  const [emailRevealDone, setEmailRevealDone] = useState(false);
   const [customPrefix, setCustomPrefix] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
@@ -42,6 +50,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
+  const prefersReducedMotion = useReducedMotion();
 
   // Track component mounted state to prevent state updates after unmount
   useEffect(() => {
@@ -60,6 +69,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       setAddress("");
       setRuc("");
       setInvoiceEmail("");
+      setEmailRevealed(false);
+      setEmailRevealDone(false);
       setCustomPrefix(false);
       setShowCitySuggestions(false);
       setDetectedLocation(null);
@@ -484,7 +495,14 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       type="text"
                       value={ruc}
                       onChange={(e) => {
-                        setRuc(normalizeDocument(e.target.value));
+                        const next = normalizeDocument(e.target.value);
+                        setRuc(next);
+                        // Una vez revelado no se vuelve a esconder: colapsarlo
+                        // al borrar un digito haria saltar el formulario entero
+                        // bajo el dedo.
+                        if (next.replace(/\D/g, "").length >= DOCUMENT_DIGITS_TO_REVEAL_EMAIL) {
+                          setEmailRevealed(true);
+                        }
                         setErrors((prev) => ({ ...prev, ruc: undefined }));
                       }}
                       placeholder="Ej: 4123456-7"
@@ -510,42 +528,55 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   )}
                 </div>
 
-                {/* FIELD 4 - EMAIL (opcional, solo para la copia de la factura) */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground">
-                    Email <span className="font-normal text-muted-foreground">(opcional)</span>
-                  </label>
-                  <div className="relative">
-                    <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="email"
-                      value={invoiceEmail}
-                      onChange={(e) => {
-                        setInvoiceEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                      }}
-                      placeholder="nombre@email.com"
-                      maxLength={120}
-                      autoComplete="email"
-                      inputMode="email"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
-                        }`}
-                    />
-                  </div>
-                  {errors.email ? (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-xs text-red-400"
-                    >
-                      {errors.email}
-                    </motion.p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      La factura es electrónica. Dejá tu email si querés la copia.
-                    </p>
-                  )}
-                </div>
+                {/* FIELD 4 - EMAIL (opcional, aparece recien con el documento cargado) */}
+                {emailRevealed && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    transition={{
+                      duration: prefersReducedMotion ? 0 : 0.28,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    onAnimationComplete={() => setEmailRevealDone(true)}
+                    // El overflow solo hace falta mientras la altura se anima.
+                    // Si queda puesto, recorta el focus ring del input.
+                    className={`space-y-2 ${emailRevealDone ? "" : "overflow-hidden"}`}
+                  >
+                    <label className="block text-sm font-medium text-foreground">
+                      Email <span className="font-normal text-muted-foreground">(opcional)</span>
+                    </label>
+                    <div className="relative">
+                      <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <input
+                        type="email"
+                        value={invoiceEmail}
+                        onChange={(e) => {
+                          setInvoiceEmail(e.target.value);
+                          setErrors((prev) => ({ ...prev, email: undefined }));
+                        }}
+                        placeholder="nombre@email.com"
+                        maxLength={120}
+                        autoComplete="email"
+                        inputMode="email"
+                        className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
+                          }`}
+                      />
+                    </div>
+                    {errors.email ? (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-red-400"
+                      >
+                        {errors.email}
+                      </motion.p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        La factura es electrónica. Dejá tu email si querés la copia.
+                      </p>
+                    )}
+                  </motion.div>
+                )}
 
                 {/* LOCATION SECTION */}
                 <div className="space-y-3 pt-2">
@@ -736,7 +767,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   disabled={!isValid || loading}
                   variant="hero"
                   size="xl"
-                  className="w-full h-14 text-base font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group w-full h-14 text-base font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
@@ -744,7 +775,10 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       Guardando...
                     </span>
                   ) : (
-                    "Confirmar y continuar al pago"
+                    <>
+                      Continuar
+                      <ArrowRightIcon className="transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                    </>
                   )}
                 </Button>
               </form>
