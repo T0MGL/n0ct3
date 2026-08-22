@@ -18,7 +18,16 @@ interface FigureRow {
   readonly origin: string;
 }
 
+// El promedio de 400 a 550 va primero: es la cifra que efectivamente separa a
+// los tres lentes. El Tsb los deja casi empatados y por si solo se lee mal.
 const buildRows = (report: LensReport): readonly FigureRow[] => [
+  {
+    symbol: null,
+    label: `Bloqueo promedio entre ${AVERAGE_BAND.from} y ${AVERAGE_BAND.to}\u00a0nm`,
+    value: formatNumber(averageBlocked(report, AVERAGE_BAND.from, AVERAGE_BAND.to), 1),
+    unit: "%",
+    origin: "Calculado por NOCTE",
+  },
   {
     symbol: "Tsb",
     label: `Transmitancia de luz azul, ${BLUE_BAND.from} a ${BLUE_BAND.to}\u00a0nm`,
@@ -32,13 +41,6 @@ const buildRows = (report: LensReport): readonly FigureRow[] => [
     value: formatNumber(report.luminousTransmittance, 2),
     unit: "%",
     origin: "Impreso en el reporte",
-  },
-  {
-    symbol: null,
-    label: `Bloqueo promedio entre ${AVERAGE_BAND.from} y ${AVERAGE_BAND.to}\u00a0nm`,
-    value: formatNumber(averageBlocked(report, AVERAGE_BAND.from, AVERAGE_BAND.to), 1),
-    unit: "%",
-    origin: "Calculado por NOCTE",
   },
 ];
 

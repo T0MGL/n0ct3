@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { AVERAGE_BAND, BLUE_BAND, type LensReport } from "@/lib/certificates";
 
 interface TechnicalDetailProps {
@@ -15,20 +14,22 @@ const Block = ({ title, children }: { title: string; children: ReactNode }) => (
 
 export const TechnicalDetail = ({ report }: TechnicalDetailProps) => (
   <details className="group rounded-lg border border-border">
-    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-4 text-sm font-medium transition-colors duration-200 ease-out hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-variant-active [&::-webkit-details-marker]:hidden">
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-4 text-sm font-medium transition-colors duration-200 ease-out hover:text-variant-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-variant-active [&::-webkit-details-marker]:hidden">
       Detalle técnico del reporte
-      <ChevronDownIcon
+      <span
         aria-hidden="true"
-        className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-open:rotate-180"
+        className="h-2 w-2 shrink-0 -translate-y-1 rotate-45 border-b border-r border-muted-foreground transition-transform duration-200 ease-out group-open:translate-y-0 group-open:-rotate-[135deg]"
       />
     </summary>
 
     <div className="space-y-6 border-t border-border px-5 py-5">
       <Block title="Qué lente es">
         <p>
-          Modelo {report.model}
-          {report.lensCode === null ? "" : `, código de lente ${report.lensCode}`}. El reporte
-          corresponde a este lente y no al armazón.
+          {report.lensCode === null
+            ? "El reporte no imprime un código de lente."
+            : `El reporte imprime el código de lente ${report.lensCode}.`}{" "}
+          La referencia interna de NOCTE para los tres tonos es {report.internalRef}, y esa no
+          figura en el reporte. El documento corresponde al lente, no al armazón.
         </p>
       </Block>
 
@@ -69,7 +70,22 @@ export const TechnicalDetail = ({ report }: TechnicalDetailProps) => (
             </li>
           ))}
         </ul>
+        <p>
+          {report.globalResultPrinted
+            ? "El reporte imprime ese resultado global para cada norma."
+            : "El reporte no imprime un resultado global. Esa columna resume el resultado de cada ítem que sí evalúa."}
+        </p>
       </Block>
+
+      {report.notEvaluated.length > 0 && (
+        <Block title="Qué no evalúa este reporte">
+          <ul className="space-y-2">
+            {report.notEvaluated.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </Block>
+      )}
 
       {report.failedItems.length > 0 && (
         <Block title="Qué ítems reprueba, exactamente">
@@ -85,8 +101,8 @@ export const TechnicalDetail = ({ report }: TechnicalDetailProps) => (
         <Block title="Sobre el título impreso en el PDF">
           <p>
             El PDF de este lente lleva impreso «{report.pdf.printedTitle}» en el encabezado. Es
-            el texto que trae la plantilla del equipo de medición. Sea cual sea ese título, lo
-            que estás viendo es un reporte de medición, no un certificado.
+            el texto que trae la plantilla del equipo de medición. Lo que estás viendo es un
+            reporte de medición, no un certificado.
           </p>
         </Block>
       )}

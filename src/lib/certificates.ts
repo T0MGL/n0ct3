@@ -5,7 +5,6 @@
  * de src/lib/variants.ts a proposito. variants.ts es el copy de producto, esto
  * es lo que dice el papel. Los dos pueden divergir y tienen que poder hacerlo.
  *
- * ------------------------------------------------------------------------
  * CUANDO LLEGUEN LOS REPORTES DE BUREAU VERITAS
  *
  *  1. Guardar cada PDF en public/reportes/ pisando el archivo que ya esta.
@@ -22,15 +21,22 @@
  *       },
  *
  *     TypeScript exige los cinco campos, asi que no se puede dejar a medias.
- *  3. Actualizar `blueBandTransmittance`, `luminousTransmittance`, `spectrum`,
- *     `standards`, `failedItems` y `pdf` con lo que diga el reporte nuevo.
- *  4. Borrar de `caveats` lo que el reporte nuevo deje sin efecto.
- *  5. Actualizar `bytes` y `printedTitle` del PDF nuevo.
- *  6. Subir `PAGE_UPDATED_ON`.
+ *  3. Actualizar `blueBandTransmittance`, `luminousTransmittance` y `spectrum`
+ *     con lo que diga el reporte nuevo.
+ *  4. Actualizar `standards`, `globalResultPrinted`, `failedItems` y
+ *     `notEvaluated` segun lo que el reporte nuevo evalue y resuelva.
+ *  5. Borrar de `caveats` y de `invalidNm` lo que el reporte nuevo deje sin
+ *     efecto. Con el amarillo, si la medicion nueva no repite el punto roto de
+ *     370 nm, se van las dos cosas.
+ *  6. Actualizar `bytes` y `printedTitle` del PDF nuevo.
+ *  7. Subir `PAGE_UPDATED_ON`.
+ *  8. Editar a mano el bloque <noscript> de cert.html. Es HTML estatico, no lee
+ *     de aca, y hoy dice quien firma la medicion y por que los reportes marcan
+ *     FAIL. Es el unico texto de la pagina que no se actualiza solo.
  *
- * Se cambia solo este archivo. Nada de rutas, nada de componentes.
+ * Fuera de ese bloque se cambia solo este archivo. Nada de rutas, nada de
+ * componentes.
  * Los lentes son independientes: uno puede estar acreditado y los otros no.
- * ------------------------------------------------------------------------
  */
 
 export type LensId = "rojo" | "naranja" | "amarillo";
@@ -47,10 +53,13 @@ export interface SpectralPoint {
   readonly transmittance: number;
 }
 
-/** Medicion del propio fabricante del lente. No es laboratorio acreditado. */
+/** Medicion sin laboratorio acreditado de por medio. */
 interface ManufacturerSource {
   readonly stage: "manufacturer";
-  readonly instrument: string;
+  /** Entidad que firma el reporte, tal como figura en el papel. */
+  readonly measuredBy: string;
+  /** Aparato, solo cuando el documento lo nombra. */
+  readonly instrument: string | null;
   /** null cuando el documento no trae fecha. El del amarillo no la trae. */
   readonly measuredOn: string | null;
 }
@@ -82,7 +91,9 @@ export interface Caveat {
 export interface LensReport {
   readonly id: LensId;
   readonly name: string;
-  readonly model: string;
+  /** Referencia interna de NOCTE. NO figura en el reporte, y la pagina lo dice. */
+  readonly internalRef: string;
+  /** Codigo de lente impreso en el reporte. null cuando el papel no lo trae. */
   readonly lensCode: string | null;
   readonly source: ReportSource;
   /** Tsb 380 a 500 nm, impreso en el reporte. */
@@ -94,7 +105,11 @@ export interface LensReport {
   /** Longitudes de onda con lectura invalida, se excluyen de todo calculo. */
   readonly invalidNm: readonly number[];
   readonly standards: readonly StandardResult[];
+  /** true cuando el papel imprime un resultado global, no solo PASS por item. */
+  readonly globalResultPrinted: boolean;
   readonly failedItems: readonly string[];
+  /** Lo que este reporte no mide. Sin esto, un PASS parece mas de lo que es. */
+  readonly notEvaluated: readonly string[];
   readonly caveats: readonly Caveat[];
   readonly pdf: ReportPdf;
 }
@@ -156,16 +171,16 @@ function toSpectrum(raw: RawSpectrum): readonly SpectralPoint[] {
 
 const DRIVING_ITEMS_ROJO: readonly string[] = [
   "Reconocimiento de la señal verde y de la azul, con luz incandescente y con LED (Q,Green y Q,Blue).",
-  "Transmitancia mínima entre 475 y 650 nm (Tmin): pide 3,89 % y mide 0,07 %.",
+  "Transmitancia mínima entre 475 y 650 nm (Tmin): mide 0,07 %, contra un mínimo de 3,89 % en ISO 12312-1 y de 3,96 % en ANSI Z80.3.",
   "Conducción en penumbra o de noche: pide una transmitancia luminosa de 75 % y mide 19,45 %.",
-  "Distorsión de color bajo ANSI Z80.3, en verde y en D65.",
+  "Distorsión de color bajo ANSI Z80.3, en las tres coordenadas: amarillo, verde y D65.",
 ];
 
 const DRIVING_ITEMS_NARANJA: readonly string[] = [
   "Reconocimiento de la señal azul, y de la verde en semáforos LED (Q,Blue y Q,Green).",
-  "Transmitancia mínima entre 475 y 650 nm (Tmin): pide 7,89 % y mide 1,14 %.",
+  "Transmitancia mínima entre 475 y 650 nm (Tmin): mide 1,14 %, contra un mínimo de 7,89 % en ISO 12312-1 y de 8,03 % en ANSI Z80.3.",
   "Conducción en penumbra o de noche: pide una transmitancia luminosa de 75 % y mide 39,46 %.",
-  "Distorsión de color bajo ANSI Z80.3, en verde y en D65.",
+  "Distorsión de color bajo ANSI Z80.3, en verde y en D65. La coordenada amarilla pasa.",
 ];
 
 const SUNGLASS_STANDARDS: readonly StandardResult[] = [
@@ -187,11 +202,12 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
   rojo: {
     id: "rojo",
     name: "Rojo",
-    model: "19220",
+    internalRef: "19220",
     lensCode: "R2251",
     source: {
       stage: "manufacturer",
-      instrument: "Micro-Light Optics",
+      measuredBy: "Micro-Light Optics Co., Ltd.",
+      instrument: null,
       measuredOn: "2025-11-24",
     },
     blueBandTransmittance: 0.68,
@@ -199,7 +215,9 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
     spectrum: toSpectrum(ROJO_SPECTRUM),
     invalidNm: [],
     standards: SUNGLASS_STANDARDS,
+    globalResultPrinted: true,
     failedItems: DRIVING_ITEMS_ROJO,
+    notEvaluated: [],
     caveats: [],
     pdf: {
       href: "/reportes/nocte-rojo.pdf",
@@ -211,11 +229,12 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
   naranja: {
     id: "naranja",
     name: "Naranja",
-    model: "19220",
+    internalRef: "19220",
     lensCode: null,
     source: {
       stage: "manufacturer",
-      instrument: "Micro-Light Optics",
+      measuredBy: "Micro-Light Optics Co., Ltd.",
+      instrument: null,
       measuredOn: "2025-11-07",
     },
     blueBandTransmittance: 0.51,
@@ -223,7 +242,9 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
     spectrum: toSpectrum(NARANJA_SPECTRUM),
     invalidNm: [],
     standards: SUNGLASS_STANDARDS,
+    globalResultPrinted: true,
     failedItems: DRIVING_ITEMS_NARANJA,
+    notEvaluated: [],
     caveats: [],
     pdf: {
       href: "/reportes/nocte-naranja.pdf",
@@ -235,10 +256,11 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
   amarillo: {
     id: "amarillo",
     name: "Amarillo",
-    model: "19220",
+    internalRef: "19220",
     lensCode: null,
     source: {
       stage: "manufacturer",
+      measuredBy: "Linhai Tongda Optical Glasses Co., Ltd.",
       instrument: "Topcon SIGM TM-3",
       measuredOn: null,
     },
@@ -247,7 +269,14 @@ const REPORTS: Readonly<Record<LensId, LensReport>> = {
     spectrum: toSpectrum(AMARILLO_SPECTRUM),
     invalidNm: [370],
     standards: [{ name: "BS EN ISO 12312-1:2013+A1:2015", outcome: "PASS" }],
+    globalResultPrinted: false,
     failedItems: [],
+    notEvaluated: [
+      "ANSI Z80.3, y con eso toda la distorsión de color.",
+      "AS/NZS 1067.",
+      "Las señales luminosas LED. Solo mide las incandescentes.",
+      "El uso en ruta y la conducción en penumbra o de noche.",
+    ],
     caveats: [AMARILLO_CAVEAT],
     pdf: {
       href: "/reportes/nocte-amarillo.pdf",
@@ -264,10 +293,6 @@ export const DEFAULT_LENS_ID: LensId = "rojo";
 
 export function getReport(id: LensId): LensReport {
   return REPORTS[id];
-}
-
-export function isLensId(value: string): value is LensId {
-  return (LENS_IDS as readonly string[]).includes(value);
 }
 
 /**

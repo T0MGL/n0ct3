@@ -3,7 +3,7 @@ import { BlockedHeadline } from "@/components/cert/BlockedHeadline";
 import { LensSelector } from "@/components/cert/LensSelector";
 import { MeasuredFigures } from "@/components/cert/MeasuredFigures";
 import { ReportActions } from "@/components/cert/ReportActions";
-import { ReportNotes } from "@/components/cert/ReportNotes";
+import { ReportCaveats, StandardsNote } from "@/components/cert/ReportNotes";
 import { ReportSource } from "@/components/cert/ReportSource";
 import { SpectralChart } from "@/components/cert/SpectralChart";
 import { TechnicalDetail } from "@/components/cert/TechnicalDetail";
@@ -19,7 +19,7 @@ const PAGE_TITLE = "Reportes de transmitancia de los lentes | NOCTE ®";
 
 /**
  * /cert. La URL va impresa en las tarjetas de garantia y no cambia nunca, asi
- * que el color se elige acá adentro y no en la ruta ni en un query param.
+ * que el color se elige aca adentro y no en la ruta ni en un query param.
  */
 export const Cert = () => {
   const [lensId, setLensId] = useState<LensId>(DEFAULT_LENS_ID);
@@ -42,7 +42,7 @@ export const Cert = () => {
   return (
     <div data-variant={lensId} className="flex min-h-[100dvh] flex-col bg-background text-foreground">
       <header className="border-b border-border">
-        <div className="mx-auto w-full max-w-[38rem] px-5 py-5">
+        <div className="mx-auto w-full max-w-[38rem] px-5 py-4">
           <a
             href="/"
             className="inline-block text-xl font-bold tracking-tighter transition-opacity duration-200 ease-out hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-variant-active"
@@ -54,20 +54,20 @@ export const Cert = () => {
       </header>
 
       <main className="mx-auto w-full max-w-[38rem] flex-1 px-5 pb-24">
-        <div className="pb-10 pt-9">
+        <div className="pb-6 pt-6">
           <h1 className="text-3xl font-bold tracking-tighter md:text-4xl">
             Reportes de transmitancia
           </h1>
-          <p className="mt-3 max-w-[46ch] text-base leading-relaxed text-muted-foreground">
-            Cuánta luz deja pasar cada uno de los tres lentes, medido punto por punto, con la
-            procedencia de cada número.
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+            Cuánta luz deja pasar cada lente, medido punto por punto.
           </p>
         </div>
 
         <LensSelector value={lensId} onChange={handleLensChange} />
 
         <div key={lensId} className={hasSwapped ? "cert-swap" : undefined}>
-          <section className="pt-12">
+          <section className="pt-8">
+            <h2 className="sr-only">Luz azul bloqueada por el lente {report.name.toLowerCase()}</h2>
             <BlockedHeadline report={report} />
             <div className="mt-10">
               <SpectralChart report={report} />
@@ -79,22 +79,26 @@ export const Cert = () => {
             <MeasuredFigures report={report} />
           </section>
 
-          <section className="mt-12 border-t border-border pt-10">
+          <section id="procedencia" className="mt-12 border-t border-border pt-10">
             <ReportSource report={report} />
           </section>
 
-          <section className="mt-10">
-            <ReportNotes report={report} />
-          </section>
+          <StandardsNote report={report} />
 
-          <section className="mt-10">
+          <ReportCaveats report={report} />
+
+          <section className="mt-10 border-t border-border pt-8">
+            <h2 className="sr-only">Reporte completo del lente {report.name.toLowerCase()}</h2>
             <ReportActions report={report} />
           </section>
-
-          <section className="mt-10">
-            <TechnicalDetail report={report} />
-          </section>
         </div>
+
+        {/* Fuera del bloque que se rehace, para no cerrarle el detalle en la
+            cara a quien esta comparando dos lentes. */}
+        <section className="mt-10">
+          <h2 className="sr-only">Detalle técnico</h2>
+          <TechnicalDetail report={report} />
+        </section>
       </main>
 
       <footer className="border-t border-border">

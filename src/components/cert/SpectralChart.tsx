@@ -19,6 +19,7 @@ const PAD_TOP = 5;
 const PLOT_H = VIEW_H - PAD_TOP - 1;
 
 const AXIS_TICKS = [300, 400, 500, 600, 700] as const;
+const Y_TICKS = [0, 50, 100] as const;
 
 const toX = (nm: number): number => nm - NM_MIN;
 const toY = (transmittance: number): number =>
@@ -54,7 +55,21 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
 
   return (
     <figure className="m-0">
-      <div className="relative">
+      <div className="relative pl-8">
+        <div
+          aria-hidden="true"
+          className="absolute left-0 top-0 h-full w-7 font-mono text-[0.6875rem] text-muted-foreground"
+        >
+          {Y_TICKS.map((value) => (
+            <span
+              key={value}
+              className="absolute right-0 -translate-y-1/2 tabular-nums"
+              style={{ top: `${(toY(value) / VIEW_H) * 100}%` }}
+            >
+              {value}
+            </span>
+          ))}
+        </div>
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           preserveAspectRatio="none"
@@ -78,14 +93,14 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
             fill="url(#cert-blue-band)"
           />
 
-          {[0, 50, 100].map((value) => (
+          {Y_TICKS.map((value) => (
             <line
               key={value}
               x1="0"
               x2={VIEW_W}
               y1={toY(value)}
               y2={toY(value)}
-              stroke="hsl(var(--border))"
+              stroke="hsl(0 0% 28%)"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
@@ -98,9 +113,8 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
               x2={toX(nm)}
               y1={PAD_TOP}
               y2={toY(0)}
-              stroke="hsl(var(--border))"
+              stroke="hsl(0 0% 22%)"
               strokeWidth="1"
-              strokeOpacity="0.55"
               vectorEffect="non-scaling-stroke"
             />
           ))}
@@ -120,7 +134,7 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
           <span
             key={nm}
             aria-hidden="true"
-            className="pointer-events-none absolute top-0 block h-full w-px -translate-x-1/2 bg-white/25"
+            className="pointer-events-none absolute top-0 block h-full w-px -translate-x-1/2 bg-white/60"
             style={{ left: toLeftPercent(nm) }}
           >
             <span className="absolute -top-1 left-1/2 block h-2 w-2 -translate-x-1/2 rounded-full border border-white/70" />
@@ -131,7 +145,7 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
 
       <div
         aria-hidden="true"
-        className="relative mt-2 h-4 font-mono text-[0.6875rem] text-muted-foreground"
+        className="relative ml-8 mt-2 h-4 font-mono text-[0.6875rem] text-muted-foreground"
       >
         {AXIS_TICKS.map((nm) => (
           <span
@@ -145,7 +159,7 @@ export const SpectralChart = ({ report }: SpectralChartProps) => {
       </div>
 
       <figcaption className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        Transmitancia medida, de 0 % abajo a 100 % arriba, en nanómetros. La franja es la banda
+        Transmitancia en porcentaje contra longitud de onda en nanómetros. La franja es la banda
         de luz azul, {BLUE_BAND.from} a {BLUE_BAND.to} nm. Los puntos son los del reporte, cada
         10 nm.
         {report.invalidNm.length > 0
