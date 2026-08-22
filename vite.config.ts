@@ -24,6 +24,13 @@ export default defineConfig({
     assetsInlineLimit: 8192, // 8kb - inline small assets as base64
     // Rollup options - Aggressive code splitting
     rollupOptions: {
+      // Dos entries: la landing y /cert. La pagina de certificados se sirve
+      // sola, sin router ni checkout ni pixel, porque se abre escaneando un QR
+      // desde el celular y con datos moviles.
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        cert: path.resolve(__dirname, "cert.html"),
+      },
       output: {
         manualChunks: (id) => {
           // Core React vendors

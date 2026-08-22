@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/cert",
+      "destination": "/cert.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -56,12 +60,50 @@
           "value": "public, max-age=86400, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/reportes/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
     }
   ],
   "redirects": [
     {
       "source": "/www",
       "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cert/",
+      "destination": "/cert",
+      "permanent": true
+    },
+    {
+      "source": "/certificados",
+      "destination": "/cert",
+      "permanent": true
+    },
+    {
+      "source": "/certificados/",
+      "destination": "/cert",
+      "permanent": true
+    },
+    {
+      "source": "/certificates",
+      "destination": "/cert",
+      "permanent": true
+    },
+    {
+      "source": "/certificates/",
+      "destination": "/cert",
       "permanent": true
     }
   ]

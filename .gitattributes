@@ -1,0 +1,3 @@
+# Los reportes de laboratorio se versionan tal cual salen del instrumento.
+# Sin normalizacion de fin de linea: un PDF alterado deja de ser evidencia.
+*.pdf binary

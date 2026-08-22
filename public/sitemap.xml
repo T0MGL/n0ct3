@@ -62,6 +62,19 @@
   </url>
 
   <!-- ========================================== -->
+  <!-- REPORTES DE TRANSMITANCIA (QR de garantia)  -->
+  <!-- ========================================== -->
+  <url>
+    <loc>https://nocte.studio/cert</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+
+    <xhtml:link rel="alternate" hreflang="es-PY" href="https://nocte.studio/cert" />
+    <xhtml:link rel="alternate" hreflang="es"    href="https://nocte.studio/cert" />
+  </url>
+
+  <!-- ========================================== -->
   <!-- POLÍTICA DE PRIVACIDAD                     -->
   <!-- ========================================== -->
   <url>
