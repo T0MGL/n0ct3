@@ -322,18 +322,23 @@ export function hasFailingStandard(report: LensReport): boolean {
   return report.standards.some((standard) => standard.outcome === "FAIL");
 }
 
-const decimalFormatters = new Map<number, Intl.NumberFormat>();
+const ONE_DECIMAL = new Intl.NumberFormat("es-PY", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
-export function formatNumber(value: number, decimals: number): string {
-  let formatter = decimalFormatters.get(decimals);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat("es-PY", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-    decimalFormatters.set(decimals, formatter);
-  }
-  return formatter.format(value);
+const TWO_DECIMALS = new Intl.NumberFormat("es-PY", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Coma decimal, como se escribe en Paraguay. La cantidad de decimales esta
+ * acotada a proposito: estas cifras se publican al lado de un reporte de
+ * laboratorio y no se inventa precision que el papel no tiene.
+ */
+export function formatNumber(value: number, decimals: 1 | 2): string {
+  return (decimals === 1 ? ONE_DECIMAL : TWO_DECIMALS).format(value);
 }
 
 export function formatBytes(bytes: number): string {
