@@ -23,3 +23,6 @@ Thumbs.db
 *.swp
 *.swo
 .vercel
+
+# Previews de email generadas (scripts/preview-emails.js)
+previews/

@@ -4,11 +4,13 @@
  */
 
 require('dotenv').config();
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const metaCapi = require('./meta-capi');
+const { sendOrderConfirmedEmail, sendOrderInTransitEmail } = require('./emails');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -856,7 +858,11 @@ app.post('/api/send-order', async (req, res) => {
       source: 'nocte-landing-page'
     };
 
-    // Send to both n8n and Ordefy in parallel
+    // Los mismos colores resueltos que viajan a Ordefy, para que el email liste
+    // exactamente lo que se le va a despachar al cliente.
+    const emailLensColors = resolveColors(resolveTier(quantity || 1), normalizedColors);
+
+    // Send to n8n, Ordefy and the confirmation email in parallel
     const results = await Promise.allSettled([
       // Send to n8n (if configured)
       process.env.N8N_WEBHOOK_URL
@@ -891,9 +897,21 @@ app.post('/api/send-order', async (req, res) => {
         ruc,
         colors: normalizedColors,
       }),
+
+      // La confirmación va acá adentro y no después de res.json(): en Vercel la
+      // lambda se puede congelar apenas responde y el envío quedaría a medias.
+      // Dentro del allSettled no suma latencia en serie y un rechazo nunca
+      // puede tumbar el pedido.
+      sendOrderConfirmedEmail({
+        to: email,
+        customerName: name,
+        lensColors: emailLensColors,
+        total,
+        orderNumber: webhookPayload.orderNumber,
+      }),
     ]);
 
-    const [n8nResult, ordefyResult] = results;
+    const [n8nResult, ordefyResult, emailResult] = results;
 
     // Process results
     let n8nSuccess = false;
@@ -924,6 +942,19 @@ app.post('/api/send-order', async (req, res) => {
       console.error('❌ Ordefy failed:', ordefyResult.reason);
     }
 
+    // El resultado del email se registra y muere acá. La respuesta del pedido
+    // no cambia nunca por un email, ni en el cuerpo ni en el código.
+    if (emailResult.status === 'fulfilled') {
+      const emailData = emailResult.value;
+      if (emailData.skipped) {
+        console.log('⚠️ Confirmation email skipped:', emailData.reason);
+      } else if (!emailData.success) {
+        console.log('⚠️ Confirmation email error:', emailData.error);
+      }
+    } else {
+      console.error('❌ Confirmation email failed:', emailResult.reason && emailResult.reason.message);
+    }
+
     // Return success if at least one succeeded
     const overallSuccess = n8nSuccess || ordefySuccess;
 
@@ -945,6 +976,89 @@ app.post('/api/send-order', async (req, res) => {
       error: error.message || 'Failed to send order',
       success: false
     });
+  }
+});
+
+// ==================== ORDEFY LIFECYCLE WEBHOOKS ====================
+
+const IN_TRANSIT_EVENT = 'order.in_transit';
+
+/**
+ * Comparación en tiempo constante del secreto. timingSafeEqual lanza si los
+ * buffers tienen distinto largo, y el largo del header lo elige quien llama,
+ * así que se compara antes. No filtra nada que un atacante no pueda medir
+ * probando largos.
+ */
+function isAuthorizedWebhook(provided, expected) {
+  const received = Buffer.from(String(provided || ''), 'utf8');
+  const secret = Buffer.from(expected, 'utf8');
+  if (received.length !== secret.length) return false;
+  return crypto.timingSafeEqual(received, secret);
+}
+
+/**
+ * Valida solo lo que el email realmente usa. El aviso de salida a reparto no
+ * lleva precios, ítems, ciudad ni transportista, así que exigir esos campos no
+ * protegería nada y haría que un cambio inofensivo del emisor rechace envíos
+ * legítimos. Devuelve null si el payload no sirve.
+ */
+function parseInTransitPayload(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  if (body.event !== IN_TRANSIT_EVENT) return null;
+
+  const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+  // Sin espacios y acotado: el orderId viaja dentro de la clave de idempotencia
+  // de Resend, que admite hasta 256 caracteres.
+  if (!orderId || orderId.length > 100 || /\s/.test(orderId)) return null;
+
+  const customer = body.customer;
+  if (!customer || typeof customer !== 'object' || Array.isArray(customer)) return null;
+  if (customer.email != null && typeof customer.email !== 'string') return null;
+
+  return { orderId, email: customer.email || null };
+}
+
+/**
+ * POST /api/order-in-transit
+ *
+ * Lo dispara Ordefy cuando el pedido sale a reparto. Hereda el apiLimiter que
+ * ya está montado en '/api/': volver a montarlo acá contaría dos veces cada
+ * request contra la misma ventana y partiría el límite a la mitad.
+ *
+ * 200 significa recibido, no enviado.
+ */
+app.post('/api/order-in-transit', async (req, res) => {
+  try {
+    if (!process.env.NOCTE_WEBHOOK_SECRET) {
+      console.error('💥 NOCTE_WEBHOOK_SECRET missing: /api/order-in-transit is disabled');
+      return res.status(503).json({ error: 'not configured' });
+    }
+
+    if (!isAuthorizedWebhook(req.get('X-NOCTE-Webhook-Secret'), process.env.NOCTE_WEBHOOK_SECRET)) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+
+    const payload = parseInTransitPayload(req.body);
+    if (!payload) {
+      return res.status(400).json({ error: 'invalid payload' });
+    }
+
+    const result = await sendOrderInTransitEmail({
+      to: payload.email,
+      orderId: payload.orderId,
+    });
+
+    if (result.skipped) {
+      const reason = result.reason === 'no_email' ? 'no_email' : 'not_configured';
+      return res.json({ status: 'skipped', reason });
+    }
+
+    return res.json({ status: result.success ? 'sent' : 'failed' });
+  } catch (error) {
+    // Express 4 no atrapa rechazos de un handler async: sin este catch el
+    // request se cuelga hasta que el emisor corta por timeout.
+    console.error('❌ order-in-transit failed:', error.message);
+    return res.status(500).json({ error: 'internal error' });
   }
 });
 
@@ -1108,6 +1222,8 @@ const server = app.listen(PORT, () => {
   console.log(`  ✓ n8n Webhook:   ${process.env.N8N_WEBHOOK_URL ? '✓ Configured' : '✗ Missing'}`);
   console.log(`  ✓ Ordefy:        ${process.env.ORDEFY_WEBHOOK_URL && process.env.ORDEFY_API_KEY ? '✓ Configured' : '✗ Missing'}`);
   console.log(`  ✓ Meta CAPI:     ${process.env.META_CAPI_PIXEL_ID && process.env.META_CAPI_ACCESS_TOKEN ? '✓ Configured' : '✗ Missing (endpoint accepts, forward skipped)'}`);
+  console.log(`  ✓ Resend:        ${process.env.RESEND_API_KEY ? '✓ Configured' : '✗ Missing (emails skipped)'}`);
+  console.log(`  ✓ Webhook secret:${process.env.NOCTE_WEBHOOK_SECRET ? ' ✓ Configured' : ' ✗ Missing (in-transit returns 503)'}`);
   console.log('═══════════════════════════════════════════');
   console.log('');
   console.log('📝 Endpoints:');
@@ -1115,6 +1231,7 @@ const server = app.listen(PORT, () => {
   console.log('   POST /api/geocode');
   console.log('   POST /api/reverse-geocode');
   console.log('   POST /api/send-order');
+  console.log('   POST /api/order-in-transit');
   console.log('   POST /api/webhook');
   console.log('   POST /api/meta-capi/event');
   console.log('   GET  /api/health');

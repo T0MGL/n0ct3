@@ -78,6 +78,31 @@ npm run dev
 | `/api/health` | GET | Health check |
 | `/api/create-payment-intent` | POST | Crear intento de pago |
 | `/api/webhook` | POST | Webhooks de Stripe |
+| `/api/send-order` | POST | Registra el pedido en n8n y Ordefy, y manda la confirmación por email |
+| `/api/order-in-transit` | POST | Aviso de salida a reparto. Lo dispara Ordefy, autenticado con `X-NOCTE-Webhook-Secret` |
+
+## 📧 Emails transaccionales
+
+Dos piezas, HTML en tablas con estilos inline más su versión en texto plano, en
+`emails/`. Sin build, sin JSX: plantillas con template literals.
+
+| Variable | Requerida | Qué pasa si falta |
+|---|---|---|
+| `RESEND_API_KEY` | sí, para enviar | El envío se saltea con un warning. El pedido no se ve afectado |
+| `RESEND_FROM` | no | Se usa `NOCTE <pedidos@nocte.studio>`. El dominio tiene que estar verificado en Resend |
+| `NOCTE_WEBHOOK_SECRET` | sí, para `/api/order-in-transit` | El endpoint responde 503 |
+
+Ver las piezas sin mandar nada:
+
+```bash
+npm run preview:emails
+```
+
+Escribe HTML y texto en `previews/` (carpeta ignorada por git) e imprime las
+rutas absolutas.
+
+La foto de producto se sirve desde `https://nocte.studio/email/`. Tiene que ser
+JPEG: el motor de render de Outlook en Windows no decodifica WebP.
 
 ## 🧪 Probar el Backend
 
@@ -140,6 +165,8 @@ CORS_ORIGIN=http://localhost:8080,http://localhost:TU_PUERTO
 ```
 nocte-backend/
 ├── server.js          # Servidor Express con Stripe
+├── emails/            # Plantillas transaccionales y envío por Resend
+├── scripts/           # Utilidades de desarrollo (previews de email)
 ├── package.json       # Dependencias
 ├── .env              # Variables de entorno (NO commitear)
 └── README.md         # Esta documentación
