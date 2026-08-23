@@ -42,6 +42,8 @@ const TerminosCondiciones = () => {
           <section className="space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-white">1. Identificación del Vendedor</h2>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li><strong>Razón social:</strong> Bright Commerce Group E.A.S.</li>
+              <li><strong>RUC:</strong> 80167845-5</li>
               <li><strong>Nombre comercial:</strong> NOCTE® Paraguay</li>
               <li><strong>Domicilio:</strong> Asunción, Paraguay</li>
               <li><strong>Contacto:</strong> WhatsApp {WHATSAPP_DISPLAY} | Instagram @noctepy</li>

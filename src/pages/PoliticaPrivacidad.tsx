@@ -29,7 +29,8 @@ const PoliticaPrivacidad = () => {
           {/* Introducción */}
           <section className="space-y-4">
             <p className="text-muted-foreground leading-relaxed">
-              NOCTE® ("nosotros", "nuestro" o "la empresa") se compromete a proteger la privacidad de sus datos personales
+              Bright Commerce Group E.A.S., RUC 80167845-5, titular de la marca NOCTE® ("nosotros", "nuestro" o
+              "la empresa"), se compromete a proteger la privacidad de sus datos personales
               de conformidad con la <strong>Ley N° 6534/2020 de Protección de Datos Personales Crediticios</strong> de la
               República del Paraguay y demás normativas aplicables.
             </p>
@@ -43,7 +44,8 @@ const PoliticaPrivacidad = () => {
           <section className="space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-white">1. Responsable del Tratamiento de Datos</h2>
             <p className="text-muted-foreground leading-relaxed">
-              El responsable del tratamiento de sus datos personales es NOCTE®, con domicilio en Asunción, Paraguay.
+              El responsable del tratamiento de sus datos personales es Bright Commerce Group E.A.S., RUC 80167845-5,
+              con domicilio en Asunción, Paraguay.
             </p>
             <p className="text-muted-foreground leading-relaxed">
               Para cualquier consulta relacionada con el tratamiento de sus datos personales, puede contactarnos a través de:
