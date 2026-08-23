@@ -115,10 +115,14 @@ function masthead() {
   );
 }
 
-/** Etiqueta de sección: 11px, versalitas, tinta apagada. */
+/**
+ * Etiqueta de sección: 11px, versalitas, tinta apagada. Va como h2 y no como
+ * div porque es el encabezado real de la sección: un lector de pantalla
+ * necesita poder saltar entre ellas.
+ */
 function sectionLabel(text) {
   return gutter(
-    `<div class="muted" style="margin:0;font-family:${FONT_BODY};font-size:11px;line-height:16px;mso-line-height-rule:exactly;letter-spacing:0.16em;text-transform:uppercase;color:${COLOR.inkMuted};">${text}</div>`
+    `<h2 class="muted" style="margin:0;font-family:${FONT_BODY};font-size:11px;line-height:16px;mso-line-height-rule:exactly;letter-spacing:0.16em;text-transform:uppercase;font-weight:400;color:${COLOR.inkMuted};">${text}</h2>`
   );
 }
 
