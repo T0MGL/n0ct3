@@ -30,12 +30,16 @@ const FONT_BODY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ari
 const COLUMN_WIDTH = 600;
 
 /**
- * La imagen tiene que ser JPEG: el motor Word de Outlook no decodifica WebP y
- * dejaría el bloque vacío justo en el cliente de escritorio. URL absoluta
- * porque ningún cliente de correo resuelve rutas relativas.
+ * El asset vive en el repo, en public/email/, y Vite lo publica en esa misma
+ * ruta. Nada de depender de un archivo subido a mano que puede no estar: si no
+ * existe, el catch-all del SPA devuelve index.html con 200 y el <img> termina
+ * apuntando a un documento HTML.
+ *
+ * JPEG y no WebP porque el motor Word de Outlook no decodifica WebP. Host
+ * canónico con www para que el proxy de imágenes de Gmail no coma el 307.
  */
 const PRODUCT_IMAGE = {
-  url: 'https://nocte.studio/email/nocte-lifestyle-1200x675.jpg',
+  url: 'https://www.nocte.studio/email/nocte-lifestyle-1200x675.jpg',
   width: 1200,
   height: 675,
   alt: 'Persona con lentes NOCTE en una habitación de luz cálida y baja, al final del día.',
@@ -230,20 +234,25 @@ ${rows.join('\n')}
 }
 
 module.exports = {
+  // Tokens
   COLOR,
-  FONT_BODY,
   FONT_DISPLAY,
+  FONT_BODY,
   PRODUCT_IMAGE,
-  accentRule,
-  closingLine,
-  displayStatement,
+  // Documento
   emailDocument,
-  footer,
   gutter,
-  hairline,
+  // Bloques de marca
   masthead,
-  paragraph,
-  productImage,
+  accentRule,
+  footer,
+  // Bloques de contenido
+  displayStatement,
   sectionLabel,
+  paragraph,
+  closingLine,
+  productImage,
+  // Separación
   spacer,
+  hairline,
 };

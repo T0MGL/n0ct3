@@ -513,6 +513,16 @@ function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, 
 // price container and the real composition lives in bundle_selections, whose
 // physical-unit quantities must sum to packs * unitsPerPack or Ordefy aborts.
 
+// El frontend suma este costo dentro del total que manda (StripeCheckoutModal
+// arma finalTotal = amount + PRIORITY_SHIPPING_COST), así que el backend lo
+// vuelve a separar. Una sola definición para que el pedido en Ordefy y el email
+// de confirmación nunca digan cosas distintas.
+const PRIORITY_SHIPPING_COST = 10000;
+
+function resolvePriorityCost(deliveryType) {
+  return deliveryType === 'premium' ? PRIORITY_SHIPPING_COST : 0;
+}
+
 const TIER = {
   1: 'suelto',
   2: 'pareja',
@@ -692,8 +702,8 @@ async function sendToOrdefy(orderData) {
     return { success: false, error: 'Ordefy not configured' };
   }
 
-  const isPriority = deliveryType === 'premium';
-  const priorityCost = isPriority ? 10000 : 0;
+  const priorityCost = resolvePriorityCost(deliveryType);
+  const isPriority = priorityCost > 0;
   const productPrice = total - priorityCost;
 
   // One product line per order: a single lens, a mono-color pack, or a mixed
@@ -786,6 +796,38 @@ async function sendToOrdefy(orderData) {
 }
 
 /**
+ * Manda la confirmación de pedido y registra el resultado.
+ *
+ * No devuelve nada y nunca lanza a propósito: la respuesta del pedido no puede
+ * cambiar por un email, ni en el cuerpo ni en el código de estado.
+ */
+async function sendConfirmationEmail({ to, name, quantity, colors, total, deliveryType, orderNumber }) {
+  try {
+    const result = await sendOrderConfirmedEmail({
+      to,
+      customerName: name,
+      // Los mismos colores resueltos que viajan a Ordefy, para que el email
+      // liste exactamente lo que se le va a despachar.
+      lensColors: resolveColors(resolveTier(quantity || 1), colors),
+      total,
+      // El envío prioritario viaja sumado dentro del total. Se pasa aparte para
+      // que el email lo muestre como línea propia en vez de esconderlo dentro
+      // del precio del lente y contradecir a la orden cargada en Ordefy.
+      shippingCost: resolvePriorityCost(deliveryType),
+      orderNumber,
+    });
+
+    if (result.skipped) {
+      console.log('⚠️ Confirmation email skipped:', result.reason);
+    } else if (!result.success) {
+      console.log('⚠️ Confirmation email not delivered:', result.error);
+    }
+  } catch (error) {
+    console.error('❌ Confirmation email failed:', error.message);
+  }
+}
+
+/**
  * POST /api/send-order
  * Send order data to n8n webhook AND Ordefy
  */
@@ -858,11 +900,7 @@ app.post('/api/send-order', async (req, res) => {
       source: 'nocte-landing-page'
     };
 
-    // Los mismos colores resueltos que viajan a Ordefy, para que el email liste
-    // exactamente lo que se le va a despachar al cliente.
-    const emailLensColors = resolveColors(resolveTier(quantity || 1), normalizedColors);
-
-    // Send to n8n, Ordefy and the confirmation email in parallel
+    // Send to both n8n and Ordefy in parallel
     const results = await Promise.allSettled([
       // Send to n8n (if configured)
       process.env.N8N_WEBHOOK_URL
@@ -897,21 +935,9 @@ app.post('/api/send-order', async (req, res) => {
         ruc,
         colors: normalizedColors,
       }),
-
-      // La confirmación va acá adentro y no después de res.json(): en Vercel la
-      // lambda se puede congelar apenas responde y el envío quedaría a medias.
-      // Dentro del allSettled no suma latencia en serie y un rechazo nunca
-      // puede tumbar el pedido.
-      sendOrderConfirmedEmail({
-        to: email,
-        customerName: name,
-        lensColors: emailLensColors,
-        total,
-        orderNumber: webhookPayload.orderNumber,
-      }),
     ]);
 
-    const [n8nResult, ordefyResult, emailResult] = results;
+    const [n8nResult, ordefyResult] = results;
 
     // Process results
     let n8nSuccess = false;
@@ -942,21 +968,30 @@ app.post('/api/send-order', async (req, res) => {
       console.error('❌ Ordefy failed:', ordefyResult.reason);
     }
 
-    // El resultado del email se registra y muere acá. La respuesta del pedido
-    // no cambia nunca por un email, ni en el cuerpo ni en el código.
-    if (emailResult.status === 'fulfilled') {
-      const emailData = emailResult.value;
-      if (emailData.skipped) {
-        console.log('⚠️ Confirmation email skipped:', emailData.reason);
-      } else if (!emailData.success) {
-        console.log('⚠️ Confirmation email error:', emailData.error);
-      }
-    } else {
-      console.error('❌ Confirmation email failed:', emailResult.reason && emailResult.reason.message);
-    }
-
     // Return success if at least one succeeded
     const overallSuccess = n8nSuccess || ordefySuccess;
+
+    // La confirmación sale recién acá, y solo si el pedido quedó registrado en
+    // algún lado. En paralelo con las otras dos, un pedido que no entró en
+    // ninguna hubiera igual recibido un "PEDIDO CONFIRMADO" de algo que no
+    // existe.
+    //
+    // Sigue antes del res.json y no después: en Vercel la lambda se puede
+    // congelar apenas responde y el envío quedaría a medias. El costo es hasta
+    // 3s de latencia extra en el peor caso, que es el timeout del mailer.
+    if (overallSuccess) {
+      await sendConfirmationEmail({
+        to: email,
+        name,
+        quantity,
+        colors: normalizedColors,
+        total: webhookPayload.order.total,
+        deliveryType,
+        orderNumber: webhookPayload.orderNumber,
+      });
+    } else {
+      console.log('⚠️ Confirmation email skipped: order was not registered anywhere');
+    }
 
     res.json({
       success: overallSuccess,

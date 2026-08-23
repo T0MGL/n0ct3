@@ -1,39 +1,50 @@
 /**
  * Email 01: pedido confirmado.
  *
- * Se dispara desde POST /api/send-order con los mismos datos que ya viajan a
- * n8n y a Ordefy. No consulta nada: el backend es stateless.
+ * Se dispara desde POST /api/send-order, y solo cuando el pedido ya quedó
+ * registrado en n8n o en Ordefy. No consulta nada: el backend es stateless.
  */
 
 const {
-  COLOR,
-  FONT_BODY,
-  FONT_DISPLAY,
-  accentRule,
-  closingLine,
-  displayStatement,
   emailDocument,
-  footer,
   gutter,
-  hairline,
   masthead,
-  paragraph,
-  productImage,
+  accentRule,
+  footer,
+  displayStatement,
   sectionLabel,
+  paragraph,
+  closingLine,
+  productImage,
   spacer,
+  hairline,
+  COLOR,
+  FONT_DISPLAY,
+  FONT_BODY,
 } = require('./layout');
 
-const { escapeHtml, firstName, formatGuaranies, groupLensLines } = require('./format');
+const {
+  firstName,
+  formatGuaranies,
+  groupLensLines,
+  escapeHtml,
+  sanitizeOrderReference,
+} = require('./format');
 
 const PREHEADER = 'Preparamos tu pedido y te contactamos para coordinar la entrega.';
 
+// Mismo nombre que la línea que sendToOrdefy carga en el pedido, para que el
+// email y lo que ve el operador digan exactamente lo mismo.
+const PRIORITY_SHIPPING_LABEL = 'Envío Prioritario VIP';
+
 /**
- * Línea de pedido: variante y cantidad a la izquierda, precio a la derecha.
- * El precio solo aparece cuando hay una sola línea, porque ahí precio de línea
- * y total son el mismo número. En un pack de varios colores se omite: el único
- * monto disponible es el total y repartirlo inventaría un precio unitario.
+ * Línea de pedido: concepto y cantidad a la izquierda, precio a la derecha.
  */
-function lensLineRow({ name, quantity, priceText }) {
+function orderLineRow({ name, quantity, priceText }) {
+  const quantityLine = quantity
+    ? `<div class="muted" style="margin:0;font-family:${FONT_BODY};font-size:13px;line-height:22px;mso-line-height-rule:exactly;color:${COLOR.inkMuted};">x ${quantity}</div>`
+    : '';
+
   const price = priceText
     ? `<div class="ink" style="margin:0;font-family:${FONT_BODY};font-size:15px;line-height:20px;mso-line-height-rule:exactly;color:${COLOR.ink};">${priceText}</div>`
     : '&nbsp;';
@@ -42,7 +53,7 @@ function lensLineRow({ name, quantity, priceText }) {
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>` +
       `<td align="left" valign="top" style="padding:0;">` +
         `<div class="ink" style="margin:0;font-family:${FONT_BODY};font-size:13px;line-height:20px;mso-line-height-rule:exactly;letter-spacing:0.08em;text-transform:uppercase;color:${COLOR.ink};">${escapeHtml(name)}</div>` +
-        `<div class="muted" style="margin:0;font-family:${FONT_BODY};font-size:13px;line-height:22px;mso-line-height-rule:exactly;color:${COLOR.inkMuted};">x ${quantity}</div>` +
+        `${quantityLine}` +
       `</td>` +
       `<td align="right" valign="top" style="padding:0;">${price}</td>` +
       `</tr></table>`
@@ -75,21 +86,55 @@ function stepRow(numeral, lines) {
   );
 }
 
-function buildLines({ customerName, lensColors, total }) {
+/**
+ * Arma las líneas del pedido.
+ *
+ * El envío prioritario viaja sumado dentro de `total`, igual que en el pedido
+ * que se carga en Ordefy. Si no se separa acá, el email le declara al cliente
+ * un precio de producto que no es y contradice a la orden.
+ *
+ * El precio por línea solo se imprime cuando hay un único color: ahí el precio
+ * del producto sale de una resta exacta (total menos envío). Con varios colores
+ * el único monto disponible sigue siendo el total, y repartirlo inventaría un
+ * precio unitario que NOCTE no publica. En ese caso no lleva precio ninguna
+ * línea, ni siquiera la de envío: un total correcto sin desglose es aceptable,
+ * un desglose a medias no.
+ */
+function buildContent({ customerName, lensColors, total, shippingCost, orderNumber }) {
   const greetingName = firstName(customerName);
   const lensLines = groupLensLines(lensColors);
+
   const totalText = formatGuaranies(total);
-  const showLinePrice = lensLines.length === 1 && Boolean(totalText);
+  const shippingText = formatGuaranies(shippingCost);
+  const productText = totalText
+    ? formatGuaranies(Number(total) - (shippingText ? Number(shippingCost) : 0))
+    : null;
+
+  const showLinePrices = lensLines.length === 1 && Boolean(productText);
+
+  const lines = lensLines.map((line) => ({
+    name: line.name,
+    quantity: line.quantity,
+    priceText: showLinePrices ? productText : null,
+  }));
+
+  if (shippingText) {
+    lines.push({
+      name: PRIORITY_SHIPPING_LABEL,
+      quantity: null,
+      priceText: showLinePrices ? shippingText : null,
+    });
+  }
 
   return {
     greeting: greetingName ? `Gracias, ${greetingName}.` : 'Gracias.',
-    lensLines,
+    lines,
     totalText,
-    showLinePrice,
+    reference: sanitizeOrderReference(orderNumber),
   };
 }
 
-function renderHtml({ greeting, lensLines, totalText, showLinePrice }) {
+function renderHtml({ greeting, lines, totalText }) {
   const rows = [
     masthead(),
     spacer(40),
@@ -107,15 +152,9 @@ function renderHtml({ greeting, lensLines, totalText, showLinePrice }) {
     spacer(20),
   ];
 
-  lensLines.forEach((line, index) => {
+  lines.forEach((line, index) => {
     if (index > 0) rows.push(spacer(16));
-    rows.push(
-      lensLineRow({
-        name: line.name,
-        quantity: line.quantity,
-        priceText: showLinePrice ? totalText : null,
-      })
-    );
+    rows.push(orderLineRow(line));
   });
 
   if (totalText) {
@@ -140,7 +179,7 @@ function renderHtml({ greeting, lensLines, totalText, showLinePrice }) {
   return emailDocument({ title: 'Pedido confirmado', preheader: PREHEADER, rows });
 }
 
-function renderText({ greeting, lensLines, totalText, showLinePrice }) {
+function renderText({ greeting, lines, totalText }) {
   const blocks = [
     'NOCTE',
     'PEDIDO CONFIRMADO',
@@ -149,9 +188,10 @@ function renderText({ greeting, lensLines, totalText, showLinePrice }) {
     'TU PEDIDO',
   ];
 
-  for (const line of lensLines) {
-    const parts = [line.name, `x ${line.quantity}`];
-    if (showLinePrice) parts.push(totalText);
+  for (const line of lines) {
+    const parts = [line.name];
+    if (line.quantity) parts.push(`x ${line.quantity}`);
+    if (line.priceText) parts.push(line.priceText);
     blocks.push(parts.join('\n'));
   }
 
@@ -170,17 +210,18 @@ function renderText({ greeting, lensLines, totalText, showLinePrice }) {
 
 /**
  * @param {object} input
- * @param {string} input.customerName  Nombre completo del checkout.
- * @param {string[]} input.lensColors  Claves ya resueltas por resolveColors.
- * @param {number} input.total         Total del pedido en guaraníes.
- * @param {string} [input.orderNumber] Para el asunto, si el pedido lo trae.
+ * @param {string} input.customerName    Nombre completo del checkout.
+ * @param {string[]} input.lensColors    Claves ya resueltas por resolveColors.
+ * @param {number} input.total           Total cobrado, envío incluido.
+ * @param {number} [input.shippingCost]  Costo del envío prioritario, 0 si no hay.
+ * @param {string} [input.orderNumber]   Se sanea antes de tocar el asunto.
  */
-function renderOrderConfirmedEmail({ customerName, lensColors, total, orderNumber }) {
-  const content = buildLines({ customerName, lensColors, total });
-  const reference = String(orderNumber || '').trim();
+function renderOrderConfirmedEmail({ customerName, lensColors, total, shippingCost, orderNumber }) {
+  const content = buildContent({ customerName, lensColors, total, shippingCost, orderNumber });
 
   return {
-    subject: reference ? `Pedido confirmado, ${reference}` : 'Pedido confirmado',
+    subject: content.reference ? `Pedido confirmado, ${content.reference}` : 'Pedido confirmado',
+    reference: content.reference,
     html: renderHtml(content),
     text: renderText(content),
   };

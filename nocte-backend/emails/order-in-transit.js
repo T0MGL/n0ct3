@@ -1,43 +1,32 @@
 /**
  * Email 02: el pedido salió en camino.
  *
- * Dos aperturas para que Gaston elija. De la imagen para abajo son idénticas.
  * La pieza no lleva precios, ni ítems, ni total, ni link de seguimiento: en
  * este momento el trabajo del email es enseñar a usar el producto, no volver a
  * cobrar una compra ya hecha.
  */
 
 const {
+  emailDocument,
+  gutter,
+  masthead,
+  accentRule,
+  footer,
+  displayStatement,
+  sectionLabel,
+  paragraph,
+  closingLine,
+  productImage,
+  spacer,
+  hairline,
   COLOR,
   FONT_BODY,
-  accentRule,
-  closingLine,
-  displayStatement,
-  emailDocument,
-  footer,
-  gutter,
-  hairline,
-  masthead,
-  paragraph,
-  productImage,
-  sectionLabel,
-  spacer,
 } = require('./layout');
 
+const SUBJECT = 'Tu NOCTE salió en camino';
 const PREHEADER = 'Cómo usar tus lentes desde la primera noche.';
-
-const OPENINGS = {
-  b: {
-    statement: 'TU NOCHE EMPIEZA HOY.',
-    lede: 'Tu NOCTE salió en camino.',
-    subject: 'Tu NOCTE salió en camino',
-  },
-  a: {
-    statement: 'TU NOCHE EMPIEZA AHORA.',
-    lede: 'Tu NOCTE llegó.',
-    subject: 'Tu NOCTE llegó',
-  },
-};
+const STATEMENT = 'TU NOCHE EMPIEZA HOY.';
+const LEDE = 'Tu NOCTE salió en camino.';
 
 const INSTRUCTIONS = [
   ['Ponételos 1 a 2 horas', 'antes de ir a dormir.'],
@@ -51,15 +40,15 @@ function instructionRow(lines) {
   );
 }
 
-function renderHtml(opening) {
+function renderHtml() {
   const rows = [
     masthead(),
     spacer(40),
     accentRule(),
     spacer(32),
-    displayStatement(opening.statement),
+    displayStatement(STATEMENT),
     spacer(24),
-    paragraph([opening.lede]),
+    paragraph([LEDE]),
     spacer(48),
     productImage(),
     spacer(48),
@@ -81,14 +70,14 @@ function renderHtml(opening) {
     footer({ withDomain: false })
   );
 
-  return emailDocument({ title: opening.subject, preheader: PREHEADER, rows });
+  return emailDocument({ title: SUBJECT, preheader: PREHEADER, rows });
 }
 
-function renderText(opening) {
+function renderText() {
   const blocks = [
     'NOCTE',
-    opening.statement,
-    opening.lede,
+    STATEMENT,
+    LEDE,
     'CÓMO USAR TUS LENTES',
     ...INSTRUCTIONS.map((lines) => lines.join('\n')),
     'Tu noche ahora es tuya.',
@@ -98,17 +87,11 @@ function renderText(opening) {
   return `${blocks.join('\n\n')}\n`;
 }
 
-/**
- * @param {object} [input]
- * @param {'a'|'b'} [input.variant] Apertura. Por defecto la recomendada (B).
- */
-function renderOrderInTransitEmail({ variant = 'b' } = {}) {
-  const opening = OPENINGS[variant] || OPENINGS.b;
-
+function renderOrderInTransitEmail() {
   return {
-    subject: opening.subject,
-    html: renderHtml(opening),
-    text: renderText(opening),
+    subject: SUBJECT,
+    html: renderHtml(),
+    text: renderText(),
   };
 }
 

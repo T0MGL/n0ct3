@@ -57,8 +57,11 @@ async function deliver({ to, subject, html, text, idempotencyKey, timeoutMs = 30
     const outcome = await Promise.race([request, deadline]);
 
     if (outcome.timedOut) {
-      console.warn(`⚠️ Resend timeout after ${timeoutMs}ms (${idempotencyKey || subject})`);
-      return { success: false, error: 'timeout' };
+      // No es un fallo de entrega: el request sigue en vuelo y lo más probable
+      // es que el email salga, solo que más lento que la ventana que se le dio.
+      // Queda como desconocido para que nadie lea el log como "no se envió".
+      console.warn(`⚠️ Resend unresolved after ${timeoutMs}ms, request still in flight (${idempotencyKey || subject})`);
+      return { success: false, unresolved: true, error: 'timeout_unresolved' };
     }
 
     if (outcome.thrown) {

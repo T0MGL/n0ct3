@@ -2,10 +2,10 @@
  * Emails transaccionales de NOCTE. Punto de entrada para server.js.
  */
 
-const { deliver } = require('./deliver');
-const { normalizeEmailAddress } = require('./format');
 const { renderOrderConfirmedEmail } = require('./order-confirmed');
 const { renderOrderInTransitEmail } = require('./order-in-transit');
+const { normalizeEmailAddress } = require('./format');
+const { deliver } = require('./deliver');
 
 // El pedido responde primero y el email va en paralelo, así que su timeout
 // tiene que ser más corto que la paciencia del checkout. El de tránsito no
@@ -18,11 +18,17 @@ const IN_TRANSIT_TIMEOUT_MS = 8000;
  * /api/send-order, nunca después de responder: en Vercel la lambda se puede
  * congelar apenas sale la respuesta y el envío quedaría a medias.
  */
-async function sendOrderConfirmedEmail({ to, customerName, lensColors, total, orderNumber }) {
+async function sendOrderConfirmedEmail({ to, customerName, lensColors, total, shippingCost, orderNumber }) {
   const recipient = normalizeEmailAddress(to);
   if (!recipient) return { skipped: true, reason: 'no_email' };
 
-  const email = renderOrderConfirmedEmail({ customerName, lensColors, total, orderNumber });
+  const email = renderOrderConfirmedEmail({
+    customerName,
+    lensColors,
+    total,
+    shippingCost,
+    orderNumber,
+  });
 
   return deliver({
     to: recipient,
@@ -32,7 +38,12 @@ async function sendOrderConfirmedEmail({ to, customerName, lensColors, total, or
     // El checkout puede reintentar el POST si la red se corta después de que el
     // servidor ya lo procesó. Con el número de pedido como clave, ese reintento
     // no le manda dos confirmaciones al cliente.
-    idempotencyKey: orderNumber ? `nocte-order-confirmed-${orderNumber}` : undefined,
+    //
+    // Solo con la referencia ya saneada: /api/send-order es público y un
+    // orderNumber crudo puede pasarse de los 256 caracteres que acepta Resend,
+    // o colapsar todas las órdenes en una única clave. Sin referencia válida se
+    // manda sin clave, que es peor que idempotente pero mejor que no enviar.
+    idempotencyKey: email.reference ? `nocte-order-confirmed-${email.reference}` : undefined,
     timeoutMs: CONFIRMATION_TIMEOUT_MS,
   });
 }
@@ -51,11 +62,11 @@ async function sendOrderConfirmedEmail({ to, customerName, lensColors, total, or
  *     Set en memoria acá sería una garantía falsa, porque cada lambda de Vercel
  *     corre con su propia memoria.
  */
-async function sendOrderInTransitEmail({ to, orderId, variant }) {
+async function sendOrderInTransitEmail({ to, orderId }) {
   const recipient = normalizeEmailAddress(to);
   if (!recipient) return { skipped: true, reason: 'no_email' };
 
-  const email = renderOrderInTransitEmail({ variant });
+  const email = renderOrderInTransitEmail();
 
   return deliver({
     to: recipient,
@@ -68,8 +79,10 @@ async function sendOrderInTransitEmail({ to, orderId, variant }) {
 }
 
 module.exports = {
-  renderOrderConfirmedEmail,
-  renderOrderInTransitEmail,
+  // Envío, para server.js
   sendOrderConfirmedEmail,
   sendOrderInTransitEmail,
+  // Render puro, para scripts/preview-emails.js
+  renderOrderConfirmedEmail,
+  renderOrderInTransitEmail,
 };

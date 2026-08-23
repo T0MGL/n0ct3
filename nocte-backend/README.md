@@ -99,10 +99,13 @@ npm run preview:emails
 ```
 
 Escribe HTML y texto en `previews/` (carpeta ignorada por git) e imprime las
-rutas absolutas.
+rutas absolutas. Cuatro casos: pedido de un color, pedido con envío prioritario,
+pack multicolor y salida a reparto.
 
-La foto de producto se sirve desde `https://nocte.studio/email/`. Tiene que ser
-JPEG: el motor de render de Outlook en Windows no decodifica WebP.
+La foto está versionada en `public/email/nocte-lifestyle-1200x675.jpg` y Vite la
+publica en esa misma ruta, así que el email no depende de ningún archivo subido
+a mano. Es JPEG y no WebP porque el motor de render de Outlook en Windows no
+decodifica WebP.
 
 ## 🧪 Probar el Backend
 
