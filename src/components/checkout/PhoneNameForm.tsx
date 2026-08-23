@@ -441,15 +441,11 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
             <div className="space-y-6">
               {/* Header with Progress Bar and Close Button */}
               <div className="flex items-start justify-between gap-4">
-                {/* La credibilidad cuelga del progress bar como bajada, no como
-                    seccion propia. El margen del progress bar se neutraliza acá
-                    porque el paso 2 lo necesita tal cual. */}
-                <div className="flex-1 min-w-0 space-y-3 [&>div:first-child]:mb-0">
+                {/* El progress bar trae su propio mb-6 porque el paso 2 lo
+                    necesita. Acá lo neutralizamos: con el space-y-6 del modal
+                    ya hay separación, y sumados dejaban un vacío de 48px. */}
+                <div className="flex-1 min-w-0 [&>div]:mb-0">
                   <CheckoutProgressBar currentStep={1} />
-                  <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/40 py-1.5 pl-3 pr-3.5 text-[13px] text-foreground/85">
-                    <span aria-hidden="true" className="leading-none">🇵🇾</span>
-                    5.000+ entregas
-                  </p>
                 </div>
                 {onClose && (
                   <button
@@ -489,7 +485,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       }}
                       placeholder="Ej: Juan López"
                       maxLength={60}
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -519,7 +515,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       onFocus={handlePhoneFocus}
                       onClick={handlePhoneClick}
                       placeholder="Ej: +595 971 234567"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -581,7 +577,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       maxLength={12}
                       inputMode="tel"
                       autoComplete="off"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -633,7 +629,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         maxLength={120}
                         autoComplete="email"
                         inputMode="email"
-                        className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
+                        className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
                           }`}
                       />
                     </div>
@@ -751,7 +747,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             }}
                             placeholder="Ej: Asunción, Ciudad del Este..."
                             autoComplete="off"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                           {/* Suggestions dropdown */}
                           {showCitySuggestions && filteredCities.length > 0 && (
@@ -800,7 +796,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               setErrors((prev) => ({ ...prev, address: undefined }));
                             }}
                             placeholder="Ej: Av. Mariscal López 1234"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-variant-active"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                         </div>
                         {errors.address && (

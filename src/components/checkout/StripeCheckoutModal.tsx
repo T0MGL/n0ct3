@@ -437,7 +437,7 @@ const CheckoutForm = ({
                 autoComplete="email"
                 inputMode="email"
                 aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
+                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
               />
             </div>
             {emailError && (
