@@ -26,9 +26,9 @@ function escapeHtml(value) {
 }
 
 /**
- * Gs. 229.000. El separador de miles con punto es el formato del sitio, y
- * es-PY lo da nativo. Un monto no numérico devuelve null para que el template
- * decida omitir la línea en vez de imprimir "Gs. NaN".
+ * Monto con el formato del sitio: separador de miles con punto, que es-PY da
+ * nativo. Un monto no numérico devuelve null para que el template omita la
+ * línea en vez de imprimir "Gs. NaN" o, peor, un número inventado.
  */
 function formatGuaranies(amount) {
   const value = Number(amount);
