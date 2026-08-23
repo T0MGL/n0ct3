@@ -48,6 +48,25 @@ const FIELD_LABELS: Record<(typeof FIELD_ORDER)[number], string> = {
 const listToSentence = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 
+/**
+ * Deja los dígitos que van después del +595 fijo del campo.
+ *
+ * El campo ya muestra el prefijo, así que cuando alguien pega su número
+ * completo el 595 aparece dos veces, y cuando lo pega como se escribe acá
+ * (0981...) viaja un 0 que no existe con código de país. Las dos formas
+ * armaban un número que Ordefy tenía que salvar del otro lado.
+ */
+const toParaguayDigits = (value: string) => {
+  let digits = value.replace(/\D/g, "");
+  while (digits.startsWith("595") && digits.length > 9) {
+    digits = digits.slice(3);
+  }
+  if (digits.startsWith("0")) {
+    digits = digits.replace(/^0+/, "");
+  }
+  return digits.slice(0, 10);
+};
+
 const normalizeDocument = (value: string) => {
   const [base, ...verifier] = value.replace(/[^\d-]/g, "").split("-");
   if (!base) return "";
@@ -169,20 +188,19 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     }
 
     // Default Paraguay mode: lock +595 prefix.
-    if (!newValue.startsWith("+595")) {
+    // Que el valor no arranque con "+595" son dos casos distintos: borraron
+    // dentro del prefijo, y ahi lo que queda es un pedazo de "+595"; o
+    // reemplazaron todo pegando el numero, y ahi hay que normalizarlo.
+    if (!newValue.startsWith("+595") && "+595".startsWith(newValue)) {
       setPhone("+595 ");
+      setErrors((prev) => ({ ...prev, phone: undefined }));
       return;
     }
 
-    if (newValue === "+595") {
-      setPhone("+595 ");
-      return;
-    }
-
-    const afterPrefix = newValue.slice(5);
-    const digits = afterPrefix.replace(/\D/g, "");
-    const formatted = `+595 ${digits}`;
-    setPhone(formatted);
+    const digits = toParaguayDigits(
+      newValue.startsWith("+595") ? newValue.slice(4) : newValue,
+    );
+    setPhone(`+595 ${digits}`);
 
     // Real-time validation for fake numbers
     if (digits.length >= 8 && isFakePhoneNumber(digits)) {
