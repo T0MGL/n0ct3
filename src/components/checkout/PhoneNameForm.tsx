@@ -23,6 +23,31 @@ const DOCUMENT_REGEX = /^\d{5,9}(-\d)?$/;
 // campo todavia no le dice nada al cliente.
 const DOCUMENT_DIGITS_TO_REVEAL_EMAIL = 6;
 
+type FormErrors = {
+  name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  email?: string;
+  ruc?: string;
+};
+
+// El orden es el de lectura del formulario: al fallar, el foco va al primero
+// que aparece en pantalla, no al primero que devuelva el objeto.
+const FIELD_ORDER = ["name", "phone", "ruc", "email", "city", "address"] as const;
+
+const FIELD_LABELS: Record<(typeof FIELD_ORDER)[number], string> = {
+  name: "nombre",
+  phone: "teléfono",
+  ruc: "RUC o cédula",
+  email: "email",
+  city: "ciudad",
+  address: "dirección",
+};
+
+const listToSentence = (items: string[]) =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+
 const normalizeDocument = (value: string) => {
   const [base, ...verifier] = value.replace(/[^\d-]/g, "").split("-");
   if (!base) return "";
@@ -45,9 +70,14 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationCoords, setLocationCoords] = useState<{ lat?: number; long?: number }>({});
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string; city?: string; email?: string; ruc?: string }>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const rucInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const cityFieldRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
   const prefersReducedMotion = useReducedMotion();
@@ -258,8 +288,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     );
   };
 
-  const validateForm = () => {
-    const newErrors: { name?: string; phone?: string; address?: string; city?: string; email?: string; ruc?: string } = {};
+  const validateForm = (): FormErrors => {
+    const newErrors: FormErrors = {};
 
     // Validate name
     if (!name || name.trim().length < 3) {
@@ -298,13 +328,16 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       }
     }
 
-    // Todo pedido se factura, así que el documento es obligatorio. La cédula
-    // alcanza para quien no tiene RUC.
+    // Todo pedido se factura y la cédula alcanza para quien no tiene RUC. Con
+    // número del exterior el documento pasa a opcional: esa persona puede no
+    // tener uno paraguayo, y exigirlo la dejaba sin poder comprar.
     const documentTrimmed = ruc.trim();
     if (!documentTrimmed) {
-      newErrors.ruc = "Ingresá tu RUC o cédula";
+      if (!customPrefix) {
+        newErrors.ruc = "Ingresá tu RUC o cédula";
+      }
     } else if (!DOCUMENT_REGEX.test(documentTrimmed)) {
-      newErrors.ruc = "Documento inválido (ej: 4123456-7)";
+      newErrors.ruc = "Documento inválido. Va sin puntos: 4123456 o 4123456-7";
     }
 
     // El email solo sirve para mandar la copia de la factura: se valida si lo cargan.
@@ -314,7 +347,23 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
+  };
+
+  const focusFirstError = (formErrors: FormErrors) => {
+    const refs: Record<(typeof FIELD_ORDER)[number], React.RefObject<HTMLInputElement>> = {
+      name: nameInputRef,
+      phone: phoneInputRef,
+      ruc: rucInputRef,
+      email: emailInputRef,
+      city: cityFieldRef,
+      address: addressInputRef,
+    };
+    const first = FIELD_ORDER.find((field) => formErrors[field]);
+    const input = first ? refs[first].current : null;
+    if (!input) return;
+    input.scrollIntoView({ block: "center", behavior: prefersReducedMotion ? "auto" : "smooth" });
+    input.focus({ preventScroll: true });
   };
 
   // Filter cities based on input
@@ -328,7 +377,11 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      focusFirstError(formErrors);
+      return;
+    }
 
     setLoading(true);
 
@@ -340,7 +393,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
       isGeolocated: !!detectedLocation,
       lat: locationCoords.lat,
       long: locationCoords.long,
-      ruc: ruc.trim(),
+      ruc: ruc.trim() || undefined,
       email: invoiceEmail.trim() || undefined,
     });
 
@@ -348,14 +401,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
   };
 
   // Validate button state
-  const hasValidLocation = detectedLocation || (city.trim().length > 0 && address.trim().length >= 5);
-  const isValidPhone = customPrefix
-    ? phone.replace(/\D/g, "").length >= 10
-    : (() => {
-        const phoneDigitsOnly = phone.slice(5).replace(/\D/g, "");
-        return phoneDigitsOnly.length >= 8 && phoneDigitsOnly.length <= 10 && !isFakePhoneNumber(phoneDigitsOnly);
-      })();
-  const isValid = name.trim().length >= 3 && isValidPhone && hasValidLocation && DOCUMENT_REGEX.test(ruc.trim());
+  const missingFields = FIELD_ORDER.filter((field) => errors[field]).map((field) => FIELD_LABELS[field]);
 
   return (
     <AnimatePresence>
@@ -416,6 +462,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   <div className="relative">
                     <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
+                      ref={nameInputRef}
                       type="text"
                       value={name}
                       onChange={(e) => {
@@ -476,7 +523,10 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       } else {
                         setCustomPrefix(true);
                         setPhone("+");
-                        setErrors((prev) => ({ ...prev, phone: undefined }));
+                        // Sin documento obligatorio, el email es la unica via
+                        // para mandarle la factura, asi que se muestra igual.
+                        setEmailRevealed(true);
+                        setErrors((prev) => ({ ...prev, phone: undefined, ruc: undefined }));
                         // Focus and place cursor after "+"
                         setTimeout(() => phoneInputRef.current?.focus(), 0);
                       }
@@ -490,11 +540,12 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 {/* FIELD 3 - DOCUMENTO FISCAL (obligatorio: todo pedido se factura) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
-                    RUC o cédula
+                    RUC o cédula{customPrefix && <span className="font-normal text-foreground/70"> (opcional)</span>}
                   </label>
                   <div className="relative">
                     <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
+                      ref={rucInputRef}
                       type="text"
                       value={ruc}
                       onChange={(e) => {
@@ -526,7 +577,9 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     </motion.p>
                   ) : (
                     <p className="text-[13px] text-foreground/80">
-                      Sin RUC, poné tu cédula.
+                      {customPrefix
+                        ? "Si tenés documento paraguayo, la factura sale a tu nombre."
+                        : "Sin RUC, poné tu cédula."}
                     </p>
                   )}
                 </div>
@@ -551,6 +604,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     <div className="relative">
                       <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <input
+                        ref={emailInputRef}
                         type="email"
                         value={invoiceEmail}
                         onChange={(e) => {
@@ -666,6 +720,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         <div className="relative" ref={cityInputRef}>
                           <BuildingOfficeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                           <input
+                            ref={cityFieldRef}
                             type="text"
                             value={city}
                             onChange={(e) => {
@@ -719,6 +774,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         <div className="relative">
                           <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                           <input
+                            ref={addressInputRef}
                             type="text"
                             value={address}
                             onChange={(e) => {
@@ -778,10 +834,22 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   </a>
                 </p>
 
+                {missingFields.length > 0 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    role="alert"
+                    className="text-[13px] text-red-400"
+                  >
+                    Falta completar: {listToSentence(missingFields)}.
+                  </motion.p>
+                )}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  disabled={!isValid || loading}
+                  disabled={loading}
                   variant="hero"
                   size="xl"
                   className="group w-full h-14 text-base font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
