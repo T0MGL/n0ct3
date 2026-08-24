@@ -322,30 +322,16 @@ export const trackAddPaymentInfo = (params: {
   mirrorToCapi('AddPaymentInfo', eventId, enriched, customData);
 };
 
-/**
- * Track Purchase event (conversion)
- * Call when order is successfully completed.
- * Most important event for ROAS measurement.
- *
- * Advanced Matching travels on the payload as user_data (NEVER re-init the
- * pixel, it corrupts state and kills downstream events). eventId enables
- * CAPI deduplication when server-side events are added later.
- */
-export const trackPurchase = (
-  params: {
-    value: number;
-    currency: string;
-    content_name: string;
-    content_ids: string[];
-    num_items: number;
-    order_id?: string;
-  },
-  userData?: MetaUserData,
-  eventId?: string
-): void => {
-  if (typeof window === 'undefined' || !window.fbq) return;
+export interface PurchaseParams {
+  value: number;
+  currency: string;
+  content_name: string;
+  content_ids: string[];
+  num_items: number;
+  order_id?: string;
+}
 
-  const finalEventId = eventId ?? newEventId();
+const buildPurchasePayload = (params: PurchaseParams, userData?: MetaUserData) => {
   const enriched = enrichUserData(userData);
   const user_data = buildUserDataPayload(enriched);
   const customData: CapiCustomData = {
@@ -360,10 +346,47 @@ export const trackPurchase = (
   };
   const payload: Record<string, unknown> = { ...customData };
   if (user_data) payload.user_data = user_data;
+  return { payload, customData, enriched };
+};
+
+/**
+ * Track Purchase event (conversion)
+ * Call when order is successfully completed.
+ * Most important event for ROAS measurement.
+ *
+ * Advanced Matching travels on the payload as user_data (NEVER re-init the
+ * pixel, it corrupts state and kills downstream events). eventId enables
+ * CAPI deduplication when server-side events are added later.
+ */
+export const trackPurchase = (
+  params: PurchaseParams,
+  userData?: MetaUserData,
+  eventId?: string
+): void => {
+  if (typeof window === 'undefined' || !window.fbq) return;
+
+  const finalEventId = eventId ?? newEventId();
+  const { payload, customData, enriched } = buildPurchasePayload(params, userData);
 
   window.fbq('track', 'Purchase', payload, { eventID: finalEventId });
   mirrorToCapi('Purchase', finalEventId, enriched, customData);
+};
 
+/**
+ * Browser replay of the Purchase that /api/send-order already sent to Meta.
+ * Same event_id as the server, so Meta dedupes it against the server event
+ * and against the n8n WhatsApp confirmation. No mirror to /api/meta-capi/event:
+ * the server event is the mirror, a third copy only adds noise.
+ */
+export const trackServerPurchase = (
+  params: PurchaseParams,
+  userData: MetaUserData | undefined,
+  eventId: string
+): void => {
+  if (typeof window === 'undefined' || !window.fbq) return;
+
+  const { payload } = buildPurchasePayload(params, userData);
+  window.fbq('track', 'Purchase', payload, { eventID: eventId });
 };
 
 /**

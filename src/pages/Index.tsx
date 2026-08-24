@@ -10,6 +10,8 @@ import {
   trackInitiateCheckout,
   trackAddToCart,
   trackPurchase,
+  trackServerPurchase,
+  type MetaUserData,
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
@@ -271,8 +273,10 @@ const Index = () => {
       // whatever was already stored on checkoutData from PhoneNameForm.
       const effectiveEmail = result.email || prev.email;
 
-      // Send order to backend in background (fire-and-forget)
-      sendOrderInBackground({
+      // Send the order to the backend. The success screen never waits on
+      // this, only the Purchase pixel does: with META_SERVER_PURCHASE on, the
+      // server emits the Purchase itself and answers with its event_id.
+      const orderSent = sendOrderInBackground({
         name: prev.name,
         phone: prev.phone,
         location: prev.location,
@@ -289,6 +293,8 @@ const Index = () => {
         isPaid: result.isPaid,
         deliveryType: result.deliveryType,
         colors: prev.colors ?? undefined,
+        fbp: getFbp(),
+        fbc: getFbc(),
       });
 
       const purchaseParams = {
@@ -304,11 +310,15 @@ const Index = () => {
         order_id: prev.orderNumber,
       };
 
-      // Build the Advanced Matching payload off the main thread and then
-      // fire Purchase. Non blocking, fire-and-forget. If hashing fails for
-      // any reason we still fire the event without user_data so we never
+      // Hash the Advanced Matching payload off the main thread while the
+      // order is in flight, then fire Purchase once the backend answers. If
+      // the server already emitted it, the pixel replays under the same
+      // event_id and Meta dedupes. Otherwise (flag off, Meta down, request
+      // lost) today's pixel plus CAPI mirror fires exactly as before. If
+      // hashing fails the event still goes out without user_data so we never
       // lose a conversion signal.
       void (async () => {
+        let userData: MetaUserData | undefined;
         try {
           const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
             hashEmail(effectiveEmail),
@@ -319,22 +329,18 @@ const Index = () => {
             hashCity(prev.location),
             hashCountry(),
           ]);
-          trackPurchase(purchaseParams, {
-            em,
-            ph,
-            fn,
-            ln,
-            ct,
-            country,
-            external_id,
-            fbc: getFbc(),
-            fbp: getFbp(),
-          }, prev.orderNumber);
+          userData = { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() };
         } catch (err) {
           if (import.meta.env.DEV) {
-            console.error('[Meta] hash/track failed, firing without user_data', err);
+            console.error('[Meta] hash failed, firing without user_data', err);
           }
-          trackPurchase(purchaseParams);
+        }
+
+        const { purchaseEventId } = await orderSent;
+        if (purchaseEventId) {
+          trackServerPurchase(purchaseParams, userData, purchaseEventId);
+        } else {
+          trackPurchase(purchaseParams, userData, prev.orderNumber);
         }
       })();
 

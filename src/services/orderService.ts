@@ -24,6 +24,13 @@ export interface OrderData {
   deliveryType: 'común' | 'premium';
   /** Lens color per unit in display order. Length should match quantity. */
   colors?: string[];
+  /**
+   * Raw _fbp/_fbc cookie values. The request is cross-origin without
+   * credentials, so the cookies never reach api.nocte.studio on their own;
+   * the server puts these on the Purchase user_data for attribution.
+   */
+  fbp?: string;
+  fbc?: string;
 }
 
 export interface GeocodeResponse {
@@ -39,10 +46,34 @@ export interface SendOrderResponse {
   success: boolean;
   message: string;
   orderNumber: string;
+  /**
+   * Present only when the server already sent the Purchase to Meta. The pixel
+   * replays it under this id so Meta dedupes; absent means the legacy path.
+   */
+  purchaseEventId?: string;
   n8nResponse?: unknown;
   ordefyResponse?: unknown;
   error?: string;
 }
+
+/**
+ * purchaseEventId is the one field the UI acts on, and a malformed value
+ * would silently skip the legacy pixel. Read it strictly, keep the rest loose.
+ */
+const readSendOrderResponse = (raw: unknown, fallbackOrderNumber: string): SendOrderResponse => {
+  const data = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<SendOrderResponse>;
+  return {
+    success: data.success === true,
+    message: typeof data.message === 'string' ? data.message : '',
+    orderNumber: typeof data.orderNumber === 'string' ? data.orderNumber : fallbackOrderNumber,
+    purchaseEventId:
+      typeof data.purchaseEventId === 'string' && data.purchaseEventId.length > 0
+        ? data.purchaseEventId
+        : undefined,
+    n8nResponse: data.n8nResponse,
+    ordefyResponse: data.ordefyResponse,
+  };
+};
 
 /**
  * Get Google Maps link for an address
@@ -124,9 +155,9 @@ export async function sendOrderToN8N(
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
-    const result: SendOrderResponse = await response.json();
+    const raw: unknown = await response.json();
 
-    return result;
+    return readSendOrderResponse(raw, orderData.orderNumber);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to send order';
@@ -144,20 +175,18 @@ export async function sendOrderToN8N(
 }
 
 /**
- * Fire-and-forget version of sendOrderToN8N
- * Sends order in background without blocking UI
- * Errors are logged but don't affect user flow
+ * Background version of sendOrderToN8N. Never rejects: a failed send resolves
+ * with success:false and no purchaseEventId, which is the legacy pixel path.
+ * Only the Purchase pixel waits on this promise, the UI never does.
  */
-export function sendOrderInBackground(orderData: OrderData): void {
-  // Use setTimeout to ensure this runs after the current call stack clears
-  // This makes the UI transition instant
-  setTimeout(() => {
-    sendOrderToN8N(orderData).catch((error) => {
-      if (import.meta.env.DEV) {
-        console.error('Background order send failed:', error);
-      }
-    });
-  }, 0);
+export function sendOrderInBackground(orderData: OrderData): Promise<SendOrderResponse> {
+  // setTimeout runs the send after the current call stack clears so the
+  // success transition stays instant.
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      void sendOrderToN8N(orderData).then(resolve);
+    }, 0);
+  });
 }
 
 /**
