@@ -5,11 +5,21 @@
  * Meta Graph API. The client pixel fires the same event with the same event_id
  * so Meta deduplicates on (pixel_id, event_name, event_id) in its 48h window.
  *
+ * The Purchase is the exception to the mirror: /api/send-order emits it from
+ * here once Ordefy confirmed the order (sendPurchase), and the browser replays
+ * it with the event_id the route returns. Same event_id convention as the n8n
+ * WhatsApp confirmation flows, so a web order confirmed by Helena is one
+ * conversion, not two.
+ *
  * Config (env):
  *   META_CAPI_PIXEL_ID         required, currently 2985948491737420
  *   META_CAPI_ACCESS_TOKEN     required, System User token with ads_management
  *   META_CAPI_API_VERSION      optional, defaults to v20.0
- *   META_CAPI_TEST_EVENT_CODE  optional, set only for validation in Test Events
+ *   META_CAPI_TEST_EVENT_CODE  optional, set only for validation in Test Events.
+ *                              Never in production: every real Purchase would
+ *                              land in Test Events and stop counting for ads.
+ *   META_SERVER_PURCHASE       'on' enables the server Purchase. Anything else
+ *                              (including unset) keeps today's behavior.
  *
  * Security contract:
  *   - Access token never leaves the server. Never logged, never echoed.
@@ -18,6 +28,8 @@
  *   - Rate limited at the Express layer (100 req/min per IP).
  *   - Always returns 202 to the client so no UX signal leaks the server state.
  */
+
+const { createHash } = require('node:crypto');
 
 const ALLOWED_EVENTS = new Set([
   'PageView',
@@ -144,7 +156,7 @@ const buildMetaEvent = (body, req) => {
   return event;
 };
 
-const forwardToMeta = async (event) => {
+const forwardToMeta = async (event, timeoutMs = 8000) => {
   const pixelId = process.env.META_CAPI_PIXEL_ID;
   const token = process.env.META_CAPI_ACCESS_TOKEN;
   const version = process.env.META_CAPI_API_VERSION || 'v20.0';
@@ -154,17 +166,19 @@ const forwardToMeta = async (event) => {
     return { skipped: true, reason: 'missing_env' };
   }
 
-  const url = `https://graph.facebook.com/${version}/${pixelId}/events?access_token=${encodeURIComponent(token)}`;
+  const url = `https://graph.facebook.com/${version}/${pixelId}/events`;
   const body = { data: [event] };
   if (isString(testCode)) body.test_event_code = testCode;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    // Token in the header, not the query string: a query string ends up in
+    // access logs and error traces, the header does not.
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
@@ -224,4 +238,175 @@ const register = (app) => {
   });
 };
 
-module.exports = { register };
+const PURCHASE_TIMEOUT_MS = 3000;
+const SITE_URL = 'https://nocte.studio/';
+const CONTENT_NAME = 'NOCTE® Red Light Blocking Glasses';
+const CONTENT_CATEGORY = 'Sleep & Wellness';
+const CONTENT_ID = 'nocte-red-glasses';
+
+// Meta's documented cookie formats: fb.<subdomain index>.<unix ms>.<id>.
+// The id is a random integer for _fbp and the fbclid for _fbc.
+const FBP_RE = /^fb\.\d\.\d+\.\d+$/;
+const FBC_RE = /^fb\.\d\.\d+\.[A-Za-z0-9_-]+$/;
+
+const sha256 = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
+const hashIfPresent = (value) => (value ? sha256(value) : undefined);
+
+const serverPurchaseEnabled = () => process.env.META_SERVER_PURCHASE === 'on';
+
+/**
+ * Same event_id the n8n flows build (Confirm Order QLts98LT5bEuQMZ7 and the
+ * [COD]/[Transfer] branches of Yl6ZN0Iu5P9jm2x8):
+ *   'nocte-purchase-' + String(orderNumber).replace(/[^A-Za-z0-9]/g, '')
+ * Meta dedupes on (pixel, event_name, event_id) inside 48h. One byte of
+ * difference here and a web order confirmed over WhatsApp counts twice.
+ */
+const purchaseEventId = (orderNumber) =>
+  'nocte-purchase-' + String(orderNumber).replace(/[^A-Za-z0-9]/g, '');
+
+/** Meta's normalization rules, applied before hashing. */
+const normalize = {
+  email: (v) => String(v || '').trim().toLowerCase() || undefined,
+  // Digits only. A local 09xx loses the zero and takes 595, anything else is
+  // kept as typed. Same rule as n8n's normalizePhone and the browser's
+  // hashPhoneE164, so the three channels hash the same value for one buyer.
+  phone: (v) => {
+    const digits = String(v || '').replace(/\D/g, '');
+    if (!digits) return undefined;
+    return digits.startsWith('0') ? '595' + digits.slice(1) : digits;
+  },
+  // Lowercase, punctuation out, accents KEPT (Meta hashes "ramírez" with the
+  // tilde, stripping it yields a hash that never matches), inner spaces kept
+  // for compound surnames.
+  name: (v) =>
+    String(v || '')
+      .toLowerCase()
+      .replace(/[^\p{L}\s]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim() || undefined,
+  // City: no spaces, no accents, no punctuation.
+  city: (v) =>
+    String(v || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z]/g, '') || undefined,
+};
+
+const cookieFrom = (req, name) => {
+  const header = req.headers.cookie;
+  if (typeof header !== 'string') return undefined;
+  for (const part of header.split(';')) {
+    const trimmed = part.trimStart();
+    if (trimmed.startsWith(`${name}=`)) return trimmed.slice(name.length + 1);
+  }
+  return undefined;
+};
+
+/**
+ * _fbp/_fbc from the request cookie when the browser sent one, else from the
+ * body. The storefront lives on nocte.studio and posts cross-origin without
+ * credentials, so in practice the body is the only channel today; the cookie
+ * still wins if both arrive. Malformed values are dropped, not forwarded.
+ */
+const readFbIds = (req, body) => {
+  const pick = (name, re) => {
+    const cookie = cookieFrom(req, name);
+    if (isString(cookie) && re.test(cookie)) return cookie;
+    const fromBody = body?.[name.slice(1)];
+    return isString(fromBody) && re.test(fromBody) ? fromBody : undefined;
+  };
+  return { fbp: pick('_fbp', FBP_RE), fbc: pick('_fbc', FBC_RE) };
+};
+
+/**
+ * Hashed user_data for the buyer. external_id is the phone hash, the same key
+ * n8n sends, so Meta stitches the web Purchase and the WhatsApp one to the
+ * same person.
+ */
+const buildPurchaseUserData = ({ name, phone, email, city, fbp, fbc }) => {
+  const [first, ...rest] = String(name || '').trim().split(/\s+/);
+  const phoneDigits = normalize.phone(phone);
+  const user = {
+    em: hashIfPresent(normalize.email(email)),
+    ph: hashIfPresent(phoneDigits),
+    fn: hashIfPresent(normalize.name(first)),
+    ln: hashIfPresent(normalize.name(rest.join(' '))),
+    ct: hashIfPresent(normalize.city(city)),
+    country: sha256('py'),
+    external_id: hashIfPresent(phoneDigits),
+    fbp,
+    fbc,
+  };
+  return Object.fromEntries(Object.entries(user).filter(([, v]) => v));
+};
+
+/**
+ * Emits the Purchase for an order Ordefy just created. Never throws and never
+ * blocks the order: any failure returns null and the caller answers the client
+ * without an event id, which makes the browser fall back to today's pixel.
+ *
+ * Returns the event_id on success (Meta answered events_received >= 1).
+ */
+const sendPurchase = async ({ req, orderNumber, value, quantity, name, phone, email, city }) => {
+  const eventId = purchaseEventId(orderNumber);
+  const referer = req.get('referer');
+  const contentId = quantity === 1 ? CONTENT_ID : `${CONTENT_ID}-${quantity}pack`;
+
+  try {
+    const user_data = buildPurchaseUserData({
+      name,
+      phone,
+      email,
+      city,
+      ...readFbIds(req, req.body),
+    });
+    const client_ip_address = extractClientIp(req);
+    const client_user_agent = req.headers['user-agent'];
+    if (client_ip_address) user_data.client_ip_address = client_ip_address;
+    if (isString(client_user_agent)) user_data.client_user_agent = client_user_agent;
+
+    const event = {
+      event_name: 'Purchase',
+      event_id: eventId,
+      event_time: Math.floor(Date.now() / 1000),
+      event_source_url: isString(referer) && /^https?:\/\//.test(referer) ? referer : SITE_URL,
+      action_source: 'website',
+      user_data,
+      custom_data: {
+        value,
+        currency: 'PYG',
+        content_name: quantity === 1 ? CONTENT_NAME : `${CONTENT_NAME} - Pack x${quantity}`,
+        content_category: CONTENT_CATEGORY,
+        content_type: 'product',
+        content_ids: [contentId],
+        num_items: quantity,
+        order_id: String(orderNumber),
+      },
+    };
+
+    const outcome = await forwardToMeta(event, PURCHASE_TIMEOUT_MS);
+    if (outcome.ok && Number(outcome.result?.events_received) >= 1) return eventId;
+
+    console.error('[capi] purchase not accepted', {
+      event_id: eventId,
+      skipped: outcome.skipped === true,
+      status: outcome.status,
+      error: outcome.error,
+    });
+    return null;
+  } catch (err) {
+    console.error('[capi] purchase failed', { event_id: eventId, error: err?.message || 'unknown' });
+    return null;
+  }
+};
+
+module.exports = {
+  register,
+  sendPurchase,
+  serverPurchaseEnabled,
+  purchaseEventId,
+  normalize,
+  readFbIds,
+  buildPurchaseUserData,
+};
