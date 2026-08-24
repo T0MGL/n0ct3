@@ -19,6 +19,10 @@ import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resolveSelectableVariant, summa
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
+// How long the Purchase pixel waits for /api/send-order to hand back the
+// server event id before falling back to the legacy pixel.
+const PURCHASE_ID_WAIT_MS = 6000;
+
 // Preload Stripe.js immediately so it's ready when the user clicks buy
 getStripe();
 
@@ -336,7 +340,17 @@ const Index = () => {
           }
         }
 
-        const { purchaseEventId } = await orderSent;
+        // Bounded wait: on a slow backend the legacy pixel fires anyway so a
+        // buyer closing the tab never costs the conversion. With the flag on
+        // and a backend slower than this, Meta may see two ids for one order
+        // (server ORD-based, browser #NOC-based); rarer and cheaper than
+        // losing the event.
+        const { purchaseEventId } = await Promise.race([
+          orderSent,
+          new Promise<{ purchaseEventId?: undefined }>((resolve) => {
+            setTimeout(() => resolve({}), PURCHASE_ID_WAIT_MS);
+          }),
+        ]);
         if (purchaseEventId) {
           trackServerPurchase(purchaseParams, userData, purchaseEventId);
         } else {

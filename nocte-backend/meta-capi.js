@@ -29,6 +29,8 @@
  *   - Always returns 202 to the client so no UX signal leaks the server state.
  */
 
+const { createHash } = require('node:crypto');
+
 const ALLOWED_EVENTS = new Set([
   'PageView',
   'ViewContent',
@@ -236,11 +238,7 @@ const register = (app) => {
   });
 };
 
-// ==================== SERVER-SIDE PURCHASE ====================
-
-const { createHash } = require('node:crypto');
-
-const PURCHASE_TIMEOUT_MS = 4000;
+const PURCHASE_TIMEOUT_MS = 3000;
 const SITE_URL = 'https://nocte.studio/';
 const CONTENT_NAME = 'NOCTE® Red Light Blocking Glasses';
 const CONTENT_CATEGORY = 'Sleep & Wellness';
@@ -269,15 +267,13 @@ const purchaseEventId = (orderNumber) =>
 /** Meta's normalization rules, applied before hashing. */
 const normalize = {
   email: (v) => String(v || '').trim().toLowerCase() || undefined,
-  // Digits only, with country code. A local 09xx loses the zero and takes 595;
-  // a bare 9xx (nine digits) is a Paraguayan mobile typed without the zero.
-  // Anything else already carries its country code.
+  // Digits only. A local 09xx loses the zero and takes 595, anything else is
+  // kept as typed. Same rule as n8n's normalizePhone and the browser's
+  // hashPhoneE164, so the three channels hash the same value for one buyer.
   phone: (v) => {
     const digits = String(v || '').replace(/\D/g, '');
     if (!digits) return undefined;
-    if (digits.startsWith('0')) return '595' + digits.replace(/^0+/, '');
-    if (digits.length === 9 && digits.startsWith('9')) return '595' + digits;
-    return digits;
+    return digits.startsWith('0') ? '595' + digits.slice(1) : digits;
   },
   // Lowercase, punctuation out, accents KEPT (Meta hashes "ramírez" with the
   // tilde, stripping it yields a hash that never matches), inner spaces kept

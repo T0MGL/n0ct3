@@ -41,7 +41,7 @@ test('event_id matches the n8n convention byte for byte', () => {
 test('phone normalizes to digits with country code', () => {
   assert.equal(normalize.phone('0981 123 456'), '595981123456');
   assert.equal(normalize.phone('+595 981 123456'), '595981123456');
-  assert.equal(normalize.phone('981123456'), '595981123456');
+  assert.equal(normalize.phone('981123456'), '981123456');
   assert.equal(normalize.phone('5491155551234'), '5491155551234');
   assert.equal(normalize.phone(''), undefined);
 });
@@ -83,6 +83,7 @@ test('user_data hashes PII, uses the phone hash as external_id, omits empties', 
 const ORDER_BODY = {
   name: 'Ana Ramírez',
   phone: '0981123456',
+  email: 'Ana.Ramirez@Example.com',
   location: 'Asunción',
   address: 'Calle 1',
   quantity: 2,
@@ -121,6 +122,7 @@ before(() => {
 after(() => server.close());
 
 beforeEach(() => {
+  delete process.env.META_SERVER_PURCHASE;
   metaCalls = [];
   metaReply = () => jsonResponse(200, { events_received: 1, fbtrace_id: 'trace' });
   ordefyReply = ordefyCreated;
@@ -224,9 +226,11 @@ test('flag on: emits Purchase after Ordefy and returns the n8n-compatible event 
     order_id: 'ORD-20260823-a1b2c3',
   });
 
-  const wire = JSON.stringify(call.body);
-  assert.equal(wire.includes('981123456'), false, 'plaintext phone must never reach Meta');
-  assert.equal(wire.includes('Ram'), false, 'plaintext name must never reach Meta');
+  assert.match(event.user_data.em, /^[a-f0-9]{64}$/);
+  const wire = JSON.stringify(call.body).toLowerCase();
+  for (const pii of ['981123456', 'ana', 'ram', 'example.com', 'asunci', 'calle 1']) {
+    assert.equal(wire.includes(pii), false, `plaintext "${pii}" must never reach Meta`);
+  }
   assert.equal(raw.includes('595981123456'), false);
 });
 
