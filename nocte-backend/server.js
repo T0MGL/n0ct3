@@ -927,7 +927,7 @@ app.post('/api/send-order', async (req, res) => {
     // Return success if at least one succeeded
     const overallSuccess = n8nSuccess || ordefySuccess;
 
-    res.json({
+    const response = {
       success: overallSuccess,
       message: overallSuccess
         ? 'Order processed successfully'
@@ -935,7 +935,28 @@ app.post('/api/send-order', async (req, res) => {
       orderNumber: webhookPayload.orderNumber,
       n8nResponse: n8nData,
       ordefyResponse: ordefyData,
-    });
+    };
+
+    // Server-side Purchase, only for an order Ordefy actually created. An
+    // idempotent replay comes back as duplicate without order_number and is
+    // not re-emitted. purchaseEventId is only present when Meta accepted the
+    // event: without it the browser keeps firing today's pixel.
+    const createdOrderNumber = ordefySuccess ? ordefyData.data?.order_number : undefined;
+    if (metaCapi.serverPurchaseEnabled() && createdOrderNumber) {
+      const purchaseEventId = await metaCapi.sendPurchase({
+        req,
+        orderNumber: createdOrderNumber,
+        value: webhookPayload.order.total,
+        quantity: webhookPayload.order.quantity,
+        name,
+        phone,
+        email,
+        city: location,
+      });
+      if (purchaseEventId) response.purchaseEventId = purchaseEventId;
+    }
+
+    res.json(response);
 
   } catch (error) {
     console.error('❌ Error sending order:', error.message);
