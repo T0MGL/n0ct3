@@ -12,6 +12,15 @@ export interface Variant {
   displayTitle: string;
   moment: VariantMoment;
   momentTimeWindow: string;
+  /**
+   * Franja horaria de este color sobre el reloj de 24 horas, [desde, hasta) en
+   * horas locales. A diferencia de momentTimeWindow (que es la ventana
+   * recomendada y se muestra como texto), las tres dayRange cubren el dia
+   * entero sin huecos ni solapamientos: MomentsSection las usa para decirle al
+   * visitante cual le toca AHORA, y eso obliga a que las 24 horas tengan
+   * dueno. La madrugada le toca al rojo.
+   */
+  dayRange: readonly [number, number];
   blockedPercent: number;
   spectrumRange: readonly [number, number];
   spectrumLabel: string;
@@ -55,6 +64,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Rojos Anti-Luz Azul",
     moment: "NOCHE",
     momentTimeWindow: "20:00 a 03:00",
+    dayRange: [20, 7],
     blockedPercent: 99,
     spectrumRange: [400, 550],
     spectrumLabel: "400 a 550nm",
@@ -88,6 +98,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
+    dayRange: [17, 20],
     blockedPercent: 95,
     spectrumRange: [400, 500],
     spectrumLabel: "400 a 500nm",
@@ -121,6 +132,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
+    dayRange: [7, 17],
     blockedPercent: 75,
     spectrumRange: [400, 450],
     spectrumLabel: "400 a 450nm",
@@ -163,6 +175,22 @@ export function isVariantId(value: string): value is VariantId {
 
 export function getVariant(id: VariantId): Variant {
   return VARIANTS[id];
+}
+
+/**
+ * El color que le toca a una hora del reloj. El rojo cruza la medianoche
+ * (20 a 7), asi que su rango se evalua al reves que los otros dos. Si algun
+ * dayRange dejara un hueco esto devolveria el rojo por defecto, que es el
+ * comportamiento seguro: de madrugada nadie quiere el amarillo.
+ */
+export function variantForHour(hour: number): VariantId {
+  const h = ((hour % 24) + 24) % 24;
+  for (const id of VARIANT_IDS) {
+    const [from, to] = VARIANTS[id].dayRange;
+    const inside = from < to ? h >= from && h < to : h >= from || h < to;
+    if (inside) return id;
+  }
+  return "rojo";
 }
 
 /** True when a color is manually flagged out of stock and must not be sellable. */

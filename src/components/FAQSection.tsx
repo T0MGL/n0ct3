@@ -66,7 +66,7 @@ export const FAQSection = () => {
           >
             Lo que <span className="text-variant-active">realmente</span> te
             <br />
-            preguntas antes de comprar.
+            preguntás antes de comprar.
           </h2>
         </Reveal>
 

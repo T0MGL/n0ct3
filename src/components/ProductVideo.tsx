@@ -50,10 +50,17 @@ export const ProductVideo = () => {
       <div className="container max-w-[900px] mx-auto">
         <div className="space-y-4 md:space-y-6 lg:space-y-8">
           {/* Heading */}
-          <Reveal className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight">
-              NOCTE <sup className="text-[0.5em] ml-0.5">®</sup>
+          <Reveal className="space-y-3 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
+              La prueba de la tarjeta
+            </p>
+            <h2 className="text-2xl font-bold tracking-tighter md:text-3xl lg:text-4xl xl:text-5xl">
+              Miralo con tus propios ojos
             </h2>
+            <p className="mx-auto max-w-[46ch] text-base text-muted-foreground md:text-lg">
+              La misma tarjeta de prueba de luz azul, vista a través del cristal NOCTE y a
+              través de un lente común.
+            </p>
           </Reveal>
 
           {/* Video Container - Integrado en la página */}

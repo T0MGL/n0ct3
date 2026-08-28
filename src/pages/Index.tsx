@@ -29,6 +29,7 @@ const PURCHASE_ID_WAIT_MS = 6000;
 getStripe();
 
 // Lazy load heavy sections that are below the fold
+const ProblemSection = lazy(() => import("@/components/ProblemSection"));
 const MomentsSection = lazy(() => import("@/components/MomentsSection"));
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
@@ -652,23 +653,28 @@ const Index = () => {
           onGalleryInteract={handleGalleryInteract}
         />
 
-        {/* Va pegado al hero: el h1 promete un lente por momento y esta es la
-            seccion que lo cumple. Cualquier cosa en el medio (la prueba social,
-            el video) hace que la promesa quede sin cobrar. */}
-        <Suspense fallback={null}>
-          <MomentsSection onPickChange={handlePickChange} />
-        </Suspense>
+        {/*
+          ORDEN DE LA PAGINA. Cada seccion responde UNA objecion y va en el
+          orden en que la objecion aparece en la cabeza del cliente:
+
+            1. ¿esto es para mi?      -> ProblemSection
+            2. ¿por que me pasa?      -> BlueLightMorph
+            3. ¿de verdad funciona?   -> ProductVideo (prueba fisica)
+            4. ¿que gano yo?          -> BenefitsSection
+            5. ¿le sirvio a alguien?  -> Testimonials, y despues Celebrities
+            6. ¿cual me llevo?        -> MomentsSection
+            7. ¿es complicado usarlo? -> LifestyleSection
+            8. ¿que me llega?         -> UnboxingSection
+            9. ¿por que cuesta esto?  -> ComparisonTable
+           10. ¿y si no me sirve?     -> FAQ y Guarantee
+
+          Mover una seccion sin mover su objecion rompe la cadena: el precio
+          antes de la prueba se lee caro, y la eleccion de color antes del
+          deseo es una decision que todavia no le importa a nadie.
+        */}
 
         <Suspense fallback={null}>
-          <CelebritiesMarquee />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <ProductVideo />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <UnboxingSection />
+          <ProblemSection />
         </Suspense>
 
         <Suspense fallback={null}>
@@ -678,29 +684,50 @@ const Index = () => {
         {/* ScienceDemo oculto: duplica el demo de espectro por color de BlueLightMorph. */}
 
         <Suspense fallback={null}>
+          <ProductVideo />
+        </Suspense>
+
+        <Suspense fallback={null}>
           <BenefitsSection />
         </Suspense>
 
-        {/* CTA 1: After Benefits */}
-        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
+        <Suspense fallback={null}>
+          <TestimonialsSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <CelebritiesMarquee />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <MomentsSection onPickChange={handlePickChange} />
+        </Suspense>
 
         <Suspense fallback={null}>
           <LifestyleSection />
+        </Suspense>
+
+        {/* CTA 1: cae cuando el cliente ya sabe cual es el suyo y como se usa. */}
+        <OfferCTA
+          onBuyClick={handleBuyClick}
+          selectedPrice={selectedPrice}
+          headline="Ya sabés cuál te toca. Llevátelo."
+        />
+
+        <Suspense fallback={null}>
+          <UnboxingSection />
         </Suspense>
 
         <Suspense fallback={null}>
           <ComparisonTable />
         </Suspense>
 
-        {/* CTA 2: After Comparison */}
-        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
-
-        <Suspense fallback={null}>
-          <TestimonialsSection />
-        </Suspense>
-
-        {/* CTA 3: After Testimonials (minimal) */}
-        <OfferCTA onBuyClick={handleBuyClick} variant="minimal" selectedPrice={selectedPrice} />
+        {/* CTA 2: cae con el precio recien justificado, asi que reencuadra el precio. */}
+        <OfferCTA
+          onBuyClick={handleBuyClick}
+          selectedPrice={selectedPrice}
+          headline="Más caro que un genérico. Más barato que otra noche sin dormir."
+        />
 
         <Suspense fallback={null}>
           <FAQSection />
@@ -709,6 +736,7 @@ const Index = () => {
         <Suspense fallback={null}>
           <GuaranteeSection onBuyClick={handleBuyClick} />
         </Suspense>
+
       </main>
 
       {/* Sticky Buy Button */}
