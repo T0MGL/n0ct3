@@ -3,9 +3,10 @@ import { CheckIcon, MinusIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
 // Honest comparison vs other blue-light brands and generic glasses. Competitor
-// numbers are framed as "aprox" because we do not control their public claims
-// and they change. NOCTE column reflects the product as currently sold
-// (3 variants, 30 day guarantee, 229k starting).
+// cells come from RONAN's public pages (checked Aug 2026) and say plainly when
+// they publish nothing, so we never put a number in their mouth. Free shipping
+// is theirs and it stays in. No price row on purpose: price moves every runout
+// and the durable difference is COD reach, not the sticker.
 
 type CellTone = "good" | "weak" | "neutral";
 
@@ -20,7 +21,7 @@ interface ComparisonRow {
 const ROWS: ReadonlyArray<ComparisonRow> = [
   {
     feature: "Bloqueo luz azul (lente nocturno)",
-    competidor: { text: "Aprox 99%", tone: "good" },
+    competidor: { text: "No publica el dato", tone: "weak" },
     generico: { text: "20 a 30%", tone: "weak" },
     nocte: { text: "99%", tone: "good" },
   },
@@ -40,7 +41,7 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
   },
   {
     feature: "Envío Asunción y Central",
-    competidor: { text: "Variable", tone: "neutral" },
+    competidor: { text: "Gratis, sin plazo publicado", tone: "neutral" },
     generico: { text: "Pago", tone: "weak" },
     nocte: { text: "Gratis 24 a 48hs", tone: "good" },
   },
@@ -59,10 +60,11 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
     highlight: true,
   },
   {
-    feature: "Precio desde",
-    competidor: { text: "Aprox 197.000 Gs", tone: "neutral" },
-    generico: { text: "180k a 250k", tone: "neutral" },
-    nocte: { text: "229.000 Gs", tone: "neutral" },
+    feature: "Pagás al recibir, también al interior",
+    competidor: { text: "Solo Gran Asunción", tone: "weak" },
+    generico: { text: "Pago adelantado", tone: "weak" },
+    nocte: { text: "Sí, en todo el interior", tone: "good" },
+    highlight: true,
   },
 ];
 
