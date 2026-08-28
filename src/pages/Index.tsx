@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
+import { NocteMark } from "@/components/NocteMark";
 import { HeroSection } from "@/components/HeroSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -556,12 +557,18 @@ const Index = () => {
         {/* We want the header to be transparent. bg-transparent. */}
         <div className="w-full">
           <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
-            {/* Sin mix-blend-difference. El blend obliga al compositor a leer
-                el fondo debajo del elemento en cada frame de scroll, y este
-                elemento es fixed: lo hace durante toda la pagina. La sombra
-                resuelve lo mismo (que el wordmark se lea sobre las fotos
-                claras) con un paint que no toca el backdrop. */}
-            <span className="text-2xl md:text-3xl font-bold tracking-tighter text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.6)]">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
+            {/* El wordmark va como marca vectorial, no como texto: es el logo,
+                no una palabra. El drop-shadow lo sostiene sobre las fotos claras
+                sin recurrir a mix-blend-difference, que obliga al compositor a
+                leer el fondo en cada frame y este header es fixed. */}
+            <span className="flex items-baseline gap-2.5 [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]">
+              <NocteMark className="h-4 w-auto text-white md:h-[18px]" />
+              {/* PARAGUAY no es parte del logo, es senal de que la tienda es
+                  local. Va al lado de la marca, no dentro. */}
+              <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/55 md:text-[10px]">
+                Paraguay
+              </span>
+            </span>
             {ALL_VARIANTS_SOLD_OUT ? (
               <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
                 Agotado
