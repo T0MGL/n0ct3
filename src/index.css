@@ -56,6 +56,11 @@ All colors MUST be HSL.
     --glow-gold: 0 0 40px hsl(43 74% 66% / 0.3);
 
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* La curva del sitio, la misma que EASING en src/lib/animations.ts:
+       arranca rapido y asienta. Una sola a proposito: dos curvas sin una razon
+       concreta para la segunda terminan mezcladas al azar. */
+    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   [data-variant="rojo"] {
@@ -89,6 +94,37 @@ All colors MUST be HSL.
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tighter;
     letter-spacing: -0.02em;
+  }
+
+  /* Press por defecto en todo el sitio. Es opt-out, no opt-in: cualquier
+     boton responde al tacto salvo que lleve .no-press, que es para los
+     controles donde hundir el elemento entero pelea con lo que esta abajo
+     (flechas sobre una foto, toggles dentro de una fila que ya se hunde).
+     El transform va en 120ms porque es feedback y tiene que llegar antes que
+     el dedo se levante; color y borde van en 250ms porque son estado. */
+  button:not(.no-press) {
+    transition:
+      background-color 250ms var(--ease-smooth),
+      border-color 250ms var(--ease-smooth),
+      box-shadow 250ms var(--ease-smooth),
+      color 250ms var(--ease-smooth),
+      opacity 250ms var(--ease-smooth),
+      transform 120ms ease-out;
+  }
+
+  button:not(:disabled):not(.no-press):active {
+    transform: scale(0.97);
+  }
+
+  /* El hover que levanta solo tiene sentido con puntero fino. En touch se
+     dispara al tocar y compite con el press. */
+  @media (hover: hover) and (pointer: fine) {
+    a {
+      transition:
+        background-color 250ms var(--ease-smooth),
+        color 250ms var(--ease-smooth),
+        opacity 250ms var(--ease-smooth);
+    }
   }
 }
 
@@ -267,6 +303,129 @@ All colors MUST be HSL.
 
 @media (prefers-reduced-motion: reduce) {
   .cert-swap { animation: none; }
+}
+
+/* Reveal al entrar en viewport.
+   La entrada la maneja el compositor via transition de CSS, no un rAF de
+   Framer Motion: el navegador la sigue corriendo aunque el main thread este
+   ocupado montando el chunk de la seccion, que es exactamente el momento en
+   que estas animaciones se disparan. Quien pone .is-revealed es el observer
+   unico de src/lib/reveal.ts.
+
+   18px y 550ms, no 40px y 700ms: un reveal mas largo que el scroll del dedo
+   deja el contenido siempre atras y se lee como lag aunque corra a 60fps.
+
+   Va por animation y no por transition a proposito: una transition sobre el
+   elemento le pisa el transition-property de cualquier utilidad de Tailwind
+   que tenga encima (transition-colors para el hover del borde, por ejemplo),
+   porque este bloque va despues de @tailwind utilities. Una animation convive.
+
+   Sin will-change a proposito. Prometer 30 capas de GPU permanentes en la
+   landing cuesta mas memoria en mobile de lo que ahorra: el navegador ya
+   promueve la capa mientras dura la animacion. */
+[data-reveal] {
+  opacity: 0;
+}
+
+[data-reveal].is-revealed {
+  animation: nocte-reveal-up 550ms var(--ease-smooth) var(--reveal-delay, 0ms) both;
+}
+
+[data-reveal="left"].is-revealed { animation-name: nocte-reveal-left; }
+[data-reveal="right"].is-revealed { animation-name: nocte-reveal-right; }
+[data-reveal="scale"].is-revealed { animation-name: nocte-reveal-scale; }
+[data-reveal="fade"].is-revealed { animation-name: nocte-reveal-fade; }
+
+@keyframes nocte-reveal-up {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nocte-reveal-left {
+  from { opacity: 0; transform: translate3d(-18px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nocte-reveal-right {
+  from { opacity: 0; transform: translate3d(18px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nocte-reveal-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nocte-reveal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Reduced motion conserva el fade, que es lo que avisa que la seccion es
+   nueva, y elimina el desplazamiento, que es lo que marea. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal].is-revealed {
+    animation: nocte-reveal-fade 200ms var(--ease-smooth) both;
+  }
+}
+
+/* Las dos animaciones perpetuas de la landing: el marquee de celebridades y el
+   sello giratorio de la garantia. Corren mientras la seccion exista, asi que
+   quien las maneje importa. En Framer Motion cada una es un rAF en el main
+   thread compitiendo con el scroll; en CSS las corre el compositor. */
+@keyframes nocte-marquee {
+  to { transform: translate3d(-100%, 0, 0); }
+}
+
+@keyframes nocte-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nocte-ticker {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* El CTA respira y el halo del producto late. Los dos son perpetuos mientras
+   el elemento este a la vista, o sea la mayor parte de la sesion: en el main
+   thread eran dos rAF permanentes compitiendo con el scroll. */
+@keyframes nocte-cta-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes nocte-halo-breathe {
+  0%, 100% { opacity: 0.34; }
+  50% { opacity: 0.45; }
+}
+
+.nocte-marquee-track {
+  animation: nocte-marquee 50s linear infinite;
+}
+
+.nocte-ticker-track {
+  animation: nocte-ticker 20s linear infinite;
+}
+
+.nocte-seal-spin {
+  animation: nocte-spin 24s linear infinite;
+}
+
+.nocte-cta-pulse {
+  animation: nocte-cta-pulse 2s ease-in-out infinite;
+}
+
+.nocte-halo-breathe {
+  animation: nocte-halo-breathe 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nocte-marquee-track,
+  .nocte-ticker-track,
+  .nocte-seal-spin,
+  .nocte-cta-pulse,
+  .nocte-halo-breathe {
+    animation: none;
+  }
 }
 
 /* Hide Stripe Dev Tools widget in development */

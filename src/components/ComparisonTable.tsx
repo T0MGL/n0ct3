@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { CheckIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { Reveal } from "@/components/Reveal";
 import { cn } from "@/lib/utils";
 
 // Honest comparison vs other blue-light brands and generic glasses. Competitor
@@ -68,11 +68,6 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
   },
 ];
 
-const ROW_VARIANTS = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-};
-
 export const ComparisonTable = () => {
   return (
     <section
@@ -81,13 +76,7 @@ export const ComparisonTable = () => {
       className="relative bg-gradient-to-b from-black via-[#0a0000] to-black px-4 py-20 md:px-6 md:py-28"
     >
       <div className="mx-auto max-w-[980px]">
-        <motion.header
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mb-10 max-w-2xl text-center md:mb-14"
-        >
+        <Reveal as="header" className="mx-auto mb-10 max-w-2xl text-center md:mb-14">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             Compara antes de comprar
           </p>
@@ -102,15 +91,9 @@ export const ComparisonTable = () => {
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
             Hay opciones más baratas y están bien si querés lo más básico. Si dormís mal en serio, esto es lo que cambia con NOCTE: tres lentes para tres momentos del día, treinta días de garantía y respaldo científico real.
           </p>
-        </motion.header>
+        </Reveal>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ staggerChildren: 0.05, delayChildren: 0.1 }}
-          className="overflow-hidden rounded-2xl border border-border/40 bg-secondary/10"
-        >
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-secondary/10">
           <div
             role="table"
             aria-label="Comparación entre NOCTE, otras marcas y lentes genéricos"
@@ -159,10 +142,11 @@ export const ComparisonTable = () => {
 
             <div role="rowgroup">
               {ROWS.map((row, i) => (
-                <motion.div
+                <Reveal
                   key={row.feature}
                   role="row"
-                  variants={ROW_VARIANTS}
+                  from="fade"
+                  delay={80 + i * 50}
                   className={cn(
                     "grid grid-cols-[1.6fr_1fr_1fr_1.2fr]",
                     i < ROWS.length - 1 && "border-b border-border/20",
@@ -178,11 +162,11 @@ export const ComparisonTable = () => {
                   <ComparisonCell value={row.competidor} />
                   <ComparisonCell value={row.generico} />
                   <ComparisonCell value={row.nocte} highlight nocte />
-                </motion.div>
+                </Reveal>
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
           Datos de competidores tomados de sus páginas públicas. Pueden variar sin aviso.

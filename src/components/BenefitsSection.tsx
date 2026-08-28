@@ -1,6 +1,5 @@
 import { EyeIcon, ShieldCheckIcon, MoonIcon } from "@heroicons/react/24/outline";
-import { motion } from "framer-motion";
-import { staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
+import { Reveal } from "@/components/Reveal";
 
 const benefits = [
   {
@@ -26,35 +25,23 @@ export const BenefitsSection = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(239,68,68,0.08),transparent_50%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-12 md:mb-20 space-y-3 md:space-y-4"
-        >
+        <Reveal className="text-center mb-12 md:mb-20 space-y-3 md:space-y-4">
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-4">
             Trabaja de noche sin sacrificar tu sueño
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
             NOCTE no es un accesorio. Es tu protección contra la luz azul que te mantiene despierto cuando deberías estar durmiendo.
           </p>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          variants={staggerContainerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-12"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-12">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
-              <motion.div
-                key={index}
-                variants={staggerItemVariants}
-                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 hover:border-variant-active/50 transition-all duration-300"
+              <Reveal
+                key={benefit.title}
+                delay={index * 70}
+                className="group relative p-8 md:p-10 bg-gradient-to-b from-card to-black border border-border/50 transition-colors duration-300 hover:border-variant-active/50"
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-variant-active/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -71,10 +58,10 @@ export const BenefitsSection = () => {
                     {benefit.description}
                   </p>
                 </div>
-              </motion.div>
+              </Reveal>
             );
           })}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

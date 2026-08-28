@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { Reveal } from "@/components/Reveal";
 import { Button } from "@/components/ui/button";
 import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 
@@ -35,22 +35,11 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
       />
 
       <div className="container relative z-10 mx-auto grid max-w-[1000px] items-center gap-12 md:grid-cols-[1fr_1.4fr] md:gap-14">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative mx-auto"
-        >
+        <Reveal from="scale" className="relative mx-auto">
           <RotatingSeal />
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        >
+        <Reveal delay={90}>
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             Riesgo cero
           </p>
@@ -105,7 +94,7 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
               </li>
             ))}
           </ul>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );
@@ -113,11 +102,9 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
 
 const RotatingSeal = () => (
   <div className="relative mx-auto flex h-[260px] w-[260px] items-center justify-center md:h-[280px] md:w-[280px]">
-    <motion.div
+    <div
       aria-hidden="true"
-      className="absolute inset-0 rounded-full border-[3px] border-variant-active"
-      animate={{ rotate: 360 }}
-      transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
+      className="nocte-seal-spin absolute inset-0 rounded-full border-[3px] border-variant-active"
     >
       <svg viewBox="0 0 280 280" className="absolute inset-0 h-full w-full">
         <defs>
@@ -130,7 +117,7 @@ const RotatingSeal = () => (
           <textPath href="#guarantee-seal-path">{SEAL_TEXT.repeat(2)}</textPath>
         </text>
       </svg>
-    </motion.div>
+    </div>
 
     <div className="absolute inset-[30px] flex flex-col items-center justify-center rounded-full border border-variant-active/40 bg-gradient-to-br from-variant-active/20 to-variant-active/5">
       <span className="text-[64px] font-extrabold leading-none tracking-tighter text-variant-active">

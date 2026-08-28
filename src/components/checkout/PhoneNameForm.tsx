@@ -712,7 +712,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         type="button"
                         onClick={handleUseLocation}
                         disabled={isLoadingLocation}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-border bg-secondary/40 text-sm font-medium text-foreground transition-[background-color,border-color,transform] duration-150 ease-out hover:bg-secondary hover:border-variant-active/40 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-border bg-secondary/40 text-sm font-medium text-foreground hover:bg-secondary hover:border-variant-active/40 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoadingLocation ? (
                           <>

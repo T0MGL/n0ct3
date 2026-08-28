@@ -556,7 +556,12 @@ const Index = () => {
         {/* We want the header to be transparent. bg-transparent. */}
         <div className="w-full">
           <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
-            <span className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
+            {/* Sin mix-blend-difference. El blend obliga al compositor a leer
+                el fondo debajo del elemento en cada frame de scroll, y este
+                elemento es fixed: lo hace durante toda la pagina. La sombra
+                resuelve lo mismo (que el wordmark se lea sobre las fotos
+                claras) con un paint que no toca el backdrop. */}
+            <span className="text-2xl md:text-3xl font-bold tracking-tighter text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.6)]">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
             {ALL_VARIANTS_SOLD_OUT ? (
               <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
                 Agotado

@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { DevicePhoneMobileIcon, ComputerDesktopIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { Reveal } from "@/components/Reveal";
 import productImage from "@/assets/nocte-product.webp";
 
 const useCases = [
@@ -21,59 +21,24 @@ const useCases = [
 ];
 
 // Stable variant objects at module scope (not recreated on each render)
-const useCaseContainerVariants = {
-  initial: { opacity: 1 },
-  animate: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const useCaseItemVariants = {
-  initial: { opacity: 0, y: 30 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  },
-};
-
 export const LifestyleSection = () => {
   return (
     <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/20 to-black relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
 
       <div className="container max-w-[1200px] mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6"
-        >
+        <Reveal className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
             ¿Cuándo usar NOCTE?
           </h2>
           <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground font-light px-4 max-w-3xl mx-auto leading-relaxed">
             No son para dormir con ellos puestos. Son para usarlos ANTES de dormir.
           </p>
-        </motion.div>
+        </Reveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Image Side */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-2 lg:order-1"
-          >
+          <Reveal from="left" className="relative order-2 lg:order-1">
             <div className="absolute inset-0 bg-variant-active/10 rounded-full blur-[100px] scale-75" />
             <div className="relative">
               <img
@@ -89,23 +54,18 @@ export const LifestyleSection = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </Reveal>
 
           {/* Use Cases Side */}
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={useCaseContainerVariants}
-            className="space-y-8 order-1 lg:order-2"
-          >
+          <div className="space-y-8 order-1 lg:order-2">
             {useCases.map((useCase, index) => {
               const Icon = useCase.icon;
               return (
-                <motion.div
-                  key={index}
-                  variants={useCaseItemVariants}
-                  className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-variant-active/50 hover:border-variant-active transition-all duration-300"
+                <Reveal
+                  key={useCase.title}
+                  from="right"
+                  delay={index * 80}
+                  className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-variant-active/50 transition-colors duration-300 hover:border-variant-active"
                 >
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-variant-active/10 rounded-lg border border-variant-active/30">
@@ -120,26 +80,20 @@ export const LifestyleSection = () => {
                       {useCase.description}
                     </p>
                   </div>
-                </motion.div>
+                </Reveal>
               );
             })}
-          </motion.div>
+          </div>
         </div>
 
         {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-16 md:mt-20 text-center"
-        >
+        <Reveal className="mt-16 md:mt-20 text-center">
           <div className="inline-block bg-secondary/50 backdrop-blur-sm border border-variant-active/30 rounded-lg px-8 py-6 md:px-12 md:py-8">
             <p className="text-lg md:text-xl lg:text-2xl font-light text-foreground/90 leading-relaxed">
               El resultado: <span className="font-bold text-variant-active">Dormís profundo</span> sin pastillas ni melatonina artificial.
             </p>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

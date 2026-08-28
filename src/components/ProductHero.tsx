@@ -80,11 +80,6 @@ const IMAGE_TRANSITION = {
   ease: [0.16, 1, 0.3, 1] as const,
 };
 
-const HALO_TRANSITION = {
-  duration: 0.6,
-  ease: [0.16, 1, 0.3, 1] as const,
-};
-
 export const ProductHero = ({
   activeVariant: activeVariantProp,
   onVariantChange,
@@ -177,18 +172,18 @@ export const ProductHero = ({
       <div className="relative mx-auto w-full max-w-[560px]">
         {/* Accent halo behind the product. Contained to the product area so the
             page background stays pure black, but rich enough to keep the lens
-            color reading saturated. */}
-        <motion.div
+            color reading saturated.
+
+            El latido va por CSS y el cambio de color por transition. En Framer
+            eran un rAF permanente (la respiracion nunca termina) mas un
+            backgroundColor animado en el main thread, los dos sobre un div con
+            64px de blur, que es lo mas caro de repintar de la pagina. */}
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-2 inset-y-6 -z-10 rounded-[45%] blur-3xl"
-          initial={false}
-          animate={{
+          className="nocte-halo-breathe pointer-events-none absolute inset-x-2 inset-y-6 -z-10 rounded-[45%] blur-3xl transition-[background-color] duration-[600ms]"
+          style={{
             backgroundColor: variant.lensGlow,
-            opacity: [0.34, 0.45, 0.34],
-          }}
-          transition={{
-            backgroundColor: HALO_TRANSITION,
-            opacity: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+            transitionTimingFunction: "var(--ease-smooth)",
           }}
         />
 

@@ -1,6 +1,5 @@
-import { motion } from "framer-motion";
-import { staggerContainerVariants, staggerItemVariants } from "@/lib/animations";
 import { GiftIcon, ShieldCheckIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { Reveal } from "@/components/Reveal";
 import productImage1 from "@/assets/productimage1.webp";
 import productImage2 from "@/assets/productimage2.webp";
 import productImage3 from "@/assets/productimage3.webp";
@@ -30,34 +29,26 @@ export const UnboxingSection = () => {
   return (
     <section className="py-12 md:py-20 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/10 to-black relative overflow-hidden">
       <div className="container max-w-[1200px] mx-auto relative z-10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-          variants={staggerContainerVariants}
-        >
+        <div>
           {/* Header */}
-          <motion.div
-            variants={staggerItemVariants}
-            className="text-center mb-10 md:mb-16 space-y-4"
-          >
+          <Reveal className="text-center mb-10 md:mb-16 space-y-4">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">
               ¿Qué incluyen tus lentes NOCTE?
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
               Todo lo que necesitás para empezar a dormir mejor, desde la primera noche.
             </p>
-          </motion.div>
+          </Reveal>
 
           {/* Grid of 3 product photos */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const Icon = item.icon;
             return (
-              <motion.div
+              <Reveal
                 key={item.title}
-                variants={staggerItemVariants}
-                className="group relative bg-secondary/20 border border-border/20 rounded-lg overflow-hidden hover:border-variant-active/30 transition-all duration-300"
+                delay={index * 70}
+                className="group relative bg-secondary/20 border border-border/20 rounded-lg overflow-hidden transition-colors duration-300 hover:border-variant-active/30"
               >
                 {/* Product image */}
                 <div className="relative aspect-square overflow-hidden">
@@ -85,11 +76,11 @@ export const UnboxingSection = () => {
                     {item.description}
                   </p>
                 </div>
-              </motion.div>
+              </Reveal>
             );
           })}
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

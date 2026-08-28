@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { Reveal } from "@/components/Reveal";
 import {
   Accordion,
   AccordionContent,
@@ -56,13 +56,7 @@ export const FAQSection = () => {
       className="relative bg-black px-4 py-20 md:px-6 md:py-28"
     >
       <div className="mx-auto max-w-[820px]">
-        <motion.header
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-12 text-center md:mb-16"
-        >
+        <Reveal as="header" className="mb-12 text-center md:mb-16">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             Dudas que detienen ventas
           </p>
@@ -74,7 +68,7 @@ export const FAQSection = () => {
             <br />
             preguntas antes de comprar.
           </h2>
-        </motion.header>
+        </Reveal>
 
         <Accordion
           type="single"
@@ -97,12 +91,7 @@ interface FaqRowProps {
 }
 
 const FaqRow = ({ index, faq }: FaqRowProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.4 }}
-    transition={{ duration: 0.45, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
-  >
+  <Reveal delay={index * 40}>
     <AccordionItem
       value={`faq-${index}`}
       className="rounded-xl border border-border/40 bg-secondary/10 px-5 transition-colors duration-300 hover:border-variant-active/40 data-[state=open]:border-variant-active/40 data-[state=open]:bg-variant-active/5 md:px-6"
@@ -114,7 +103,7 @@ const FaqRow = ({ index, faq }: FaqRowProps) => (
         {faq.a}
       </AccordionContent>
     </AccordionItem>
-  </motion.div>
+  </Reveal>
 );
 
 export default FAQSection;

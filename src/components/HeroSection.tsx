@@ -422,17 +422,9 @@ export const HeroSection = ({
 
             {/* CTA Button */}
             <div className="space-y-3">
-              <motion.div
+              <div
                 ref={ctaRef}
-                animate={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
-                  scale: [1, 1.02, 1],
-                } : { scale: 1 }}
-                transition={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  ease: "easeInOut"
-                } : { duration: 0 }}
+                className={ctaInView && !ALL_VARIANTS_SOLD_OUT ? "nocte-cta-pulse" : undefined}
               >
                 <Button
                   data-hero-cta
@@ -447,7 +439,7 @@ export const HeroSection = ({
                     ? "AGOTADO · VUELVE PRONTO"
                     : `COMPRAR AHORA · Gs. ${selectedPrice.toLocaleString('es-PY')}`}
                 </Button>
-              </motion.div>
+              </div>
 
               {/* Dynamic Delivery Date */}
               {!ALL_VARIANTS_SOLD_OUT && (
