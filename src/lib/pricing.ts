@@ -1,7 +1,7 @@
 // NOCTE pricing engine. Single source of truth for unit price, bundle tiers and
 // the wholesale threshold. Anything that quotes a price reads from here.
 
-export const UNIT_PRICE = 229000;
+export const UNIT_PRICE = 249000;
 export const ORIGINAL_UNIT_PRICE = 290000;
 export const WHOLESALE_THRESHOLD = 6;
 
@@ -16,11 +16,11 @@ export interface PriceTier {
 }
 
 const RAW_TIERS: ReadonlyArray<Omit<PriceTier, "total" | "wholesale">> = [
-  { qty: 1, unitPrice: 229000, label: "Personal", badge: null, highlighted: false },
-  { qty: 2, unitPrice: 174500, label: "Pack Pareja", badge: "MÁS VENDIDO", highlighted: true },
-  { qty: 3, unitPrice: 163000, label: "Pack Oficina", badge: "SUPER AHORRO", highlighted: false },
-  { qty: 4, unitPrice: 163000, label: "Pack Familia", badge: null, highlighted: false },
-  { qty: 5, unitPrice: 163000, label: "Pack Familia", badge: null, highlighted: false },
+  { qty: 1, unitPrice: 249000, label: "Personal", badge: null, highlighted: false },
+  { qty: 2, unitPrice: 194500, label: "Pack Pareja", badge: "MÁS VENDIDO", highlighted: true },
+  { qty: 3, unitPrice: 183000, label: "Pack Oficina", badge: "SUPER AHORRO", highlighted: false },
+  { qty: 4, unitPrice: 183000, label: "Pack Familia", badge: null, highlighted: false },
+  { qty: 5, unitPrice: 183000, label: "Pack Familia", badge: null, highlighted: false },
 ];
 
 export const PRICE_TIERS: ReadonlyArray<PriceTier> = RAW_TIERS.map((t) => ({
