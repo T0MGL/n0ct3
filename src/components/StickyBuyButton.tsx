@@ -86,10 +86,9 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
           <div className="flex flex-col gap-4">
             {/* Precio y detalles */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              {/* El precio vive solo en el boton. Repetirlo arriba no agrega
+                  informacion y compite con el CTA por la misma mirada. */}
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  <span className="text-xl md:text-2xl font-bold text-white">Gs. {selectedPrice.toLocaleString('es-PY')}</span>
-                </p>
                 {!ALL_VARIANTS_SOLD_OUT && (
                   <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                     <TruckIcon className="w-4 h-4 text-gold/90" />

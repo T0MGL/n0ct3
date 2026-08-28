@@ -306,52 +306,43 @@
         background: #000;
       }
 
-      /* Un solo tamano en todo el preloader. La version anterior arrancaba a
-         3.6x y bajaba a 1x: eso leia como "todo se achico", no como una
-         transformacion, y tres barras blancas solas y gigantes en el centro de
-         una pantalla negra son un icono de menu hamburguesa, no una marca. */
       #npl svg {
-        width: min(62vw, 340px);
+        width: min(42vw, 230px);
         height: auto;
         color: #fff;
       }
 
-      /* La palabra esta desde el primer frame, apagada. Es lo que hace que las
-         tres barras se lean como la E de NOCTE y no como un hamburger. */
-      #npl .npl-l {
-        opacity: 0.13;
-        transition: opacity 340ms cubic-bezier(0.16, 1, 0.3, 1);
+      /* NOCTE tiene cinco letras, o sea un centro exacto: la C. El pulso sale
+         de ahi y se abre a los pares (O,T) y (N,E). Simetrico por construccion,
+         no por casualidad. */
+      #npl .npl-g {
+        opacity: 0.12;
+        animation: npl-bloom 1900ms ease-in-out infinite;
       }
+      #npl .npl-g[data-ring="1"] { animation-delay: 150ms; }
+      #npl .npl-g[data-ring="2"] { animation-delay: 300ms; }
 
-      /* Arriba, medio, abajo. Y de nuevo. */
-      #npl .npl-bar { opacity: 0.13; animation: npl-cascade 1200ms ease-in-out infinite; }
-      #npl .npl-bar:nth-child(2) { animation-delay: 110ms; }
-      #npl .npl-bar:nth-child(3) { animation-delay: 220ms; }
-
-      @keyframes npl-cascade {
-        0%, 58%, 100% { opacity: 0.13; }
+      @keyframes npl-bloom {
+        0%, 55%, 100% { opacity: 0.12; }
         26% { opacity: 1; }
       }
 
-      /* Al resolver la palabra se enciende de izquierda a derecha y cierra en la
-         E, que es donde estuvo pasando todo. */
-      #npl.is-resolving .npl-l { opacity: 1; }
-      #npl.is-resolving .npl-l:nth-child(2) { transition-delay: 70ms; }
-      #npl.is-resolving .npl-l:nth-child(3) { transition-delay: 140ms; }
-      #npl.is-resolving .npl-l:nth-child(4) { transition-delay: 210ms; }
-
-      #npl.is-resolving .npl-bar {
+      /* El resolve mantiene el mismo orden que el pulso: del centro hacia
+         afuera. La ultima imagen es la palabra entera, encendida pareja. */
+      #npl.is-resolving .npl-g {
         animation: none;
         opacity: 1;
-        transition: opacity 340ms cubic-bezier(0.16, 1, 0.3, 1) 300ms;
+        transition: opacity 380ms cubic-bezier(0.16, 1, 0.3, 1);
       }
+      #npl.is-resolving .npl-g[data-ring="1"] { transition-delay: 90ms; }
+      #npl.is-resolving .npl-g[data-ring="2"] { transition-delay: 180ms; }
 
       #npl.is-done { opacity: 0; pointer-events: none; transition: opacity 300ms ease-out; }
 
       html.npl-lock, html.npl-lock body { overflow: hidden; }
 
       @media (prefers-reduced-motion: reduce) {
-        #npl .npl-l, #npl .npl-bar { opacity: 1; animation: none; transition: none; }
+        #npl .npl-g { opacity: 1; animation: none; transition: none; }
       }
     </style>
 
@@ -370,28 +361,26 @@
 
 
     <div id="npl" role="status" aria-label="Cargando NOCTE">
-      <svg viewBox="0 0 1050 226" aria-hidden="true" focusable="false">
-        <g class="npl-letters" fill="currentColor">
-          <g class="npl-l">
-            <rect x="0" y="3" width="37" height="218"/>
-            <rect x="160" y="3" width="37" height="218"/>
-            <polygon points="0,3 41,3 197,221 156,221"/>
-          </g>
-          <g class="npl-l">
-            <ellipse cx="344" cy="113" rx="93" ry="96" fill="none" stroke="currentColor" stroke-width="37"/>
-          </g>
-          <g class="npl-l">
-            <path d="M664.4 58.5 A 92 95 0 1 0 664.4 167.5" fill="none" stroke="currentColor" stroke-width="37"/>
-          </g>
-          <g class="npl-l">
-            <rect x="695" y="3" width="173" height="35"/>
-            <rect x="763.5" y="3" width="37" height="218"/>
-          </g>
+      <svg viewBox="0 0 1050 226" aria-hidden="true" focusable="false" fill="currentColor">
+        <g class="npl-g" data-ring="2">
+          <rect x="0" y="3" width="37" height="218"/>
+          <rect x="160" y="3" width="37" height="218"/>
+          <polygon points="0,3 41,3 197,221 156,221"/>
         </g>
-        <g class="npl-bars" fill="currentColor">
-          <rect class="npl-bar" x="896" y="3" width="154" height="35"/>
-          <rect class="npl-bar" x="896" y="94.5" width="154" height="35"/>
-          <rect class="npl-bar" x="896" y="186" width="154" height="35"/>
+        <g class="npl-g" data-ring="1">
+          <ellipse cx="344" cy="113" rx="93" ry="96" fill="none" stroke="currentColor" stroke-width="37"/>
+        </g>
+        <g class="npl-g" data-ring="0">
+          <path d="M664.4 58.5 A 92 95 0 1 0 664.4 167.5" fill="none" stroke="currentColor" stroke-width="37"/>
+        </g>
+        <g class="npl-g" data-ring="1">
+          <rect x="695" y="3" width="173" height="35"/>
+          <rect x="763.5" y="3" width="37" height="218"/>
+        </g>
+        <g class="npl-g" data-ring="2">
+          <rect x="896" y="3" width="154" height="35"/>
+          <rect x="896" y="94.5" width="154" height="35"/>
+          <rect x="896" y="186" width="154" height="35"/>
         </g>
       </svg>
     </div>
@@ -406,7 +395,7 @@
         // CAP: tope duro. Si una imagen del hero tarda o falla, la pagina sale
         // igual. Un preloader que espera "a que cargue todo" sin techo es una
         // pantalla negra eterna esperando que pase.
-        var MIN = 750, CAP = 1800, RESOLVE = 640, HOLD = 200, FADE = 300;
+        var MIN = 820, CAP = 1800, RESOLVE = 560, HOLD = 200, FADE = 300;
         var t0 = Date.now(), done = false;
 
         root.classList.add('npl-lock');

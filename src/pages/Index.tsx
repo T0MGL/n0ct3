@@ -556,19 +556,14 @@ const Index = () => {
       >
         {/* We want the header to be transparent. bg-transparent. */}
         <div className="w-full">
-          <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
+          <div className="container relative max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-end">
             {/* El wordmark va como marca vectorial, no como texto: es el logo,
                 no una palabra. El drop-shadow lo sostiene sobre las fotos claras
                 sin recurrir a mix-blend-difference, que obliga al compositor a
                 leer el fondo en cada frame y este header es fixed. */}
-            <span className="flex items-baseline gap-2.5 [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]">
-              <NocteMark className="h-4 w-auto text-white md:h-[18px]" />
-              {/* PARAGUAY no es parte del logo, es senal de que la tienda es
-                  local. Va al lado de la marca, no dentro. */}
-              <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/55 md:text-[10px]">
-                Paraguay
-              </span>
-            </span>
+            {/* La marca va centrada en el viewport, no en el hueco que le deja
+                el CTA: por eso es absoluta y no un item mas del flex. */}
+            <NocteMark className="pointer-events-none absolute left-1/2 h-4 w-auto -translate-x-1/2 text-white md:h-[18px] [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]" />
             {ALL_VARIANTS_SOLD_OUT ? (
               <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
                 Agotado
