@@ -84,7 +84,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Sin distorsión cromática extrema",
       "Fatiga ocular reducida un 70%",
     ],
-    soldOut: false,
+    soldOut: true,
   },
   amarillo: {
     id: "amarillo",
