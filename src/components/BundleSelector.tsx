@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { TruckIcon } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
 import { BUNDLES, ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 import { VariantPicker } from "@/components/VariantPicker";
@@ -229,6 +230,19 @@ export const BundleSelector = ({
           </motion.div>
         );
       })}
+
+      {/* El envio gratis va pegado a los packs, no en el footer ni en la
+          garantia: la duda de cuanto sale mandarlo aparece exactamente cuando
+          el cliente esta eligiendo cuantos lleva. Va con la letra chica al lado
+          porque el interior no es gratis y esconderlo se paga en el WhatsApp. */}
+      <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5">
+        <TruckIcon className="h-4 w-4 flex-shrink-0 text-emerald-400" aria-hidden="true" />
+        <p className="text-[12px] leading-snug text-white">
+          <span className="font-semibold text-emerald-400">Envío gratis</span> a
+          Asunción y Central, 24 a 48 h.{" "}
+          <span className="text-white/70">Resto del país, tarifa por zona.</span>
+        </p>
+      </div>
     </div>
   );
 };

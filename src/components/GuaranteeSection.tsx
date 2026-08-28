@@ -27,7 +27,7 @@ export const GuaranteeSection = ({ onBuyClick }: GuaranteeSectionProps) => {
     <section
       id="garantia"
       aria-labelledby="guarantee-title"
-      className="relative overflow-hidden bg-gradient-to-b from-black to-[#0a0000] px-4 py-20 md:px-6 md:py-28"
+      className="relative overflow-hidden bg-gradient-to-b from-black to-[#0a0000] px-4 pb-20 pt-10 md:px-6 md:pb-28 md:pt-14"
     >
       <div
         aria-hidden="true"

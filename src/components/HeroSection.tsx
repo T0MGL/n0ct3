@@ -13,10 +13,11 @@ import tarjetasImage from "@/assets/tarjetas.webp";
 import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
 import { BundleSelector } from "@/components/BundleSelector";
 import { ProductHero } from "@/components/ProductHero";
+import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, VARIANTS, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, TITLE_TAIL, VARIANTS, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface HeroSectionProps {
@@ -27,6 +28,10 @@ interface HeroSectionProps {
   selectedQuantity: number;
   picks: VariantId[];
   onPickChange: (unitIndex: number, next: VariantId) => void;
+  /** El badge de autoridad vive aca hasta que se posa en el header. */
+  badgeCollapsed: boolean;
+  badgeDocked: boolean;
+  onGalleryInteract: () => void;
 }
 
 export const HeroSection = ({
@@ -37,6 +42,9 @@ export const HeroSection = ({
   selectedQuantity,
   picks,
   onPickChange,
+  badgeCollapsed,
+  badgeDocked,
+  onGalleryInteract,
 }: HeroSectionProps) => {
   const { activeVariant, setActiveVariant } = useActiveVariant();
 
@@ -56,16 +64,9 @@ export const HeroSection = ({
     onPickChange(unitIndex, next);
     if (unitIndex === 0) setActiveVariant(next);
   };
-  const [badgeCollapsed, setBadgeCollapsed] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { amount: 0.5 });
   const variant = VARIANTS[activeVariant];
-
-  // Auto-collapse the authority badge once, 2s after mount, never expands again.
-  useEffect(() => {
-    const timer = setTimeout(() => setBadgeCollapsed(true), 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Live purchase notification
   const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
@@ -190,39 +191,21 @@ export const HeroSection = ({
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-1 w-full lg:self-center lg:-mt-10"
           >
-            {/* Authority Badge, auto-collapses to the left after 2s, one-way.
-                #1 and the flag stay mounted; only the middle copy collapses. */}
-            <motion.div
-              layout
-              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-lg overflow-hidden text-white text-xs md:text-sm font-semibold whitespace-nowrap"
-              style={{
-                background: `linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))`,
-                willChange: "width, transform",
-              }}
-              transition={{ layout: { duration: 0.85, ease: [0.22, 0.61, 0.36, 1] } }}
-              initial={false}
-            >
-              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>#1</motion.span>
-              <AnimatePresence mode="popLayout" initial={false}>
-                {!badgeCollapsed && (
-                  <motion.span
-                    key="mid"
-                    layout="position"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
-                  >
-                    Lentes Anti-Luz Azul en Paraguay
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>🇵🇾</motion.span>
-            </motion.div>
+            {/* Badge de autoridad. Vive sobre la esquina de la foto hasta
+                que el cliente toca la galeria: ahi se va al header. Ver
+                AuthorityBadge para el vuelo. */}
+            {!badgeDocked && (
+              <AuthorityBadge
+                collapsed={badgeCollapsed}
+                docked={false}
+                className="absolute left-2 top-4 z-20 md:left-4 md:top-2"
+              />
+            )}
 
             <ProductHero
               activeVariant={activeVariant}
               onVariantChange={(next) => handlePickChange(0, next)}
+              onGalleryInteract={onGalleryInteract}
             />
           </motion.div>
 
@@ -256,46 +239,37 @@ export const HeroSection = ({
                 </span>
               </div>
 
+              {/* El titulo se parte en dos lineas fijas y no por ancho: los
+                  tres colores miden lo mismo, asi que cambiar de lente ya no
+                  empuja 58px de pagina hacia abajo. La bajada reserva su alto
+                  maximo por la misma razon, porque las tres descripciones no
+                  tienen el mismo largo.
+
+                  El swap va por CSS y no por AnimatePresence: con mode="wait"
+                  el nodo viejo se iba, quedaba el hueco 280ms y recien despues
+                  entraba el nuevo. Ese hueco era el salto. Con key + animation
+                  React cambia los dos en el mismo commit. */}
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={variant.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                    className="block"
-                  >
-                    {variant.displayTitle}
-                  </motion.span>
-                </AnimatePresence>
+                <span key={variant.id} className="nocte-swap block">
+                  {variant.titleLead}
+                  <br />
+                  {TITLE_TAIL}
+                </span>
               </h1>
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p
-                  key={`tagline-${variant.id}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-base md:text-lg font-medium text-white"
-                >
-                  {variant.tagline}
-                </motion.p>
-              </AnimatePresence>
+              <p
+                key={`tagline-${variant.id}`}
+                className="nocte-swap text-base md:text-lg font-medium text-white"
+              >
+                {variant.tagline}
+              </p>
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p
-                  key={`desc-${variant.id}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-sm md:text-base text-white max-w-md"
-                >
-                  {variant.description}
-                </motion.p>
-              </AnimatePresence>
+              <p
+                key={`desc-${variant.id}`}
+                className="nocte-swap min-h-[60px] max-w-md text-sm text-white md:min-h-[48px] md:text-base"
+              >
+                {variant.description}
+              </p>
 
               {/* Star Rating + Social Proof */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -454,7 +428,7 @@ export const HeroSection = ({
               <img
                 src={tarjetasImage}
                 alt="Visa, Mastercard, Apple Pay, Google Pay"
-                className="h-8 md:h-9 w-auto opacity-80"
+                className="h-11 w-auto opacity-95 md:h-12"
               />
             </div>
 

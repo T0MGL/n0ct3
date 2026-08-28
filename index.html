@@ -335,13 +335,19 @@
          Antes el resolve hacia `animation: none` sobre las letras que pulsaban.
          Cada letra estaba en un punto distinto del ciclo, asi que todas pegaban
          un tiron al valor base antes de subir. Eso era el trabon. Encendiendo
-         una capa aparte no hay nada que cortar: es imposible que salte. */
+         una capa aparte no hay nada que cortar: es imposible que salte.
+
+         Las cinco letras suben JUNTAS, sin delay por anillo. El pulso de abajo
+         va en onda desde la C, asi que si el resolve tambien sale del centro la
+         C queda fija mientras las puntas todavia estan bajando su ciclo: el
+         final se lee como que la animacion termina en el medio. Subiendo en
+         bloque el ultimo frame es la palabra entera, que es donde tiene que
+         terminar. La curva es front-loaded a proposito: gana mas rapido de lo
+         que el pulso decae, asi que ninguna letra se oscurece en el camino. */
       #npl .npl-s {
         opacity: 0;
-        transition: opacity 680ms cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 620ms cubic-bezier(0.16, 1, 0.3, 1);
       }
-      #npl .npl-s[data-ring="1"] { transition-delay: 80ms; }
-      #npl .npl-s[data-ring="2"] { transition-delay: 160ms; }
 
       #npl.is-resolving .npl-s { opacity: 1; }
 
@@ -414,7 +420,7 @@
         // CAP: tope duro. Si una imagen del hero tarda o falla, la pagina sale
         // igual. Un preloader que espera "a que cargue todo" sin techo es una
         // pantalla negra eterna esperando que pase.
-        var MIN = 900, CAP = 1800, RESOLVE = 840, HOLD = 200, FADE = 320;
+        var MIN = 900, CAP = 1800, RESOLVE = 620, HOLD = 280, FADE = 320;
         var t0 = Date.now(), done = false;
 
         root.classList.add('npl-lock');
@@ -427,6 +433,11 @@
             setTimeout(function () {
               el.className = 'is-resolving is-done';
               root.classList.remove('npl-lock');
+              // La app espera esta senal para arrancar lo que tiene que ver el
+              // cliente despierto (el badge de autoridad, por ejemplo). Contar
+              // desde el mount de React es contar debajo de esta pantalla.
+              root.dataset.npl = 'done';
+              window.dispatchEvent(new Event('nocte:ready'));
               setTimeout(function () { el.remove(); }, FADE);
             }, RESOLVE + HOLD);
           }, Math.max(0, MIN - (Date.now() - t0)));

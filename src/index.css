@@ -418,12 +418,93 @@ All colors MUST be HSL.
   animation: nocte-halo-breathe 5s ease-in-out infinite;
 }
 
+/* Destello del badge de autoridad ya posado en el header. Un pseudo-elemento
+   que barre en diagonal, solo transform: no toca layout ni pintura del padre.
+   El ciclo es largo y el barrido corto a proposito. Un brillo cada siete
+   segundos es un detalle; uno cada dos es un banner. */
+/* Sin `position` aca a proposito: es CSS crudo despues de @tailwind utilities,
+   asi que un `position: relative` propio le gana al `absolute` de la utility y
+   el badge termina fuera de pantalla. El contenedor lo posiciona el componente. */
+.nocte-glint {
+  isolation: isolate;
+}
+
+.nocte-glint::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: translate3d(-180%, 0, 0);
+  animation: nocte-glint 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes nocte-glint {
+  0%, 84% { transform: translate3d(-180%, 0, 0); }
+  94%, 100% { transform: translate3d(380%, 0, 0); }
+}
+
+/* Cambio de copy por variante. El texto entra con la clase puesta desde el
+   primer frame (both), asi que React monta el nodo nuevo en el mismo commit en
+   que saca el viejo: no hay un hueco de 280ms sin titulo empujando la pagina,
+   que era lo que hacia que cambiar de color moviera todo lo de abajo. */
+@keyframes nocte-swap-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nocte-swap-image {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: none; }
+}
+
+.nocte-swap {
+  animation: nocte-swap-in 260ms var(--ease-smooth) both;
+}
+
+.nocte-swap-image {
+  animation: nocte-swap-image 280ms var(--ease-smooth) both;
+}
+
+/* El segundero del countdown. Un latido por segundo, escala minima: la unica
+   forma de que un contador se lea vivo sin volverse un cartel parpadeando. */
+@keyframes nocte-tick {
+  0% { transform: scale(1.14); opacity: 0.55; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.nocte-tick {
+  animation: nocte-tick 320ms var(--ease-smooth) both;
+}
+
+/* Los dos puntos laten como en un reloj. Es el gesto que hace que un contador
+   se lea corriendo en vez de impreso, y no cuesta un nodo extra. */
+@keyframes nocte-colon {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.18; }
+}
+
+.nocte-colon {
+  animation: nocte-colon 1s steps(1, end) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nocte-marquee-track,
   .nocte-ticker-track,
   .nocte-seal-spin,
   .nocte-cta-pulse,
-  .nocte-halo-breathe {
+  .nocte-halo-breathe,
+  .nocte-glint::after,
+  .nocte-swap,
+  .nocte-swap-image,
+  .nocte-tick,
+  .nocte-colon {
     animation: none;
   }
 }

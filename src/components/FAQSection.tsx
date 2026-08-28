@@ -53,7 +53,7 @@ export const FAQSection = () => {
     <section
       id="faq"
       aria-labelledby="faq-title"
-      className="relative bg-black px-4 py-20 md:px-6 md:py-28"
+      className="relative bg-black px-4 pb-6 pt-20 md:px-6 md:pb-8 md:pt-28"
     >
       <div className="mx-auto max-w-[820px]">
         <Reveal as="header" className="mb-12 text-center md:mb-16">

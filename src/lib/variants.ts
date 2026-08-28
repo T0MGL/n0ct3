@@ -10,6 +10,14 @@ export interface Variant {
   /** Colored circle that prefixes the variant in the WhatsApp order breakdown. */
   emoji: string;
   displayTitle: string;
+  /**
+   * Primera linea del h1 del hero. El titulo se parte en dos lineas fijas
+   * ("Lentes Naranjas" / "Anti-Luz Azul") en vez de dejar que el ancho decida:
+   * asi el bloque mide lo mismo en los tres colores y cambiar de lente no
+   * empuja media pagina hacia abajo. displayTitle sigue siendo el titulo en una
+   * linea para el checkout y las confirmaciones.
+   */
+  titleLead: string;
   moment: VariantMoment;
   momentTimeWindow: string;
   blockedPercent: number;
@@ -31,6 +39,9 @@ export interface Variant {
   soldOut?: boolean;
 }
 
+// Segunda linea del h1 del hero, igual para los tres colores. Ver titleLead.
+export const TITLE_TAIL = "Anti-Luz Azul";
+
 // Source of truth for the three NOCTE lens variants. Single product, three tints.
 // Anything that touches lens color, blocking spectrum, copy or accent reads from here.
 export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
@@ -40,6 +51,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Rojos",
     emoji: "🔴",
     displayTitle: "Lentes Rojos Anti-Luz Azul",
+    titleLead: "Lentes Rojos",
     moment: "NOCHE",
     momentTimeWindow: "20:00 a 03:00",
     blockedPercent: 99,
@@ -66,6 +78,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Naranjas",
     emoji: "🟠",
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
+    titleLead: "Lentes Naranjas",
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
     blockedPercent: 95,
@@ -92,6 +105,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Amarillos",
     emoji: "🟡",
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
+    titleLead: "Lentes Amarillos",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
     blockedPercent: 75,

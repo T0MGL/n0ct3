@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } fro
 import { Link } from "react-router-dom";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
 import { NocteMark } from "@/components/NocteMark";
+import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { HeroSection } from "@/components/HeroSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -510,6 +511,46 @@ const Index = () => {
   const lastScrollYRef = useRef(0);
   const [showHeader, setShowHeader] = useState(true);
 
+  // El badge de autoridad se comparte entre el hero y el header, asi que su
+  // estado vive aca arriba: los dos puntos de montaje lo tienen que ver.
+  const [badgeCollapsed, setBadgeCollapsed] = useState(false);
+  const [badgeDocked, setBadgeDocked] = useState(false);
+
+  // La cuenta para encogerlo arranca cuando el preloader se va, no al montar.
+  // Antes corria debajo del overlay y el badge llegaba a la pantalla ya
+  // colapsado: nadie alcanzaba a leer que decia.
+  useEffect(() => {
+    let collapse: ReturnType<typeof setTimeout> | undefined;
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      collapse = setTimeout(() => setBadgeCollapsed(true), 4200);
+    };
+    if (document.documentElement.dataset.npl === "done") start();
+    window.addEventListener("nocte:ready", start, { once: true });
+    // El preloader puede no estar (build sin el, o ya removido). Sin este
+    // respaldo el badge se quedaria abierto para siempre.
+    const fallback = setTimeout(start, 2600);
+    return () => {
+      clearTimeout(fallback);
+      clearTimeout(collapse);
+      window.removeEventListener("nocte:ready", start);
+    };
+  }, []);
+
+  // Tocar la galeria es la senal de que el cliente esta mirando las fotos. El
+  // badge se va al header y no vuelve: una vez que estorbo, estorbo.
+  const handleGalleryInteract = useCallback(() => {
+    setBadgeCollapsed(true);
+    setBadgeDocked(true);
+    // El header se esconde al scrollear hacia abajo. Si el badge aterriza en un
+    // header oculto, el vuelo termina fuera de pantalla y se lee como que
+    // desaparecio.
+    setShowHeader(true);
+  }, []);
+
+
   useEffect(() => {
     let ticking = false;
     let mounted = true;
@@ -563,7 +604,19 @@ const Index = () => {
                 leer el fondo en cada frame y este header es fixed. */}
             {/* La marca va centrada en el viewport, no en el hueco que le deja
                 el CTA: por eso es absoluta y no un item mas del flex. */}
-            <NocteMark className="pointer-events-none absolute left-1/2 h-4 w-auto -translate-x-1/2 text-white md:h-[18px] [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]" />
+            {/* Marca y badge viajan como un bloque centrado: el badge se
+                cuelga a la izquierda del wordmark con right-full, asi la marca
+                queda en el centro exacto del viewport se pose o no el badge. */}
+            <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center">
+              {badgeDocked && (
+                <AuthorityBadge
+                  collapsed
+                  docked
+                  className="absolute right-full mr-2"
+                />
+              )}
+              <NocteMark className="h-[22px] w-auto text-white md:h-[26px] [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]" />
+            </div>
             {ALL_VARIANTS_SOLD_OUT ? (
               <span className="text-white font-medium text-sm md:text-base tracking-tight">
                 Agotado
@@ -593,6 +646,9 @@ const Index = () => {
           selectedQuantity={selectedQuantity}
           picks={picks}
           onPickChange={handlePickChange}
+          badgeCollapsed={badgeCollapsed}
+          badgeDocked={badgeDocked}
+          onGalleryInteract={handleGalleryInteract}
         />
 
         <Suspense fallback={null}>
