@@ -91,7 +91,7 @@ export const CountdownTimer = memo(() => {
 
   return (
     <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-variant-active/10 border border-variant-active/30 px-4 sm:px-5 py-3 backdrop-blur-sm w-full sm:w-auto">
-      <span className="text-[10px] sm:text-xs text-foreground/70 font-medium uppercase tracking-wider">
+      <span className="text-[10px] sm:text-xs text-foreground font-medium uppercase tracking-wider">
         Oferta termina en
       </span>
       <div className="flex items-center gap-1">

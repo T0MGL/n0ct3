@@ -84,7 +84,7 @@ export const ComparisonTable = () => {
             id="comparison-title"
             className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[1.05] tracking-tighter text-foreground"
           >
-            Otras marcas son <span className="text-muted-foreground/70">más baratas.</span>
+            Otras marcas son <span className="text-muted-foreground">más baratas.</span>
             <br />
             NOCTE es <span className="text-variant-active">más completo.</span>
           </h2>
@@ -110,7 +110,7 @@ export const ComparisonTable = () => {
                   scope="col"
                   className="bg-secondary/20 px-3 py-5 text-center"
                 >
-                  <p className="text-sm font-bold text-foreground/70">Otras marcas</p>
+                  <p className="text-sm font-bold text-foreground">Otras marcas</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Competencia
                   </p>
@@ -120,7 +120,7 @@ export const ComparisonTable = () => {
                   scope="col"
                   className="bg-secondary/20 px-3 py-5 text-center"
                 >
-                  <p className="text-sm font-bold text-foreground/70">Genéricos</p>
+                  <p className="text-sm font-bold text-foreground">Genéricos</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Mercado libre
                   </p>
@@ -155,7 +155,7 @@ export const ComparisonTable = () => {
                   <div
                     role="rowheader"
                     scope="row"
-                    className="px-4 py-4 text-[13px] text-foreground/75"
+                    className="px-4 py-4 text-[13px] text-foreground"
                   >
                     {row.feature}
                   </div>
@@ -168,7 +168,7 @@ export const ComparisonTable = () => {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
           Datos de competidores tomados de sus páginas públicas. Pueden variar sin aviso.
         </p>
       </div>
@@ -197,7 +197,7 @@ const ComparisonCell = ({ value, highlight, nocte }: ComparisonCellProps) => {
           className={cn(
             "h-4 w-4",
             value.tone === "good" && (nocte ? "text-variant-active" : "text-emerald-400"),
-            value.tone === "weak" && "text-muted-foreground/40",
+            value.tone === "weak" && "text-muted-foreground",
           )}
           strokeWidth={2.5}
           aria-hidden="true"
@@ -206,8 +206,8 @@ const ComparisonCell = ({ value, highlight, nocte }: ComparisonCellProps) => {
       <span
         className={cn(
           "font-semibold leading-tight",
-          nocte ? "text-foreground" : "text-foreground/65",
-          value.tone === "weak" && !nocte && "text-foreground/45",
+          nocte ? "text-foreground" : "text-foreground",
+          value.tone === "weak" && !nocte && "text-foreground",
         )}
       >
         {value.text}

@@ -565,7 +565,7 @@ const Index = () => {
                 el CTA: por eso es absoluta y no un item mas del flex. */}
             <NocteMark className="pointer-events-none absolute left-1/2 h-4 w-auto -translate-x-1/2 text-white md:h-[18px] [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]" />
             {ALL_VARIANTS_SOLD_OUT ? (
-              <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
+              <span className="text-white font-medium text-sm md:text-base tracking-tight">
                 Agotado
               </span>
             ) : (
@@ -704,20 +704,20 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-black border-t border-border/30 py-12 md:py-16 px-4 md:px-6 pb-32 md:pb-40">
         <div className="container max-w-[1400px] mx-auto text-center space-y-5 md:space-y-6">
-          <p className="text-2xl font-bold tracking-tighter opacity-70">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></p>
+          <NocteMark className="mx-auto h-4 w-auto text-white md:h-[18px]" />
           <p className="text-muted-foreground font-light text-xs md:text-sm">
             Úsalos antes de dormir. Dormí profundo.
           </p>
 
           {/* Legal Links */}
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground/60">
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
             <Link
               to="/terminos-y-condiciones"
               className="hover:text-white transition-colors"
             >
               Términos y Condiciones
             </Link>
-            <span className="text-muted-foreground/30">|</span>
+            <span className="text-muted-foreground">|</span>
             <Link
               to="/politica-de-privacidad"
               className="hover:text-white transition-colors"
@@ -726,7 +726,7 @@ const Index = () => {
             </Link>
           </div>
 
-          <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-light">
             © {new Date().getFullYear()} NOCTE® Todos los Derechos Reservados
           </p>
         </div>

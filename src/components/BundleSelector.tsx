@@ -114,28 +114,28 @@ export const BundleSelector = ({
                     <span
                       className={[
                         "text-[15px] font-semibold leading-none tracking-tight",
-                        isSelected || isHighlighted ? "text-white" : "text-white/85",
+                        isSelected || isHighlighted ? "text-white" : "text-white",
                       ].join(" ")}
                     >
                       {bundle.quantity} {bundle.quantity === 1 ? "Unidad" : "Unidades"}
                     </span>
-                    <span className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-white">
                       {bundle.label}
                     </span>
                   </div>
 
                   {bundle.quantity > 1 ? (
-                    <p className="mt-1.5 text-[12px] text-white/55">
-                      <span className="line-through mr-1.5 text-white/30">
+                    <p className="mt-1.5 text-[12px] text-white">
+                      <span className="line-through mr-1.5 text-white">
                         Gs. {ORIGINAL_UNIT_PRICE.toLocaleString("es-PY")}
                       </span>
-                      <span className="font-semibold text-white/75">
+                      <span className="font-semibold text-white">
                         Gs. {bundle.unitPrice.toLocaleString("es-PY")}
                       </span>
-                      <span className="text-white/45"> c/u</span>
+                      <span className="text-white"> c/u</span>
                     </p>
                   ) : (
-                    <p className="mt-1.5 text-[12px] text-white/55">Para probar el efecto</p>
+                    <p className="mt-1.5 text-[12px] text-white">Para probar el efecto</p>
                   )}
                 </div>
 
@@ -171,13 +171,13 @@ export const BundleSelector = ({
                 >
                   <div className="px-4 pb-4">
                     <div className="h-px bg-white/8 mb-3" />
-                    <p className="mb-2.5 text-[10px] uppercase tracking-[0.2em] text-white/45">
+                    <p className="mb-2.5 text-[10px] uppercase tracking-[0.2em] text-white">
                       {bundle.quantity === 1
                         ? "Elegí el color del lente"
                         : "Elegí el color de cada lente"}
                     </p>
                     {SOLD_OUT_NOTICE && (
-                      <p className="mb-2.5 text-[11px] font-medium text-white/60">
+                      <p className="mb-2.5 text-[11px] font-medium text-white">
                         {SOLD_OUT_NOTICE}
                       </p>
                     )}
@@ -194,16 +194,16 @@ export const BundleSelector = ({
                               {bundle.quantity > 1 && (
                                 <span
                                   aria-hidden="true"
-                                  className="grid h-5 w-5 place-items-center rounded-full bg-white/5 text-[10px] font-bold text-white/75 ring-1 ring-white/10"
+                                  className="grid h-5 w-5 place-items-center rounded-full bg-white/5 text-[10px] font-bold text-white ring-1 ring-white/10"
                                 >
                                   {unitIdx + 1}
                                 </span>
                               )}
                               <div className="min-w-0">
-                                <p className="text-[12px] font-medium leading-none text-white/85 capitalize">
+                                <p className="text-[12px] font-medium leading-none text-white capitalize">
                                   {pick}
                                 </p>
-                                <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/40">
+                                <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white">
                                   Modo {v.moment}
                                 </p>
                               </div>

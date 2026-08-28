@@ -249,9 +249,9 @@ export const HeroSection = ({
                   <span style={{ color: variant.accent }}>
                     {variant.blockedPercent}%
                   </span>{" "}
-                  <span className="font-medium text-white/70">luz azul</span>
+                  <span className="font-medium text-white">luz azul</span>
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white">
                   Modo {variant.moment}
                 </span>
               </div>
@@ -278,7 +278,7 @@ export const HeroSection = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-base md:text-lg font-medium text-white/80"
+                  className="text-base md:text-lg font-medium text-white"
                 >
                   {variant.tagline}
                 </motion.p>
@@ -291,7 +291,7 @@ export const HeroSection = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-sm md:text-base text-white/70 max-w-md"
+                  className="text-sm md:text-base text-white max-w-md"
                 >
                   {variant.description}
                 </motion.p>
@@ -305,13 +305,13 @@ export const HeroSection = ({
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
                   <div className="relative w-5 h-5">
-                    <StarIcon className="w-5 h-5 text-muted-foreground/30 absolute" />
+                    <StarIcon className="w-5 h-5 text-muted-foreground absolute" />
                     <div className="overflow-hidden absolute inset-0" style={{ width: '80%' }}>
                       <StarIcon className="w-5 h-5 star-gold" />
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-foreground/80 font-medium">
+                <p className="text-sm text-foreground font-medium">
                   4.8/5 (+5.380 Clientes Satisfechos)
                 </p>
               </div>
@@ -355,7 +355,7 @@ export const HeroSection = ({
 
             {/* Price */}
             <div className="flex items-center gap-3">
-              <span className="text-base text-foreground/40 line-through">
+              <span className="text-base text-foreground line-through">
                 Gs. {originalPrice.toLocaleString('es-PY')}
               </span>
               <span className="text-4xl md:text-5xl font-bold text-white">
@@ -367,7 +367,7 @@ export const HeroSection = ({
             {ALL_VARIANTS_SOLD_OUT ? (
               <div className="inline-flex items-center gap-2 px-4 py-2 border border-white/15 bg-white/[0.04] rounded-lg">
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white/40" />
-                <span className="text-sm font-semibold text-white/70">
+                <span className="text-sm font-semibold text-white">
                   Stock agotado. Reponemos pronto.
                 </span>
               </div>

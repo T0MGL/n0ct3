@@ -307,7 +307,7 @@
       }
 
       #npl svg {
-        width: min(42vw, 230px);
+        width: min(40.7vw, 225px);
         height: auto;
         color: #fff;
       }
@@ -317,14 +317,17 @@
          no por casualidad. */
       #npl .npl-g {
         opacity: 0.12;
-        animation: npl-bloom 1900ms ease-in-out infinite;
+        animation: npl-bloom 2400ms cubic-bezier(0.37, 0, 0.63, 1) infinite;
       }
-      #npl .npl-g[data-ring="1"] { animation-delay: 150ms; }
-      #npl .npl-g[data-ring="2"] { animation-delay: 300ms; }
+      #npl .npl-g[data-ring="1"] { animation-delay: 190ms; }
+      #npl .npl-g[data-ring="2"] { animation-delay: 380ms; }
 
       @keyframes npl-bloom {
-        0%, 55%, 100% { opacity: 0.12; }
-        26% { opacity: 1; }
+        0%   { opacity: 0.12; }
+        14%  { opacity: 0.42; }
+        28%  { opacity: 1; }
+        42%  { opacity: 0.42; }
+        56%, 100% { opacity: 0.12; }
       }
 
       /* El resolve mantiene el mismo orden que el pulso: del centro hacia
@@ -332,7 +335,7 @@
       #npl.is-resolving .npl-g {
         animation: none;
         opacity: 1;
-        transition: opacity 380ms cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 460ms cubic-bezier(0.16, 1, 0.3, 1);
       }
       #npl.is-resolving .npl-g[data-ring="1"] { transition-delay: 90ms; }
       #npl.is-resolving .npl-g[data-ring="2"] { transition-delay: 180ms; }
@@ -395,7 +398,7 @@
         // CAP: tope duro. Si una imagen del hero tarda o falla, la pagina sale
         // igual. Un preloader que espera "a que cargue todo" sin techo es una
         // pantalla negra eterna esperando que pase.
-        var MIN = 820, CAP = 1800, RESOLVE = 560, HOLD = 200, FADE = 300;
+        var MIN = 900, CAP = 1800, RESOLVE = 640, HOLD = 220, FADE = 320;
         var t0 = Date.now(), done = false;
 
         root.classList.add('npl-lock');

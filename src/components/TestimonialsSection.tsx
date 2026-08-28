@@ -106,14 +106,14 @@ export const TestimonialsSection = () => {
                       i < testimonial.rating ? (
                         <StarIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 star-gold" />
                       ) : (
-                        <StarOutlineIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground/30" />
+                        <StarOutlineIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground" />
                       )
                     ))}
                   </div>
-                  <span className="text-[10px] text-muted-foreground/60">{testimonial.date}</span>
+                  <span className="text-[10px] text-muted-foreground">{testimonial.date}</span>
                 </div>
 
-                <p className="text-foreground/80 leading-relaxed font-light text-sm">
+                <p className="text-foreground leading-relaxed font-light text-sm">
                   &ldquo;{testimonial.quote}&rdquo;
                 </p>
               </div>

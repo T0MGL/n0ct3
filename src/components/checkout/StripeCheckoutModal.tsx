@@ -437,7 +437,7 @@ const CheckoutForm = ({
                 autoComplete="email"
                 inputMode="email"
                 aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
+                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
               />
             </div>
             {emailError && (
@@ -590,7 +590,7 @@ const CheckoutForm = ({
                   <p className={`text-sm font-bold ${isPriorityShipping ? 'text-variant-active' : 'text-foreground'}`}>
                     Envío Prioritario VIP
                   </p>
-                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground/70'}`} />
+                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`} />
                 </div>
                 <p className={`text-sm font-bold whitespace-nowrap ml-2 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`}>
                   + Gs. 10.000
@@ -615,7 +615,7 @@ const CheckoutForm = ({
 
         {/* Trust Microcopy */}
         <div className="flex justify-center pt-2">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-white">
             Envío seguro a todo Paraguay 🇵🇾
           </p>
         </div>
@@ -978,7 +978,7 @@ export const StripeCheckoutModal = ({
                   <div className="text-center space-y-4 max-w-sm w-full">
                     <div className="w-16 h-16 border-4 border-variant-active/30 border-t-primary rounded-full animate-spin mx-auto" />
                     <h3 className="text-xl md:text-2xl font-bold text-white">Procesando tu pedido...</h3>
-                    <p className="text-sm text-gray-400 leading-relaxed">
+                    <p className="text-sm text-white leading-relaxed">
                       Estamos confirmando tu orden y enviando los detalles. Esto tomará solo unos segundos.
                     </p>
                   </div>

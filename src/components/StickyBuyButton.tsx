@@ -81,8 +81,8 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
         isVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0",
       )}
     >
-      <div className="w-full px-4 md:px-6 pb-4 md:pb-6">
-        <div className="bg-black/95 backdrop-blur-xl border-t border-border/30 p-4 md:p-5 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
+      <div className="w-full">
+        <div className="bg-black/95 backdrop-blur-xl border-t border-border/30 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-5 md:pt-5 md:pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
           <div className="flex flex-col gap-4">
             {/* Precio y detalles */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">

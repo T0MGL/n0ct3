@@ -110,7 +110,7 @@ export const CelebritiesMarquee = () => {
                     as="p"
                     from="fade"
                     delay={160}
-                    className="text-center mt-12 md:mt-16 text-sm md:text-base text-white/50 font-light tracking-wide"
+                    className="text-center mt-12 md:mt-16 text-sm md:text-base text-white font-light tracking-wide"
                 >
                     Confiado por profesionales y celebridades alrededor del mundo
                 </Reveal>

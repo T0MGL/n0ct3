@@ -89,7 +89,7 @@ export const LifestyleSection = () => {
         {/* Bottom CTA */}
         <Reveal className="mt-16 md:mt-20 text-center">
           <div className="inline-block bg-secondary/50 backdrop-blur-sm border border-variant-active/30 rounded-lg px-8 py-6 md:px-12 md:py-8">
-            <p className="text-lg md:text-xl lg:text-2xl font-light text-foreground/90 leading-relaxed">
+            <p className="text-lg md:text-xl lg:text-2xl font-light text-foreground leading-relaxed">
               El resultado: <span className="font-bold text-variant-active">Dormís profundo</span> sin pastillas ni melatonina artificial.
             </p>
           </div>

@@ -18,7 +18,7 @@ const TRUST_POINTS: ReadonlyArray<string> = [
 
 const TRUST_BADGES: ReadonlyArray<string> = [
   "Envío gratis Asunción y Central",
-  "Garantía 1 año fábrica",
+  "Garantía 30 días",
   "Soporte directo por WhatsApp",
 ];
 
@@ -123,7 +123,7 @@ const RotatingSeal = () => (
       <span className="text-[64px] font-extrabold leading-none tracking-tighter text-variant-active">
         30
       </span>
-      <span className="mt-1 text-[12px] tracking-[0.2em] text-foreground/70">DÍAS</span>
+      <span className="mt-1 text-[12px] tracking-[0.2em] text-foreground">DÍAS</span>
       <span className="mt-1 text-[11px] tracking-[0.15em] text-muted-foreground">
         GARANTÍA TOTAL
       </span>

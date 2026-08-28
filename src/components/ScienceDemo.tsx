@@ -142,7 +142,7 @@ export const ScienceDemo = () => {
               <figcaption className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
                 {c.source}
               </figcaption>
-              <blockquote className="mb-3 text-[13px] italic leading-relaxed text-foreground/85">
+              <blockquote className="mb-3 text-[13px] italic leading-relaxed text-foreground">
                 {c.quote}
               </blockquote>
               <cite className="text-[11px] not-italic text-muted-foreground">Segun {c.cite}</cite>

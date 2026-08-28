@@ -167,7 +167,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                             </p>
                             <p className="text-sm text-muted-foreground">{bundle.label}</p>
                             {bundle.quantity > 1 && (
-                              <p className="text-xs text-muted-foreground/70 mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {unitPrice.toLocaleString('es-PY')} Gs c/u
                               </p>
                             )}
@@ -204,7 +204,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
               </div>
 
               {/* Trust Indicators */}
-              <p className="text-center text-xs text-muted-foreground/60 leading-relaxed">
+              <p className="text-center text-xs text-muted-foreground leading-relaxed">
                 Soporte real por WhatsApp · Envíos a todo Paraguay · Pago al recibir
               </p>
             </div>

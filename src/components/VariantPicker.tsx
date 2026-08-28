@@ -107,7 +107,7 @@ export const VariantPicker = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 4 }}
                     transition={{ duration: 0.16, ease: "easeOut" }}
-                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 ring-1 ring-red-500/40"
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white ring-1 ring-red-500/40"
                   >
                     {`${id.charAt(0).toUpperCase()}${id.slice(1)} agotado`}
                   </motion.span>

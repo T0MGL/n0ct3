@@ -250,7 +250,7 @@ export const ProductHero = ({
                     transition={{ duration: 0.25 }}
                     className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/15 bg-black/60 px-3 py-1 backdrop-blur-md"
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
                       Vista previa, llegando pronto
                     </p>
                   </motion.div>
@@ -324,11 +324,11 @@ export const ProductHero = ({
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: variant.lensColor, boxShadow: `0 0 10px ${variant.lensGlow}` }}
             />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/85">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
               Modo {variant.moment}
             </span>
           </div>
-          <span className="text-[10px] uppercase tracking-[0.18em] text-white/55">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-white">
             {variant.momentTimeWindow}
           </span>
         </div>
@@ -373,7 +373,7 @@ export const ProductHero = ({
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90"
+                  className="absolute inset-x-0 bottom-0 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white"
                   style={{
                     background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.85) 100%)`,
                   }}
@@ -383,7 +383,7 @@ export const ProductHero = ({
                 {soldOut && (
                   <span
                     aria-hidden="true"
-                    className="absolute right-1.5 top-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/90 ring-1 ring-white/15"
+                    className="absolute right-1.5 top-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white ring-1 ring-white/15"
                   >
                     Agotado
                   </span>
