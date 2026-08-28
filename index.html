@@ -291,6 +291,63 @@
     })();
     </script>
     <!-- End Meta Pixel Code -->
+
+    <!-- Preloader NOCTE. Inline a proposito: tiene que pintar con el primer byte
+         del HTML, antes de que baje el bundle. Un preloader que vive en React
+         aparece despues del JS, o sea justo despues de la ventana que deberia
+         cubrir. -->
+    <style>
+      #npl {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: #000;
+      }
+
+      #npl svg {
+        width: min(70vw, 440px);
+        height: auto;
+        color: #fff;
+        transform: scale(3.6);
+        transition: transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Las tres barras arrancan centradas en pantalla. 448 es la distancia
+         exacta del centro de la E al centro del wordmark en el sistema del
+         viewBox: al resolver vuelven a su lugar y se vuelven la E. */
+      #npl .npl-bars { transform: translateX(-448px); transition: transform 680ms cubic-bezier(0.16, 1, 0.3, 1); }
+      #npl .npl-letters { opacity: 0; transition: opacity 380ms ease-out 140ms; }
+
+      /* Arriba, medio, abajo. Y de nuevo. */
+      #npl .npl-bar { opacity: 0.28; animation: npl-cascade 900ms ease-in-out infinite; }
+      #npl .npl-bar:nth-child(2) { animation-delay: 120ms; }
+      #npl .npl-bar:nth-child(3) { animation-delay: 240ms; }
+
+      @keyframes npl-cascade {
+        0%, 62%, 100% { opacity: 0.28; }
+        28% { opacity: 1; }
+      }
+
+      #npl.is-resolving svg { transform: scale(1); }
+      #npl.is-resolving .npl-bars { transform: translateX(0); }
+      #npl.is-resolving .npl-letters { opacity: 1; }
+      #npl.is-resolving .npl-bar { animation: none; opacity: 1; transition: opacity 200ms ease-out; }
+
+      #npl.is-done { opacity: 0; pointer-events: none; transition: opacity 300ms ease-out; }
+
+      html.npl-lock, html.npl-lock body { overflow: hidden; }
+
+      @media (prefers-reduced-motion: reduce) {
+        #npl svg, #npl .npl-bars { transform: none; transition: none; }
+        #npl .npl-letters { opacity: 1; transition: none; }
+        #npl .npl-bar { animation: none; opacity: 1; }
+      }
+    </style>
+
+    <!-- Sin JS nadie saca el overlay, y taparia la pagina entera. -->
+    <noscript><style>#npl { display: none; }</style></noscript>
   </head>
 
   <body>
@@ -301,6 +358,60 @@
       />
     </noscript>
     <!-- End Meta Pixel Code -->
+
+
+    <div id="npl" role="status" aria-label="Cargando NOCTE">
+      <svg viewBox="0 0 1050 226" aria-hidden="true" focusable="false">
+        <g class="npl-letters" fill="currentColor">
+          <rect x="0" y="3" width="37" height="218"/>
+          <rect x="160" y="3" width="37" height="218"/>
+          <polygon points="0,3 41,3 197,221 156,221"/>
+          <ellipse cx="344" cy="113" rx="93" ry="96" fill="none" stroke="currentColor" stroke-width="37"/>
+          <path d="M664.4 58.5 A 92 95 0 1 0 664.4 167.5" fill="none" stroke="currentColor" stroke-width="37"/>
+          <rect x="695" y="3" width="173" height="35"/>
+          <rect x="763.5" y="3" width="37" height="218"/>
+        </g>
+        <g class="npl-bars" fill="currentColor">
+          <rect class="npl-bar" x="896" y="3" width="154" height="35"/>
+          <rect class="npl-bar" x="896" y="94.5" width="154" height="35"/>
+          <rect class="npl-bar" x="896" y="186" width="154" height="35"/>
+        </g>
+      </svg>
+    </div>
+    <script>
+      (function () {
+        var el = document.getElementById('npl');
+        if (!el) return;
+        var root = document.documentElement;
+
+        // MIN: lo que dura una pasada completa de las tres barras. Por debajo de
+        // esto el preloader es un parpadeo y molesta mas de lo que aporta.
+        // CAP: tope duro. Si una imagen del hero tarda o falla, la pagina sale
+        // igual. Un preloader que espera "a que cargue todo" sin techo es una
+        // pantalla negra eterna esperando que pase.
+        var MIN = 650, CAP = 1800, RESOLVE = 680, HOLD = 160, FADE = 300;
+        var t0 = Date.now(), done = false;
+
+        root.classList.add('npl-lock');
+
+        function finish() {
+          if (done) return;
+          done = true;
+          setTimeout(function () {
+            el.className = 'is-resolving';
+            setTimeout(function () {
+              el.className = 'is-resolving is-done';
+              root.classList.remove('npl-lock');
+              setTimeout(function () { el.remove(); }, FADE);
+            }, RESOLVE + HOLD);
+          }, Math.max(0, MIN - (Date.now() - t0)));
+        }
+
+        if (document.readyState === 'complete') finish();
+        else window.addEventListener('load', finish);
+        setTimeout(finish, CAP);
+      })();
+    </script>
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
