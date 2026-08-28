@@ -1,96 +1,80 @@
-import { DevicePhoneMobileIcon, ComputerDesktopIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Reveal } from "@/components/Reveal";
-import productImage from "@/assets/nocte-product.webp";
+import trioImage from "@/assets/nocte-trio-momentos.webp";
+import { MOMENT_ORDER, VARIANTS } from "@/lib/variants";
 
-const useCases = [
-  {
-    icon: ComputerDesktopIcon,
-    title: "Trabajo Nocturno",
-    description: "Usalos mientras trabajás en tu laptop después de las 8 PM",
-  },
-  {
-    icon: DevicePhoneMobileIcon,
-    title: "Scrolling Nocturno",
-    description: "Instagram, TikTok, WhatsApp, sin afectar tu sueño",
-  },
-  {
-    icon: ClockIcon,
-    title: "2-3 Horas Antes",
-    description: "Ponételos 2-3 horas antes de dormir para máximos resultados",
-  },
-];
-
-// Stable variant objects at module scope (not recreated on each render)
 export const LifestyleSection = () => {
   return (
-    <section className="py-8 md:py-16 px-4 md:px-6 bg-gradient-to-b from-black via-secondary/20 to-black relative overflow-hidden">
+    <section className="relative overflow-hidden bg-gradient-to-b from-black via-secondary/20 to-black px-4 py-8 md:px-6 md:py-16">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
 
-      <div className="container max-w-[1200px] mx-auto relative z-10">
-        <Reveal className="text-center mb-12 md:mb-20 space-y-4 md:space-y-6">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter px-4">
-            ¿Cuándo usar NOCTE?
+      <div className="container relative z-10 mx-auto max-w-[1200px]">
+        <Reveal className="mb-12 text-center md:mb-20">
+          <h2 className="px-4 text-4xl font-bold tracking-tighter md:text-5xl lg:text-6xl">
+            ¿Cuándo usás NOCTE?
           </h2>
-          <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground font-light px-4 max-w-3xl mx-auto leading-relaxed">
-            No son para dormir con ellos puestos. Son para usarlos ANTES de dormir.
-          </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
-          {/* Image Side */}
+        <div className="grid grid-cols-1 items-center gap-12 md:gap-16 lg:grid-cols-2">
+          {/* La misma luz de la foto es la del dia: entra clara por la
+              izquierda sobre el amarillo y termina en penumbra ambar sobre el
+              rojo. Va sin cartel encima porque la linea de tiempo de al lado
+              ya dice lo que hay que decir. */}
           <Reveal from="left" className="relative order-2 lg:order-1">
-            <div className="absolute inset-0 bg-variant-active/10 rounded-full blur-[100px] scale-75" />
-            <div className="relative">
-              <img
-                src={productImage}
-                alt="NOCTE: úsalos mientras trabajas de noche"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto drop-shadow-[0_8px_16px_rgba(239,68,68,0.25)] max-w-[500px] mx-auto"
-              />
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-variant-active/90 backdrop-blur-sm px-6 py-3 rounded-lg border border-variant-active/50 shadow-lg">
-                <p className="text-sm md:text-base font-bold text-white text-center">
-                  Úsalos mientras usas dispositivos
-                </p>
-              </div>
-            </div>
+            <div className="absolute inset-0 scale-75 rounded-full bg-variant-active/10 blur-[100px]" />
+            <img
+              src={trioImage}
+              alt="Los tres lentes NOCTE sobre una mesa, del amarillo al rojo, con la luz pasando de la mañana a la noche"
+              loading="lazy"
+              decoding="async"
+              className="relative mx-auto h-auto w-full max-w-[560px] rounded-xl"
+            />
           </Reveal>
 
-          {/* Use Cases Side */}
-          <div className="space-y-8 order-1 lg:order-2">
-            {useCases.map((useCase, index) => {
-              const Icon = useCase.icon;
+          {/* La hora manda: es lo primero que se lee de cada fila, porque la
+              duda del cliente no es "que hace el lente" sino "a que hora me
+              pongo cual". El borde de cada fila lleva el color de su tramo. */}
+          <div className="order-1 space-y-8 lg:order-2">
+            {MOMENT_ORDER.map((id, index) => {
+              const variant = VARIANTS[id];
               return (
                 <Reveal
-                  key={useCase.title}
+                  key={id}
                   from="right"
                   delay={index * 80}
-                  className="flex gap-6 items-start p-6 md:p-8 bg-gradient-to-r from-card/50 to-transparent border-l-2 border-variant-active/50 transition-colors duration-300 hover:border-variant-active"
+                  className="border-l-2 bg-gradient-to-r from-card/50 to-transparent p-6 md:p-8"
+                  style={{ borderColor: `${variant.accent}80` }}
                 >
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-variant-active/10 rounded-lg border border-variant-active/30">
-                      <Icon className="w-6 h-6 md:w-7 md:h-7 text-variant-active" strokeWidth={1.5} />
-                    </div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold tabular-nums leading-none text-white md:text-4xl">
+                      {variant.timeline.hour}
+                    </span>
+                    <span
+                      className="text-[11px] font-bold uppercase tracking-[0.22em]"
+                      style={{ color: variant.accent }}
+                    >
+                      {variant.id}
+                    </span>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl md:text-2xl font-bold text-foreground">
-                      {useCase.title}
-                    </h3>
-                    <p className="text-base md:text-lg text-muted-foreground leading-relaxed font-light">
-                      {useCase.description}
-                    </p>
-                  </div>
+                  <p className="mt-3 text-lg font-semibold text-foreground md:text-xl">
+                    {variant.timeline.scene}
+                  </p>
+                  <p className="mt-1.5 text-base font-light leading-relaxed text-muted-foreground md:text-lg">
+                    {variant.timeline.result}
+                  </p>
                 </Reveal>
               );
             })}
           </div>
         </div>
 
-        {/* Bottom CTA */}
-        <Reveal className="mt-16 md:mt-20 text-center">
-          <div className="inline-block bg-secondary/50 backdrop-blur-sm border border-variant-active/30 rounded-lg px-8 py-6 md:px-12 md:py-8">
-            <p className="text-lg md:text-xl lg:text-2xl font-light text-foreground leading-relaxed">
-              El resultado: <span className="font-bold text-variant-active">Dormís profundo</span> sin pastillas ni melatonina artificial.
+        <Reveal className="mt-16 text-center md:mt-20">
+          <div className="inline-block rounded-lg border border-variant-active/30 bg-secondary/50 px-8 py-6 backdrop-blur-sm md:px-12 md:py-8">
+            <p className="max-w-[52ch] text-lg font-light leading-relaxed text-foreground md:text-xl lg:text-2xl">
+              No se duerme con ellos puestos. Se usan antes, que es cuando{" "}
+              <span className="font-bold text-variant-active">
+                tu cuerpo decide a qué hora te va a dar sueño
+              </span>
+              .
             </p>
           </div>
         </Reveal>

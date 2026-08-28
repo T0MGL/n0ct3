@@ -29,6 +29,7 @@ const PURCHASE_ID_WAIT_MS = 6000;
 getStripe();
 
 // Lazy load heavy sections that are below the fold
+const MomentsSection = lazy(() => import("@/components/MomentsSection"));
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
 const BlueLightMorph = lazy(() => import("@/components/BlueLightMorph"));
@@ -650,6 +651,13 @@ const Index = () => {
           badgeDocked={badgeDocked}
           onGalleryInteract={handleGalleryInteract}
         />
+
+        {/* Va pegado al hero: el h1 promete un lente por momento y esta es la
+            seccion que lo cumple. Cualquier cosa en el medio (la prueba social,
+            el video) hace que la promesa quede sin cobrar. */}
+        <Suspense fallback={null}>
+          <MomentsSection onPickChange={handlePickChange} />
+        </Suspense>
 
         <Suspense fallback={null}>
           <CelebritiesMarquee />

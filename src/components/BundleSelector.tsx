@@ -174,8 +174,8 @@ export const BundleSelector = ({
                     <div className="h-px bg-white/8 mb-3" />
                     <p className="mb-2.5 text-[10px] uppercase tracking-[0.2em] text-white">
                       {bundle.quantity === 1
-                        ? "Elegí el color del lente"
-                        : "Elegí el color de cada lente"}
+                        ? "Elegí tu momento"
+                        : "Elegí el momento de cada lente"}
                     </p>
                     {SOLD_OUT_NOTICE && (
                       <p className="mb-2.5 text-[11px] font-medium text-white">
@@ -233,14 +233,14 @@ export const BundleSelector = ({
 
       {/* El envio gratis va pegado a los packs, no en el footer ni en la
           garantia: la duda de cuanto sale mandarlo aparece exactamente cuando
-          el cliente esta eligiendo cuantos lleva. Va con la letra chica al lado
-          porque el interior no es gratis y esconderlo se paga en el WhatsApp. */}
+          el cliente esta eligiendo cuantos lleva. El plazo va al lado del
+          "gratis" porque el interior tarda mas y prometerle 24 h a Encarnacion
+          se paga despues en el WhatsApp. */}
       <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5">
         <TruckIcon className="h-4 w-4 flex-shrink-0 text-emerald-400" aria-hidden="true" />
         <p className="text-[12px] leading-snug text-white">
-          <span className="font-semibold text-emerald-400">Envío gratis</span> a
-          Asunción y Central, 24 a 48 h.{" "}
-          <span className="text-white/70">Resto del país, tarifa por zona.</span>
+          <span className="font-semibold text-emerald-400">Envío gratis a todo Paraguay.</span>{" "}
+          <span className="text-white/70">24 a 48 h en Asunción y Central, 2 a 4 días al interior.</span>
         </p>
       </div>
     </div>

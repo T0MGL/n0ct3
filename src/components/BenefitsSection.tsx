@@ -17,35 +17,35 @@ interface Benefit {
 const BENEFITS: readonly Benefit[] = [
   {
     image: suenoProfundo,
-    alt: "Mujer en el borde de la cama con lentes NOCTE rojos, dejando el telefono sobre la mesa de luz",
+    alt: "Hombre sentado en el borde de la cama de noche con lentes NOCTE rojos, dejando el teléfono sobre la mesa de luz",
     title: "Sueño profundo",
     description:
       "El rojo bloquea el espectro que frena tu melatonina. Dejás el teléfono y tu cuerpo ya entiende que es de noche.",
   },
   {
     image: trabajoNocturno,
-    alt: "Hombre trabajando de noche frente a un monitor con lentes NOCTE rojos y una lampara calida",
+    alt: "Hombre riéndose frente al monitor de madrugada con lentes NOCTE rojos y una lámpara cálida",
     title: "Trabajá de noche sin pagarlo",
     description:
       "Terminás lo que tenías que terminar y aun así te dormís. No hay que elegir entre las dos cosas.",
   },
   {
     image: sinDolorDeCabeza,
-    alt: "Persona recostada en el sillon viendo una laptop de noche con lentes NOCTE rojos, con la cara distendida",
+    alt: "Hombre recostado en el sillón con la laptop de noche, con lentes NOCTE rojos y la cara distendida",
     title: "La frente se afloja",
     description:
       "Esa tensión de mirar una pantalla a oscuras es luz azul, no cansancio. Con el filtro puesto se va.",
   },
   {
     image: ochoHoras,
-    alt: "Mujer en una oficina de dia frente a dos monitores con lentes NOCTE amarillos",
+    alt: "Hombre canoso en su escritorio de día con lentes NOCTE amarillos, hablando con alguien fuera de cuadro",
     title: "Ocho horas de pantalla",
     description:
       "El amarillo filtra sin tocar los colores. Trabajás todo el día y llegás a la noche sin los ojos ardiendo.",
   },
   {
     image: transicionTarde,
-    alt: "Hombre junto a una ventana al atardecer con lentes NOCTE naranjas",
+    alt: "Hombre apoyado en la ventana al atardecer con lentes NOCTE naranjas y una taza en las manos",
     title: "La bajada de la tarde",
     description:
       "El naranja es el paso intermedio. Tu ritmo empieza a bajar cuando tiene que bajar, no a las dos de la mañana.",

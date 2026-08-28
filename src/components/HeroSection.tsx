@@ -17,7 +17,7 @@ import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, TITLE_TAIL, VARIANTS, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, VARIANTS, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface HeroSectionProps {
@@ -239,34 +239,41 @@ export const HeroSection = ({
                 </span>
               </div>
 
-              {/* El titulo se parte en dos lineas fijas y no por ancho: los
-                  tres colores miden lo mismo, asi que cambiar de lente ya no
-                  empuja 58px de pagina hacia abajo. La bajada reserva su alto
-                  maximo por la misma razon, porque las tres descripciones no
-                  tienen el mismo largo.
-
-                  El swap va por CSS y no por AnimatePresence: con mode="wait"
-                  el nodo viejo se iba, quedaba el hueco 280ms y recien despues
-                  entraba el nuevo. Ese hueco era el salto. Con key + animation
-                  React cambia los dos en el mismo commit. */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                <span key={variant.id} className="nocte-swap block">
-                  {variant.titleLead}
-                  <br />
-                  {TITLE_TAIL}
-                </span>
+              {/* El titulo nombra el sistema, no el SKU. La mayoria del
+                  trafico entra por el ad de los tres momentos, asi que abrir
+                  con "Lentes Rojos" le habla al color que se llevo el click y
+                  no a lo que se vende. Efecto lateral: al ser fijo, cambiar de
+                  lente ya no reescribe el h1 ni empuja la pagina. */}
+              <h1 className="text-[28px] font-bold leading-[1.08] tracking-tight text-white md:text-4xl lg:text-5xl">
+                Un lente para cada momento del día
               </h1>
 
-              <p
-                key={`tagline-${variant.id}`}
-                className="nocte-swap text-base md:text-lg font-medium text-white"
-              >
-                {variant.tagline}
+              {/* Cada color va pintado de su propio tono: la bajada es el mapa
+                  de las tres miniaturas de arriba, no una frase mas. */}
+              <p className="max-w-md text-base leading-snug text-white md:text-lg">
+                De mañana el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.amarillo.accent }}>
+                  amarillo
+                </span>{" "}
+                para enfocarte, de tarde el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.naranja.accent }}>
+                  naranja
+                </span>{" "}
+                para no apagarte, de noche el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.rojo.accent }}>
+                  rojo
+                </span>{" "}
+                para dormir profundo.
               </p>
 
+              {/* La unica linea que cambia con el color: confirma la eleccion.
+                  Reserva su alto maximo porque las tres descripciones no miden
+                  lo mismo, y el swap va por CSS y no por AnimatePresence: con
+                  mode="wait" el nodo viejo se iba, quedaba el hueco 280ms y
+                  recien despues entraba el nuevo. Ese hueco era el salto. */}
               <p
                 key={`desc-${variant.id}`}
-                className="nocte-swap min-h-[60px] max-w-md text-sm text-white md:min-h-[48px] md:text-base"
+                className="nocte-swap min-h-[60px] max-w-md text-sm text-white/80 md:min-h-[48px] md:text-base"
               >
                 {variant.description}
               </p>

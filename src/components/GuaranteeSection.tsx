@@ -17,7 +17,7 @@ const TRUST_POINTS: ReadonlyArray<string> = [
 ];
 
 const TRUST_BADGES: ReadonlyArray<string> = [
-  "Envío gratis Asunción y Central",
+  "Envío gratis a todo Paraguay",
   "Garantía 30 días",
   "Soporte directo por WhatsApp",
 ];

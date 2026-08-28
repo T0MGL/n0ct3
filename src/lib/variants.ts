@@ -10,14 +10,6 @@ export interface Variant {
   /** Colored circle that prefixes the variant in the WhatsApp order breakdown. */
   emoji: string;
   displayTitle: string;
-  /**
-   * Primera linea del h1 del hero. El titulo se parte en dos lineas fijas
-   * ("Lentes Naranjas" / "Anti-Luz Azul") en vez de dejar que el ancho decida:
-   * asi el bloque mide lo mismo en los tres colores y cambiar de lente no
-   * empuja media pagina hacia abajo. displayTitle sigue siendo el titulo en una
-   * linea para el checkout y las confirmaciones.
-   */
-  titleLead: string;
   moment: VariantMoment;
   momentTimeWindow: string;
   blockedPercent: number;
@@ -27,9 +19,22 @@ export interface Variant {
   lensColor: string;
   lensGlow: string;
   tintFilter: string;
-  tagline: string;
   use: string;
   description: string;
+  /** Titular del momento del dia en MomentsSection. */
+  momentHeadline: string;
+  /**
+   * Parrafo del momento. Abre con el sintoma que ya tiene el cliente y recien
+   * despues aparece el lente: el que llega del ad no compra "anti luz azul",
+   * compra dejar de sentirse quemado a las cuatro de la tarde.
+   */
+  momentCopy: string;
+  /** Fila de este color en la linea de tiempo de uso. */
+  timeline: {
+    hour: string;
+    scene: string;
+    result: string;
+  };
   benefits: readonly string[];
   /**
    * Manual out-of-stock flag. When true the color still renders but cannot be
@@ -38,9 +43,6 @@ export interface Variant {
    */
   soldOut?: boolean;
 }
-
-// Segunda linea del h1 del hero, igual para los tres colores. Ver titleLead.
-export const TITLE_TAIL = "Anti-Luz Azul";
 
 // Source of truth for the three NOCTE lens variants. Single product, three tints.
 // Anything that touches lens color, blocking spectrum, copy or accent reads from here.
@@ -51,7 +53,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Rojos",
     emoji: "🔴",
     displayTitle: "Lentes Rojos Anti-Luz Azul",
-    titleLead: "Lentes Rojos",
     moment: "NOCHE",
     momentTimeWindow: "20:00 a 03:00",
     blockedPercent: 99,
@@ -61,10 +62,17 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     lensColor: "#FF1A1A",
     lensGlow: "rgba(239,68,68,0.55)",
     tintFilter: "sepia(1) saturate(8) hue-rotate(-50deg) brightness(0.78)",
-    tagline: "Sueño profundo. Modo noche.",
     use: "Para usar 2 a 3hs antes de dormir",
     description:
       "El bloqueo más agresivo. Si trabajás de noche con pantallas y querés dormir profundo, este es el tuyo.",
+    momentHeadline: "Las dos horas antes de dormir.",
+    momentCopy:
+      "Te acostás cansado pero la cabeza no para. No sos vos, son las pantallas hasta el último momento. El rojo bloquea el 99% de la luz azul y le devuelve a tu cuerpo la señal de que es de noche.",
+    timeline: {
+      hour: "21:00",
+      scene: "Última serie, últimos mensajes.",
+      result: "Ponételos dos horas antes de acostarte y dormís distinto.",
+    },
     benefits: [
       "Bloquea 99% de luz azul y verde",
       "Melatonina natural en 30 minutos",
@@ -78,7 +86,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Naranjas",
     emoji: "🟠",
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
-    titleLead: "Lentes Naranjas",
     moment: "TARDE",
     momentTimeWindow: "17:00 a 20:00",
     blockedPercent: 95,
@@ -88,10 +95,17 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     lensColor: "#FF7A1A",
     lensGlow: "rgba(255,122,26,0.55)",
     tintFilter: "sepia(1) saturate(5) hue-rotate(-25deg) brightness(0.92)",
-    tagline: "Atardecer. Transición.",
     use: "Para las horas previas al rojo",
     description:
       "Bloqueo intermedio. Ideal para la transición tarde a noche cuando todavía necesitás distinguir colores con precisión.",
+    momentHeadline: "De tarde, cuando baja el sol.",
+    momentCopy:
+      "Es la hora en que tu cuerpo debería empezar a frenar y la pantalla le dice que siga. El naranja bloquea el 95% y acompaña la transición sin cortarte la productividad.",
+    timeline: {
+      hour: "17:00",
+      scene: "Todavía te quedan dos horas.",
+      result: "Seguís rindiendo mientras tu cuerpo empieza a bajar.",
+    },
     benefits: [
       "Bloquea 95% de luz azul",
       "Sin distorsión cromática extrema",
@@ -105,7 +119,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     productName: "NOCTE® Lentes Amarillos",
     emoji: "🟡",
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
-    titleLead: "Lentes Amarillos",
     moment: "DÍA",
     momentTimeWindow: "08:00 a 17:00",
     blockedPercent: 75,
@@ -115,10 +128,17 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     lensColor: "#FFD11A",
     lensGlow: "rgba(255,209,26,0.45)",
     tintFilter: "sepia(0.8) saturate(2) hue-rotate(-8deg) brightness(1.02)",
-    tagline: "Oficina. Día con pantallas.",
     use: "Para usar todo el día",
     description:
       "Para 8 horas o más frente a pantallas. Reduce fatiga sin alterar los colores. Trabajás todo el día sin migrañas.",
+    momentHeadline: "De mañana y toda la jornada.",
+    momentCopy:
+      "Ocho horas de pantalla te cansan la vista y te apagan el foco a media tarde. El amarillo filtra el 75% de la luz azul sin cambiarte los colores, así trabajás todo el día sin que te pese.",
+    timeline: {
+      hour: "7:00",
+      scene: "Prendés la compu.",
+      result: "Arrancás el día sin que la pantalla te queme la vista.",
+    },
     benefits: [
       "Bloquea 75% de luz azul HEV",
       "Colores prácticamente naturales",
@@ -129,6 +149,13 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
 } as const;
 
 export const VARIANT_IDS = ["rojo", "naranja", "amarillo"] as const satisfies readonly VariantId[];
+
+/**
+ * Los mismos tres colores en el orden en que se viven, no en el orden del
+ * catalogo: la seccion de los momentos y la linea de tiempo se leen de la
+ * manana a la noche, y arrancar por el rojo obligaria a leer el dia al reves.
+ */
+export const MOMENT_ORDER = ["amarillo", "naranja", "rojo"] as const satisfies readonly VariantId[];
 
 export function isVariantId(value: string): value is VariantId {
   return value === "rojo" || value === "naranja" || value === "amarillo";

@@ -110,13 +110,13 @@ const TerminosCondiciones = () => {
           <section className="space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-white">5. Envíos y Entregas</h2>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Zona de cobertura:</strong> Asunción y Departamento Central
+              <strong>Zona de cobertura:</strong> todo el territorio de la República del Paraguay
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Costo de envío:</strong> GRATIS para todas las compras dentro de la zona de cobertura
+              <strong>Costo de envío:</strong> GRATIS en todos los pedidos, sin monto mínimo y sin importar el departamento de destino
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Plazo de entrega:</strong> 1-2 días hábiles después de confirmada la compra
+              <strong>Plazo de entrega:</strong> 24 a 48 horas en Asunción y Departamento Central, 2 a 4 días hábiles en el interior del país, contados desde la confirmación de la compra
             </p>
             <p className="text-muted-foreground leading-relaxed mt-4">
               Los plazos de entrega son estimados y pueden variar por factores externos como clima o

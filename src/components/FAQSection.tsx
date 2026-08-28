@@ -32,7 +32,7 @@ const FAQS: ReadonlyArray<FaqEntry> = [
   },
   {
     q: "¿Cuánto tarda el envío en Paraguay?",
-    a: "Asunción y Departamento Central: gratis, 24 a 48 horas. Resto del país: tarifa estándar según zona, 2 a 4 días hábiles. Tracking incluido en todos los pedidos.",
+    a: "El envío es gratis a todo Paraguay. Asunción y Departamento Central en 24 a 48 horas, interior del país en 2 a 4 días hábiles. Tracking incluido en todos los pedidos.",
   },
   {
     q: "¿Cómo pago?",

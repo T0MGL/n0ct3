@@ -40,10 +40,10 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
     highlight: true,
   },
   {
-    feature: "Envío Asunción y Central",
+    feature: "Envío a todo el país",
     competidor: { text: "Gratis, sin plazo publicado", tone: "neutral" },
     generico: { text: "Pago", tone: "weak" },
-    nocte: { text: "Gratis 24 a 48hs", tone: "good" },
+    nocte: { text: "Gratis, 24 a 48 h", tone: "good" },
   },
   {
     feature: "Estuche y accesorios incluidos",
