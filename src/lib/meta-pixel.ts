@@ -144,7 +144,7 @@ const NOCTE_CONTENT_NAME = 'NOCTE® Red Light Blocking Glasses';
 const NOCTE_CONTENT_CATEGORY = 'Sleep & Wellness';
 const NOCTE_CONTENT_ID = 'nocte-red-glasses';
 const NOCTE_CONTENT_TYPE = 'product';
-const NOCTE_UNIT_PRICE = 229000;
+const NOCTE_UNIT_PRICE = 249000;
 const NOCTE_CURRENCY = 'PYG';
 
 /**

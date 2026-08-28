@@ -28,7 +28,7 @@ const FAQS: ReadonlyArray<FaqEntry> = [
   },
   {
     q: "¿Por qué elegir NOCTE si hay opciones más baratas?",
-    a: "Honestidad primero: hay marcas más baratas y NOCTE arranca en 229.000 Gs. Pagás un poco más, sí. ¿Qué te llevás a cambio? Tres lentes para tres momentos del día (la mayoría vende solo el rojo), 30 días de garantía, respaldo científico citado y estuche premium completo. Si querés lo más básico, otra marca está bien. Si dormís mal en serio y querés un sistema completo, NOCTE.",
+    a: "Honestidad primero: hay marcas más baratas y NOCTE arranca en 249.000 Gs. Pagás más, sí. ¿Qué te llevás a cambio? Tres lentes para tres momentos del día (la mayoría vende solo el rojo), 30 días de garantía, respaldo científico citado y estuche premium completo. Si querés lo más básico, otra marca está bien. Si dormís mal en serio y querés un sistema completo, NOCTE.",
   },
   {
     q: "¿Cuánto tarda el envío en Paraguay?",

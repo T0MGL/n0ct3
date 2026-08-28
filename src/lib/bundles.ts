@@ -13,8 +13,8 @@ export const BUNDLES: readonly Bundle[] = [
   {
     id: 'personal',
     quantity: 1,
-    price: 229000,
-    unitPrice: 229000,
+    price: 249000,
+    unitPrice: 249000,
     label: "Personal",
     badge: null,
     highlighted: false,
@@ -22,8 +22,8 @@ export const BUNDLES: readonly Bundle[] = [
   {
     id: 'pareja',
     quantity: 2,
-    price: 349000,
-    unitPrice: 174500,
+    price: 389000,
+    unitPrice: 194500,
     label: "Pack Pareja",
     badge: "MÁS VENDIDO",
     highlighted: true,
@@ -32,8 +32,8 @@ export const BUNDLES: readonly Bundle[] = [
   {
     id: 'oficina',
     quantity: 3,
-    price: 489000,
-    unitPrice: 163000,
+    price: 549000,
+    unitPrice: 183000,
     label: "Pack Oficina",
     badge: "Super Ahorro",
     highlighted: false,
@@ -41,5 +41,5 @@ export const BUNDLES: readonly Bundle[] = [
   },
 ];
 
-export const DEFAULT_BUNDLE_INDEX = 0; // Personal (229.000 Gs, base pack)
-export const ORIGINAL_UNIT_PRICE = 279000; // Crossed-out reference price per unit
+export const DEFAULT_BUNDLE_INDEX = 0; // Personal (249.000 Gs, base pack)
+export const ORIGINAL_UNIT_PRICE = 290000; // Crossed-out reference price per unit
