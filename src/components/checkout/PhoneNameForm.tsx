@@ -460,14 +460,12 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
               </div>
 
               {/* Form */}
+              {/* Sin encabezado "Tus datos": el paso ya se llama "Datos de
+                  entrega" en la barra de progreso justo arriba, asi que era la
+                  misma palabra dos veces y 46px de alto para no decir nada. Los
+                  campos arrancan directo. "Ubicacion de entrega" si conserva su
+                  divisor porque ahi si cambia el tema. */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
-                  <UserIcon className="w-5 h-5 text-variant-active" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Tus datos
-                  </h3>
-                </div>
-
                 {/* FIELD 1 - NOMBRE COMPLETO */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
@@ -592,8 +590,8 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                   ) : (
                     <p className="text-[13px] text-foreground">
                       {customPrefix
-                        ? "Si tenés documento paraguayo, la factura sale a tu nombre."
-                        : "Sin RUC, poné tu cédula."}
+                        ? "Es para la factura. Con documento paraguayo sale a tu nombre."
+                        : "Es para emitir tu factura. Si no tenés RUC, poné tu cédula."}
                     </p>
                   )}
                 </div>

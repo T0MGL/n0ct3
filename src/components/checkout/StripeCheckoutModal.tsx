@@ -93,6 +93,11 @@ const CheckoutForm = ({
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
   const [email, setEmail] = useState(customerData.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
+  // Si en el paso de la factura ya dejo el correo, no se le vuelve a pedir:
+  // se le muestra cual va a recibir el recibo y un enlace por si se equivoco.
+  const [editingEmail, setEditingEmail] = useState(false);
+  const emailFromInvoice = (customerData.email ?? '').trim();
+  const showEmailInput = editingEmail || !emailFromInvoice;
 
   // Determine if delivery is free (Gran Asunción only)
   const isFreeDelivery = isGranAsuncion(customerData.location);
@@ -418,28 +423,53 @@ const CheckoutForm = ({
             Detalles de pago
           </h3>
 
-          {/* Email for Stripe receipt - only shown for card payments */}
+          {/* Email del recibo. Si ya lo dejo para la factura en el paso
+              anterior se muestra cual es y no se le pide de nuevo. */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-foreground">
-              Email para el recibo
-            </label>
-            <div className="relative">
-              <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError(null);
-                }}
-                placeholder="nombre@email.com"
-                maxLength={120}
-                autoComplete="email"
-                inputMode="email"
-                aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
-              />
-            </div>
+            {showEmailInput ? (
+              <>
+                <label className="block text-sm font-medium text-foreground">
+                  Email para el recibo
+                </label>
+                <div className="relative">
+                  <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    placeholder="nombre@email.com"
+                    maxLength={120}
+                    autoComplete="email"
+                    inputMode="email"
+                    autoFocus={editingEmail}
+                    aria-invalid={!!emailError}
+                    className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <EnvelopeIcon className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                      Recibo y factura
+                    </p>
+                    <p className="truncate text-sm text-foreground">{email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingEmail(true)}
+                  className="flex-shrink-0 text-[13px] font-medium text-variant-active underline underline-offset-4 transition-opacity hover:opacity-75"
+                >
+                  Cambiar
+                </button>
+              </div>
+            )}
             {emailError && (
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
