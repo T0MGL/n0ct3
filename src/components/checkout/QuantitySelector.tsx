@@ -98,10 +98,10 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
               {/* Headline */}
               <div className="space-y-4 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                  Elige tu Pack NOCTE<sup className="text-[0.3em]">®</sup>
+                  Elegí tu Pack NOCTE<sup className="text-[0.3em]">®</sup>
                 </h2>
                 <p className="text-base text-muted-foreground leading-relaxed">
-                  Aprovecha nuestras ofertas especiales
+                  Aprovechá nuestras ofertas especiales
                 </p>
               </div>
 
@@ -198,7 +198,7 @@ export const QuantitySelector = ({ isOpen, onClose, onContinue }: QuantitySelect
                 <div className="flex items-center justify-center gap-2">
                   <TruckIcon className="w-5 h-5 text-variant-active" />
                   <p className="text-sm text-variant-active font-medium">
-                    Envío gratis a todo el Paraguay 🇵🇾
+                    Envío gratis a todo Paraguay 🇵🇾
                   </p>
                 </div>
               </div>

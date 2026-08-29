@@ -37,10 +37,12 @@ export const AuthorityBadge = ({
         : "px-3 py-1.5 text-xs md:text-sm",
       className,
     )}
+    // Sin willChange fijo: el badge vive montado toda la sesion y dejarle una
+    // capa de composicion reservada para siempre es justo lo que el resto del
+    // sitio evita. Framer lo pone y lo saca solo durante el vuelo.
     style={{
       background:
         "linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))",
-      willChange: "transform, width",
     }}
   >
     <motion.span layout="position" transition={FLIGHT}>
@@ -66,4 +68,3 @@ export const AuthorityBadge = ({
   </motion.div>
 );
 
-export default AuthorityBadge;

@@ -43,7 +43,7 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
     feature: "Envío a todo el país",
     competidor: { text: "Gratis, sin plazo publicado", tone: "neutral" },
     generico: { text: "Pago", tone: "weak" },
-    nocte: { text: "Gratis, 24 a 48 h", tone: "good" },
+    nocte: { text: "Gratis, 24 a 48 h en Central", tone: "good" },
   },
   {
     feature: "Estuche y accesorios incluidos",
@@ -197,17 +197,21 @@ const ComparisonCell = ({ value, highlight, nocte }: ComparisonCellProps) => {
           className={cn(
             "h-4 w-4",
             value.tone === "good" && (nocte ? "text-variant-active" : "text-emerald-400"),
-            value.tone === "weak" && "text-muted-foreground",
+            value.tone === "weak" && "text-white/45",
           )}
           strokeWidth={2.5}
           aria-hidden="true"
         />
       )}
+      {/* La tabla existe para que se note la diferencia. Cuando las tres
+          columnas se pintan del mismo blanco deja de comparar: la celda debil
+          va atenuada y la de NOCTE en blanco pleno. Los dos ternarios que
+          estaban aca tenian las dos ramas identicas, o sea no decidian nada. */}
       <span
         className={cn(
           "font-semibold leading-tight",
-          nocte ? "text-foreground" : "text-foreground",
-          value.tone === "weak" && !nocte && "text-foreground",
+          nocte ? "text-white" : "text-white/70",
+          value.tone === "weak" && !nocte && "text-white/45",
         )}
       >
         {value.text}

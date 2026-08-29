@@ -20,12 +20,33 @@ export const ProductVideo = () => {
 
     let isMounted = true;
 
+    let resolveWarmed: () => void = () => undefined;
+    const warmed = new Promise<void>((resolve) => {
+      resolveWarmed = resolve;
+    });
+
+    // Con reduced-motion no se arranca solo: un loop de 17 segundos que el
+    // sistema pidio no reproducir es exactamente lo que la preferencia cubre.
+    // Queda el boton, asi que se puede ver igual.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setAutoplayBlocked(true);
+      return;
+    }
+
     const playVideo = async () => {
+      // El warmup llama load(), que resetea el elemento y aborta cualquier
+      // play() en vuelo. Si los dos observers resuelven en el mismo tick (scroll
+      // rapido, entrada por ancla) el play rechazaba con AbortError y se
+      // prendia el boton encima de un video que arrancaba igual. Se espera al
+      // warmup, y un AbortError no cuenta como autoplay bloqueado.
+      await warmed;
+      if (!isMounted) return;
       try {
         await videoElement.play();
         if (isMounted) setAutoplayBlocked(false);
       } catch (error) {
         if (!isMounted) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
         setAutoplayBlocked(true);
         if (import.meta.env.DEV) {
           console.warn("Autoplay bloqueado por el navegador:", error);
@@ -60,6 +81,7 @@ export const ProductVideo = () => {
         warmup.disconnect();
         videoElement.preload = "auto";
         videoElement.load();
+        resolveWarmed();
       },
       { rootMargin: "800px 0px" },
     );

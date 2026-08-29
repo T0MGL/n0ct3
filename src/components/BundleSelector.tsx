@@ -128,7 +128,7 @@ export const BundleSelector = ({
 
                   {bundle.quantity > 1 ? (
                     <p className="mt-1.5 text-[12px] text-white">
-                      <span className="line-through mr-1.5 text-white">
+                      <span className="line-through mr-1.5 text-white/50">
                         Gs. {ORIGINAL_UNIT_PRICE.toLocaleString("es-PY")}
                       </span>
                       <span className="font-semibold text-white">

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { VARIANT_IDS, VARIANTS, isVariantSoldOut, type VariantId } from "@/lib/variants";
+import { VARIANT_IDS, VARIANTS, isVariantSoldOut, momentWindowLabel, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface ProductHeroProps {
@@ -344,7 +344,7 @@ export const ProductHero = ({
             </span>
           </div>
           <span className="text-[10px] uppercase tracking-[0.18em] text-white">
-            {variant.momentTimeWindow}
+            {momentWindowLabel(variant.id)}
           </span>
         </div>
 

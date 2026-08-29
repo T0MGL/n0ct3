@@ -9,7 +9,6 @@ import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry } from '@/lib/meta-matching';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
-import { isGranAsuncion } from '@/data/paraguayCities';
 import { buildWhatsAppUrl } from '@/lib/contact';
 import { isVariantId, summarizeVariantCounts } from '@/lib/variants';
 
@@ -100,7 +99,12 @@ const CheckoutForm = ({
   const showEmailInput = editingEmail || !emailFromInvoice;
 
   // Determine if delivery is free (Gran Asunción only)
-  const isFreeDelivery = isGranAsuncion(customerData.location);
+  // El envio es gratis a todo Paraguay, sin importar el departamento. Antes
+  // esto era isGranAsuncion(location) y al cliente del interior le aparecia
+  // "A cargo del Courier" en la pantalla de pagar, despues de que el banner, el
+  // FAQ, la tira de packs, la comparativa, el sello de garantia y los terminos
+  // le prometieran envio gratis. Lo que cambia por zona es el plazo, no el
+  // precio, y el plazo ya se comunica antes de llegar aca.
 
   const productSummary = describeProduct(customerData.colors, customerData.quantity);
 
@@ -139,11 +143,15 @@ const CheckoutForm = ({
     const emailTrimmed = email.trim();
     if (paymentMethod === 'card') {
       if (!emailTrimmed) {
+        // Si el correo venia del paso 1 el campo esta colapsado: hay que
+        // abrirlo o el error queda sin donde corregirse.
+        setEditingEmail(true);
         setEmailError('Email requerido para el recibo del pago');
         setIsProcessing(false);
         return;
       }
       if (!EMAIL_REGEX.test(emailTrimmed) || emailTrimmed.length > 120) {
+        setEditingEmail(true);
         setEmailError('Email inválido');
         setIsProcessing(false);
         return;
@@ -529,7 +537,7 @@ const CheckoutForm = ({
             <BanknotesIcon className="w-6 h-6 text-variant-active flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Pagas recién cuando tienes el producto en mano
+                Pagás recién cuando tenés el producto en mano
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Aceptamos efectivo, QR o transferencia al momento de la entrega. Total: {formatPrice(finalTotal, currency)}
@@ -572,21 +580,13 @@ const CheckoutForm = ({
         <div className="flex justify-between items-center pt-2 border-t border-border/30">
           <div className="flex items-center gap-2">
             <p className="text-sm text-foreground">Delivery</p>
-            {isFreeDelivery && (
-              <span className="px-2 py-0.5 bg-variant-active/10 border border-variant-active/20 rounded text-xs font-semibold text-variant-active">
-                GRATIS
-              </span>
-            )}
+            <span className="px-2 py-0.5 bg-variant-active/10 border border-variant-active/20 rounded text-xs font-semibold text-variant-active">
+              GRATIS
+            </span>
           </div>
-          {isFreeDelivery ? (
-            <p className="text-sm font-semibold text-muted-foreground line-through">
-              Gs. 30.000
-            </p>
-          ) : (
-            <p className="text-sm font-semibold text-muted-foreground">
-              A cargo del Courier
-            </p>
-          )}
+          <p className="text-sm font-semibold text-white/55 line-through">
+            Gs. 30.000
+          </p>
         </div>
 
         {/* PRIORITY SHIPPING UPSELL */}

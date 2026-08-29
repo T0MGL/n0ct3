@@ -11,14 +11,12 @@ export interface Variant {
   emoji: string;
   displayTitle: string;
   moment: VariantMoment;
-  momentTimeWindow: string;
   /**
    * Franja horaria de este color sobre el reloj de 24 horas, [desde, hasta) en
-   * horas locales. A diferencia de momentTimeWindow (que es la ventana
-   * recomendada y se muestra como texto), las tres dayRange cubren el dia
-   * entero sin huecos ni solapamientos: MomentsSection las usa para decirle al
-   * visitante cual le toca AHORA, y eso obliga a que las 24 horas tengan
-   * dueno. La madrugada le toca al rojo.
+   * horas locales. Las tres cubren el dia entero sin huecos ni solapamientos,
+   * porque MomentsSection las usa para decirle al visitante cual le toca AHORA
+   * y eso obliga a que las 24 horas tengan dueno. La madrugada le toca al
+   * rojo. El texto que se muestra sale de aca via momentWindowLabel().
    */
   dayRange: readonly [number, number];
   blockedPercent: number;
@@ -63,7 +61,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     emoji: "🔴",
     displayTitle: "Lentes Rojos Anti-Luz Azul",
     moment: "NOCHE",
-    momentTimeWindow: "20:00 a 03:00",
     dayRange: [20, 7],
     blockedPercent: 99,
     spectrumRange: [400, 550],
@@ -97,7 +94,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     emoji: "🟠",
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
     moment: "TARDE",
-    momentTimeWindow: "17:00 a 20:00",
     dayRange: [17, 20],
     blockedPercent: 95,
     spectrumRange: [400, 500],
@@ -131,7 +127,6 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     emoji: "🟡",
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",
-    momentTimeWindow: "08:00 a 17:00",
     dayRange: [7, 17],
     blockedPercent: 75,
     spectrumRange: [400, 450],
@@ -175,6 +170,19 @@ export function isVariantId(value: string): value is VariantId {
 
 export function getVariant(id: VariantId): Variant {
   return VARIANTS[id];
+}
+
+/**
+ * La ventana horaria del color, escrita. Sale de dayRange y no de un texto
+ * propio: cuando eran dos campos distintos se contradecian entre si, la
+ * tarjeta del rojo decia "20:00 a 03:00" mientras la barra de la misma seccion
+ * le daba de 20 a 7, y a las cinco de la manana la aguja marcaba un color que
+ * la tarjeta daba por terminado.
+ */
+export function momentWindowLabel(id: VariantId): string {
+  const [from, to] = VARIANTS[id].dayRange;
+  const pad = (hour: number) => String(hour).padStart(2, "0");
+  return `${pad(from)}:00 a ${pad(to)}:00`;
 }
 
 /**

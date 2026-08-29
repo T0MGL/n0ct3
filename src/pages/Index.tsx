@@ -794,7 +794,7 @@ const Index = () => {
         <div className="container max-w-[1400px] mx-auto text-center space-y-5 md:space-y-6">
           <NocteMark className="mx-auto h-4 w-auto text-white md:h-[18px]" />
           <p className="text-muted-foreground font-light text-xs md:text-sm">
-            Úsalos antes de dormir. Dormí profundo.
+            Usalos antes de dormir. Dormí profundo.
           </p>
 
           {/* Legal Links */}

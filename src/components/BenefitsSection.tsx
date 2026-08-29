@@ -75,8 +75,12 @@ export const BenefitsSection = () => {
             animado peleando con el dedo. La tarjeta siguiente asoma a proposito,
             es la unica senal de que hay mas. */}
         <Reveal
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-p-4 px-4 pb-2 scrollbar-hide md:gap-4 md:scroll-p-6 md:px-6 lg:scroll-p-12 lg:px-12"
+          // tabIndex hace que el carrusel se pueda recorrer con las flechas del
+          // teclado. Sin esto las tarjetas 2 a 5 no existian para quien no usa
+          // mouse ni touch, porque la seccion no tiene ni flechas ni puntos.
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-p-4 px-4 pb-2 scrollbar-hide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 md:gap-4 md:scroll-p-6 md:px-6 lg:scroll-p-12 lg:px-12"
           role="list"
+          tabIndex={0}
           aria-label="Beneficios de NOCTE"
         >
           {BENEFITS.map((benefit) => (

@@ -6,6 +6,7 @@ import {
   MOMENT_ORDER,
   VARIANTS,
   isVariantSoldOut,
+  momentWindowLabel,
   variantForHour,
   type VariantId,
 } from "@/lib/variants";
@@ -32,7 +33,7 @@ const positionOf = (hourDecimal: number): number =>
   (((hourDecimal - DAY_START) % 24) + 24) % 24 / 24;
 
 const formatClock = (d: Date): string =>
-  `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 const useLocalNow = (): Date => {
   const [now, setNow] = useState(() => new Date());
@@ -106,11 +107,15 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
               </div>
             </div>
 
-            <div
-              role="img"
-              aria-label={`Reloj del día: amarillo de 7 a 17, naranja de 17 a 20, rojo de 20 a 7. Ahora son las ${formatClock(now)}.`}
-              className="flex h-10 overflow-hidden rounded-lg md:h-12"
-            >
+            {/* Sin role="img" en el contenedor: volvia presentacional todo el
+                subarbol y los tres botones desaparecian del arbol de
+                accesibilidad. La descripcion va en un parrafo solo para
+                lectores y cada boton conserva su propia etiqueta. */}
+            <p className="sr-only">
+              Reloj del día: amarillo de 7 a 17, naranja de 17 a 20, rojo de 20 a 7. Ahora son
+              las {formatClock(now)}.
+            </p>
+            <div className="flex h-10 overflow-hidden rounded-lg md:h-12">
               {/* Sin nombres adentro de la barra: la franja del naranja dura
                   tres horas y cualquier palabra ahi entra apretada o se corta.
                   El nombre lo lleva la tarjeta de abajo, y el vinculo entre
@@ -122,7 +127,8 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => !isVariantSoldOut(id) && pick(id)}
+                    disabled={isVariantSoldOut(id)}
+                    onClick={() => pick(id)}
                     aria-label={`Elegir ${variant.name}`}
                     style={{
                       flexGrow: spanHours(id),
@@ -130,7 +136,7 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                       background: `linear-gradient(180deg, ${variant.accent}, ${variant.accent}c4)`,
                       boxShadow: isSelected ? "inset 0 0 0 2px rgba(255,255,255,0.85)" : "none",
                     }}
-                    className="relative transition-shadow duration-300 hover:brightness-110"
+                    className="relative transition-shadow duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-40"
                   />
                 );
               })}
@@ -193,7 +199,7 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                       {variant.id}
                     </p>
                     <p className="mt-1 text-[11px] font-medium tabular-nums text-white/40">
-                      {variant.momentTimeWindow}
+                      {momentWindowLabel(id)}
                     </p>
                   </div>
 
@@ -229,7 +235,7 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                   <button
                     type="button"
                     onClick={() => pick(id)}
-                    className="group mt-auto inline-flex items-center gap-1.5 self-start pt-6 text-sm font-semibold transition-opacity duration-200 hover:opacity-75 active:scale-[0.98]"
+                    className="group mt-auto inline-flex items-center gap-1.5 self-start rounded pt-6 text-sm font-semibold transition-opacity duration-200 hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black active:scale-[0.98]"
                     style={{ color: variant.accent }}
                   >
                     {isSelected ? "Es el que tenés elegido" : `Elegir el ${variant.id}`}

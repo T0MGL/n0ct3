@@ -20,4 +20,3 @@ export const WhatsAppGlyph = ({ className }: WhatsAppGlyphProps) => (
   </svg>
 );
 
-export default WhatsAppGlyph;

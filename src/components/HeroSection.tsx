@@ -291,8 +291,12 @@ export const HeroSection = ({
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
+                  {/* El fondo de la media estrella tiene que verse apagado o
+                      el 4.8 se lee como 5 lleno. Va con un blanco al 22% y no
+                      con text-muted-foreground, que es blanco pleno a proposito
+                      en todo el sitio: aca el atenuado ES el dato. */}
                   <div className="relative w-5 h-5">
-                    <StarIcon className="w-5 h-5 text-muted-foreground absolute" />
+                    <StarIcon className="w-5 h-5 text-white/20 absolute" />
                     <div className="overflow-hidden absolute inset-0" style={{ width: '80%' }}>
                       <StarIcon className="w-5 h-5 star-gold" />
                     </div>
@@ -342,7 +346,9 @@ export const HeroSection = ({
 
             {/* Price */}
             <div className="flex items-center gap-3">
-              <span className="text-base text-foreground line-through">
+              {/* El precio de referencia va atenuado: al mismo blanco que el
+                  precio real competian y el ancla dejaba de anclar. */}
+              <span className="text-base text-white/50 line-through">
                 Gs. {originalPrice.toLocaleString('es-PY')}
               </span>
               <span className="text-4xl md:text-5xl font-bold text-white">

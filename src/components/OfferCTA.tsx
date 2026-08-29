@@ -13,8 +13,6 @@ interface OfferCTAProps {
    * el unico momento en que el cliente ya tiene la duda resuelta y fresca.
    */
   headline?: string;
-  /** Texto del boton. Por defecto, la oferta con el precio. */
-  label?: string;
 }
 
 export const OfferCTA = ({
@@ -22,14 +20,13 @@ export const OfferCTA = ({
   variant = "default",
   selectedPrice,
   headline,
-  label,
 }: OfferCTAProps) => {
   const ctaShadow = ALL_VARIANTS_SOLD_OUT ? undefined : "0 0 50px hsl(var(--variant-active) / 0.4)";
   const sectionBg =
     "linear-gradient(180deg, #000000, hsl(var(--variant-active) / 0.05), #000000)";
   const ctaLabel = ALL_VARIANTS_SOLD_OUT
     ? "Agotado. Reponemos pronto"
-    : label ?? `Aprovechar Oferta. Gs. ${selectedPrice.toLocaleString('es-PY')}`;
+    : `Aprovechar Oferta. Gs. ${selectedPrice.toLocaleString('es-PY')}`;
 
   if (variant === "minimal") {
     return (
