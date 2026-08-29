@@ -192,7 +192,13 @@ export const HeroSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-1 w-full lg:self-center lg:-mt-10"
+            // Arriba y no centrada. La columna de contenido mide casi el doble
+            // que la galeria, asi que centrarla dejaba 300px de negro arriba de
+            // la foto con el titulo ya empezado al costado. Pegarla con sticky
+            // tampoco sirve: la galeria mide 783px y en un portatil de 800 de
+            // alto, con el header fijo arriba, las miniaturas de color quedarian
+            // permanentemente fuera de pantalla.
+            className="relative order-1 w-full lg:self-start"
           >
             {/* Badge de autoridad. Vive sobre la esquina de la foto hasta
                 que el cliente toca la galeria: ahi se va al header. Ver
