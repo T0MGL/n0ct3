@@ -127,7 +127,7 @@ export const PaymentFallbackModal = ({
                         Reintentar pago digital
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Vuelve a intentar con Face ID, Google Pay o tarjeta
+                        Volvé a intentar con Face ID, Google Pay o tarjeta
                       </p>
                     </div>
                   </div>

@@ -27,11 +27,11 @@ export const ProductVideo = () => {
 
     // Con reduced-motion no se arranca solo: un loop de 17 segundos que el
     // sistema pidio no reproducir es exactamente lo que la preferencia cubre.
-    // Queda el boton, asi que se puede ver igual.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setAutoplayBlocked(true);
-      return;
-    }
+    // Queda el boton, asi que se puede ver igual. Lo que NO se saltea es el
+    // observer que pausa fuera de pantalla: si lo arranca a mano, el loop
+    // tiene que dejar de correr igual cuando el video sale de la pantalla.
+    const autoplayAllowed = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!autoplayAllowed) setAutoplayBlocked(true);
 
     const playVideo = async () => {
       // El warmup llama load(), que resetea el elemento y aborta cualquier
@@ -61,7 +61,7 @@ export const ProductVideo = () => {
         entries.forEach((entry) => {
           if (!isMounted) return;
           if (entry.isIntersecting) {
-            playVideo();
+            if (autoplayAllowed) playVideo();
           } else if (!videoElement.paused) {
             videoElement.pause();
           }

@@ -112,8 +112,9 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                 accesibilidad. La descripcion va en un parrafo solo para
                 lectores y cada boton conserva su propia etiqueta. */}
             <p className="sr-only">
-              Reloj del día: amarillo de 7 a 17, naranja de 17 a 20, rojo de 20 a 7. Ahora son
-              las {formatClock(now)}.
+              Reloj del día:{" "}
+              {MOMENT_ORDER.map((id) => `${id} de ${momentWindowLabel(id)}`).join(", ")}. Ahora
+              son las {formatClock(now)}.
             </p>
             <div className="flex h-10 overflow-hidden rounded-lg md:h-12">
               {/* Sin nombres adentro de la barra: la franja del naranja dura

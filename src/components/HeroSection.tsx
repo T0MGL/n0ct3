@@ -292,7 +292,7 @@ export const HeroSection = ({
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
                   {/* El fondo de la media estrella tiene que verse apagado o
-                      el 4.8 se lee como 5 lleno. Va con un blanco al 22% y no
+                      el 4.8 se lee como 5 lleno. Va con un blanco al 20% y no
                       con text-muted-foreground, que es blanco pleno a proposito
                       en todo el sitio: aca el atenuado ES el dato. */}
                   <div className="relative w-5 h-5">

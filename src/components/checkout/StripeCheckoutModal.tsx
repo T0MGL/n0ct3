@@ -221,7 +221,7 @@ const CheckoutForm = ({
       }
 
       if (!isElementReady) {
-        setErrorMessage('El formulario de pago aún se está cargando. Intenta de nuevo en un momento.');
+        setErrorMessage('El formulario de pago aún se está cargando. Intentá de nuevo en un momento.');
         setIsProcessing(false);
         return;
       }
