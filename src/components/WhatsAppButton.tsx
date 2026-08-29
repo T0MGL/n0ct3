@@ -43,7 +43,7 @@ export const WhatsAppButton = () => {
       target="_blank"
       rel="noopener noreferrer"
       className={`fixed right-4 z-[100] bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 ${
-        stickyButtonVisible ? "bottom-32 md:bottom-36" : "bottom-6 md:bottom-8"
+        stickyButtonVisible ? "bottom-40 md:bottom-44" : "bottom-6 md:bottom-8"
       } ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       }`}

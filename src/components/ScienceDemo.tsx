@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { VariantPicker } from "@/components/VariantPicker";
-import { VARIANTS, DEFAULT_VARIANT, type VariantId } from "@/lib/variants";
+import { VARIANTS, DEFAULT_VARIANT, momentWindowLabel, type VariantId } from "@/lib/variants";
 
 // Single morphing SVG that interpolates the blocked region between variants.
 // Uses Framer Motion on the blocked rect so x and width tween in sync, no
@@ -115,7 +115,7 @@ export const ScienceDemo = () => {
 
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-variant-active">
-                Momento {v.moment} · {v.momentTimeWindow}
+                Momento {v.moment} · {momentWindowLabel(v.id)}
               </p>
               <h3 className="mb-3 text-2xl font-bold tracking-tight text-foreground md:text-3xl">{v.name}</h3>
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground md:text-base">{v.description}</p>
@@ -142,7 +142,7 @@ export const ScienceDemo = () => {
               <figcaption className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
                 {c.source}
               </figcaption>
-              <blockquote className="mb-3 text-[13px] italic leading-relaxed text-foreground/85">
+              <blockquote className="mb-3 text-[13px] italic leading-relaxed text-foreground">
                 {c.quote}
               </blockquote>
               <cite className="text-[11px] not-italic text-muted-foreground">Segun {c.cite}</cite>

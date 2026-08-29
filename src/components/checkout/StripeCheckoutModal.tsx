@@ -9,7 +9,6 @@ import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry } from '@/lib/meta-matching';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
-import { isGranAsuncion } from '@/data/paraguayCities';
 import { buildWhatsAppUrl } from '@/lib/contact';
 import { isVariantId, summarizeVariantCounts } from '@/lib/variants';
 
@@ -93,9 +92,19 @@ const CheckoutForm = ({
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
   const [email, setEmail] = useState(customerData.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
+  // Si en el paso de la factura ya dejo el correo, no se le vuelve a pedir:
+  // se le muestra cual va a recibir el recibo y un enlace por si se equivoco.
+  const [editingEmail, setEditingEmail] = useState(false);
+  const emailFromInvoice = (customerData.email ?? '').trim();
+  const showEmailInput = editingEmail || !emailFromInvoice;
 
   // Determine if delivery is free (Gran Asunción only)
-  const isFreeDelivery = isGranAsuncion(customerData.location);
+  // El envio es gratis a todo Paraguay, sin importar el departamento. Antes
+  // esto era isGranAsuncion(location) y al cliente del interior le aparecia
+  // "A cargo del Courier" en la pantalla de pagar, despues de que el banner, el
+  // FAQ, la tira de packs, la comparativa, el sello de garantia y los terminos
+  // le prometieran envio gratis. Lo que cambia por zona es el plazo, no el
+  // precio, y el plazo ya se comunica antes de llegar aca.
 
   const productSummary = describeProduct(customerData.colors, customerData.quantity);
 
@@ -134,11 +143,15 @@ const CheckoutForm = ({
     const emailTrimmed = email.trim();
     if (paymentMethod === 'card') {
       if (!emailTrimmed) {
+        // Si el correo venia del paso 1 el campo esta colapsado: hay que
+        // abrirlo o el error queda sin donde corregirse.
+        setEditingEmail(true);
         setEmailError('Email requerido para el recibo del pago');
         setIsProcessing(false);
         return;
       }
       if (!EMAIL_REGEX.test(emailTrimmed) || emailTrimmed.length > 120) {
+        setEditingEmail(true);
         setEmailError('Email inválido');
         setIsProcessing(false);
         return;
@@ -208,7 +221,7 @@ const CheckoutForm = ({
       }
 
       if (!isElementReady) {
-        setErrorMessage('El formulario de pago aún se está cargando. Intenta de nuevo en un momento.');
+        setErrorMessage('El formulario de pago aún se está cargando. Intentá de nuevo en un momento.');
         setIsProcessing(false);
         return;
       }
@@ -418,28 +431,53 @@ const CheckoutForm = ({
             Detalles de pago
           </h3>
 
-          {/* Email for Stripe receipt - only shown for card payments */}
+          {/* Email del recibo. Si ya lo dejo para la factura en el paso
+              anterior se muestra cual es y no se le pide de nuevo. */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-foreground">
-              Email para el recibo
-            </label>
-            <div className="relative">
-              <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError(null);
-                }}
-                placeholder="nombre@email.com"
-                maxLength={120}
-                autoComplete="email"
-                inputMode="email"
-                aria-invalid={!!emailError}
-                className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
-              />
-            </div>
+            {showEmailInput ? (
+              <>
+                <label className="block text-sm font-medium text-foreground">
+                  Email para el recibo
+                </label>
+                <div className="relative">
+                  <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    placeholder="nombre@email.com"
+                    maxLength={120}
+                    autoComplete="email"
+                    inputMode="email"
+                    autoFocus={editingEmail}
+                    aria-invalid={!!emailError}
+                    className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:ring-2 focus:ring-variant-active/20 transition-all ${emailError ? 'border-red-500' : 'border-border focus:border-variant-active'}`}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <EnvelopeIcon className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                      Recibo y factura
+                    </p>
+                    <p className="truncate text-sm text-foreground">{email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingEmail(true)}
+                  className="flex-shrink-0 text-[13px] font-medium text-variant-active underline underline-offset-4 transition-opacity hover:opacity-75"
+                >
+                  Cambiar
+                </button>
+              </div>
+            )}
             {emailError && (
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
@@ -499,7 +537,7 @@ const CheckoutForm = ({
             <BanknotesIcon className="w-6 h-6 text-variant-active flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                Pagas recién cuando tienes el producto en mano
+                Pagás recién cuando tenés el producto en mano
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Aceptamos efectivo, QR o transferencia al momento de la entrega. Total: {formatPrice(finalTotal, currency)}
@@ -542,21 +580,13 @@ const CheckoutForm = ({
         <div className="flex justify-between items-center pt-2 border-t border-border/30">
           <div className="flex items-center gap-2">
             <p className="text-sm text-foreground">Delivery</p>
-            {isFreeDelivery && (
-              <span className="px-2 py-0.5 bg-variant-active/10 border border-variant-active/20 rounded text-xs font-semibold text-variant-active">
-                GRATIS
-              </span>
-            )}
+            <span className="px-2 py-0.5 bg-variant-active/10 border border-variant-active/20 rounded text-xs font-semibold text-variant-active">
+              GRATIS
+            </span>
           </div>
-          {isFreeDelivery ? (
-            <p className="text-sm font-semibold text-muted-foreground line-through">
-              Gs. 30.000
-            </p>
-          ) : (
-            <p className="text-sm font-semibold text-muted-foreground">
-              A cargo del Courier
-            </p>
-          )}
+          <p className="text-sm font-semibold text-white/55 line-through">
+            Gs. 30.000
+          </p>
         </div>
 
         {/* PRIORITY SHIPPING UPSELL */}
@@ -590,7 +620,7 @@ const CheckoutForm = ({
                   <p className={`text-sm font-bold ${isPriorityShipping ? 'text-variant-active' : 'text-foreground'}`}>
                     Envío Prioritario VIP
                   </p>
-                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground/70'}`} />
+                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`} />
                 </div>
                 <p className={`text-sm font-bold whitespace-nowrap ml-2 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`}>
                   + Gs. 10.000
@@ -615,7 +645,7 @@ const CheckoutForm = ({
 
         {/* Trust Microcopy */}
         <div className="flex justify-center pt-2">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-white">
             Envío seguro a todo Paraguay 🇵🇾
           </p>
         </div>
@@ -978,7 +1008,7 @@ export const StripeCheckoutModal = ({
                   <div className="text-center space-y-4 max-w-sm w-full">
                     <div className="w-16 h-16 border-4 border-variant-active/30 border-t-primary rounded-full animate-spin mx-auto" />
                     <h3 className="text-xl md:text-2xl font-bold text-white">Procesando tu pedido...</h3>
-                    <p className="text-sm text-gray-400 leading-relaxed">
+                    <p className="text-sm text-white leading-relaxed">
                       Estamos confirmando tu orden y enviando los detalles. Esto tomará solo unos segundos.
                     </p>
                   </div>

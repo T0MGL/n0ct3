@@ -460,14 +460,12 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
               </div>
 
               {/* Form */}
+              {/* Sin encabezado "Tus datos": el paso ya se llama "Datos de
+                  entrega" en la barra de progreso justo arriba, asi que era la
+                  misma palabra dos veces y 46px de alto para no decir nada. Los
+                  campos arrancan directo. "Ubicacion de entrega" si conserva su
+                  divisor porque ahi si cambia el tema. */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
-                  <UserIcon className="w-5 h-5 text-variant-active" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Tus datos
-                  </h3>
-                </div>
-
                 {/* FIELD 1 - NOMBRE COMPLETO */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
@@ -485,7 +483,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       }}
                       placeholder="Ej: Juan López"
                       maxLength={60}
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.name ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -515,7 +513,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       onFocus={handlePhoneFocus}
                       onClick={handlePhoneClick}
                       placeholder="Ej: +595 971 234567"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.phone ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -545,7 +543,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         setTimeout(() => phoneInputRef.current?.focus(), 0);
                       }
                     }}
-                    className="text-[13px] text-foreground/70 underline underline-offset-4 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/60 transition-colors"
+                    className="text-[13px] text-foreground underline underline-offset-4 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/60 transition-colors"
                   >
                     {customPrefix ? "Volver a +595 (Paraguay)" : "¿Otro país?"}
                   </button>
@@ -554,7 +552,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 {/* FIELD 3 - DOCUMENTO FISCAL (obligatorio: todo pedido se factura) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
-                    RUC o cédula{customPrefix && <span className="font-normal text-foreground/70"> (opcional)</span>}
+                    RUC o cédula{customPrefix && <span className="font-normal text-foreground"> (opcional)</span>}
                   </label>
                   <div className="relative">
                     <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -577,7 +575,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       maxLength={12}
                       inputMode="tel"
                       autoComplete="off"
-                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
+                      className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
                     />
                   </div>
@@ -590,10 +588,10 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       {errors.ruc}
                     </motion.p>
                   ) : (
-                    <p className="text-[13px] text-foreground/80">
+                    <p className="text-[13px] text-foreground">
                       {customPrefix
-                        ? "Si tenés documento paraguayo, la factura sale a tu nombre."
-                        : "Sin RUC, poné tu cédula."}
+                        ? "Es para la factura. Con documento paraguayo sale a tu nombre."
+                        : "Es para emitir tu factura. Si no tenés RUC, poné tu cédula."}
                     </p>
                   )}
                 </div>
@@ -613,7 +611,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                     className={`space-y-2 ${emailRevealDone ? "" : "overflow-hidden"}`}
                   >
                     <label className="block text-sm font-medium text-foreground">
-                      Email <span className="font-normal text-foreground/70">(opcional)</span>
+                      Email <span className="font-normal text-foreground">(opcional)</span>
                     </label>
                     <div className="relative">
                       <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -629,7 +627,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         maxLength={120}
                         autoComplete="email"
                         inputMode="email"
-                        className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
+                        className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.email ? "border-red-500" : "border-border focus:border-variant-active"
                           }`}
                       />
                     </div>
@@ -642,7 +640,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         {errors.email}
                       </motion.p>
                     ) : (
-                      <p className="text-[13px] text-foreground/80">
+                      <p className="text-[13px] text-foreground">
                         Para enviarte la factura electrónica.
                       </p>
                     )}
@@ -679,7 +677,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             setLocationCoords({});
                             setShowManualLocation(true);
                           }}
-                          className="text-[13px] text-foreground/70 underline underline-offset-4 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/60 transition-colors"
+                          className="text-[13px] text-foreground underline underline-offset-4 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/60 transition-colors"
                         >
                           Cambiar
                         </button>
@@ -712,7 +710,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                         type="button"
                         onClick={handleUseLocation}
                         disabled={isLoadingLocation}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-border bg-secondary/40 text-sm font-medium text-foreground transition-[background-color,border-color,transform] duration-150 ease-out hover:bg-secondary hover:border-variant-active/40 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-border bg-secondary/40 text-sm font-medium text-foreground hover:bg-secondary hover:border-variant-active/40 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoadingLocation ? (
                           <>
@@ -747,7 +745,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                             }}
                             placeholder="Ej: Asunción, Ciudad del Este..."
                             autoComplete="off"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.city ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                           {/* Suggestions dropdown */}
                           {showCitySuggestions && filteredCities.length > 0 && (
@@ -796,7 +794,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                               setErrors((prev) => ({ ...prev, address: undefined }));
                             }}
                             placeholder="Ej: Av. Mariscal López 1234"
-                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-variant-active"}`}
+                            className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.address ? "border-red-500" : "border-border focus:border-variant-active"}`}
                           />
                         </div>
                         {errors.address && (
@@ -815,7 +813,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
 
                 {/* Las dos pruebas que contestan la duda del momento de pagar,
                     contra el boton y no en la cabecera. */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-foreground/80">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-foreground">
                   <span className="flex items-center gap-1.5">
                     <CheckIcon className="w-4 h-4 shrink-0 text-variant-active" strokeWidth={2.5} />
                     Pagás al recibir
@@ -827,7 +825,7 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                 </div>
 
                 {/* Consent Disclosure */}
-                <p className="text-xs leading-relaxed text-foreground/65">
+                <p className="text-xs leading-relaxed text-foreground">
                   Al continuar, acepto los{" "}
                   <a
                     href="/terminos-y-condiciones"

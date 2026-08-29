@@ -220,7 +220,7 @@ const PoliticaPrivacidad = () => {
 
           {/* Marco Legal */}
           <section className="mt-12 pt-8 border-t border-border/30">
-            <p className="text-xs text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Esta Política de Privacidad se rige por la legislación de la República del Paraguay,
               en particular la Ley N° 6534/2020 "De Protección de Datos Personales Crediticios",
               la Ley N° 1334/98 "De Defensa del Consumidor y del Usuario", el Código Civil paraguayo
@@ -234,7 +234,7 @@ const PoliticaPrivacidad = () => {
       <footer className="bg-black border-t border-border/30 py-8 px-4">
         <div className="container max-w-[900px] mx-auto text-center">
           <p className="text-2xl font-bold tracking-tighter opacity-70">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></p>
-          <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light mt-4">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-light mt-4">
             © {new Date().getFullYear()} NOCTE® Todos los Derechos Reservados
           </p>
         </div>

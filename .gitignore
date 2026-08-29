@@ -30,3 +30,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Artefactos de build de TypeScript: se regeneran en cada tsc y ensucian todos los diffs
+*.tsbuildinfo

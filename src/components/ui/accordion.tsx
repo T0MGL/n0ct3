@@ -22,7 +22,10 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        // no-press: el trigger ocupa la fila entera de la FAQ. Hundir un bloque
+        // de ese tamano no se lee como feedback de un boton, se lee como que la
+        // pagina se movio. El chevron ya confirma el toque.
+        "no-press flex flex-1 items-center justify-between py-4 font-medium transition-colors hover:underline [&[data-state=open]>svg]:rotate-180",
         className,
       )}
       {...props}

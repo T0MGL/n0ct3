@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { TruckIcon, ShieldCheckIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 const messages = [
@@ -27,15 +26,7 @@ export const DeliveryBanner = () => {
     >
       <div className="absolute inset-0 flex items-center w-full">
         {/* We need multiple copies to ensure seamless loop on large screens */}
-        <motion.div
-          className="flex whitespace-nowrap"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            repeat: Infinity,
-            ease: "linear",
-            duration: 20, // Adjust speed as needed
-          }}
-        >
+        <div className="nocte-ticker-track flex whitespace-nowrap">
           {/* Render list enough times to cover screen width + buffer */}
           {[...Array(6)].map((_, groupIndex) => (
             <div key={groupIndex} className="flex items-center">
@@ -49,7 +40,7 @@ export const DeliveryBanner = () => {
               ))}
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

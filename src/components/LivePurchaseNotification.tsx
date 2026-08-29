@@ -50,11 +50,11 @@ export const LivePurchaseNotification = ({
                 <p className="text-sm font-medium text-white">
                   {buyerName} de {buyerCity}
                 </p>
-                <p className="text-xs text-foreground/60 mt-0.5">
+                <p className="text-xs text-foreground mt-0.5">
                   acaba de comprar NOCTE
                 </p>
               </div>
-              <span className="text-xs text-foreground/40 flex-shrink-0">
+              <span className="text-xs text-foreground flex-shrink-0">
                 ahora
               </span>
             </div>

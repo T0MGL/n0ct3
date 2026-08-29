@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ShieldCheckIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
+import { cn } from "@/lib/utils";
 
 interface StickyBuyButtonProps {
   onBuyClick: () => void;
@@ -74,28 +74,21 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
   }, []);
 
   return (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{
-        y: isVisible ? 0 : 100,
-        opacity: isVisible ? 1 : 0
-      }}
-      transition={{
-        duration: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
-      style={{ willChange: 'transform, opacity' }}
-      className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
+    <div
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 pointer-events-none",
+        "transition-[transform,opacity] duration-[400ms] ease-out will-change-[transform,opacity]",
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0",
+      )}
     >
-      <div className="w-full px-4 md:px-6 pb-4 md:pb-6">
-        <div className="bg-black/95 backdrop-blur-xl border-t border-border/30 p-4 md:p-5 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
+      <div className="w-full">
+        <div className="bg-black/95 backdrop-blur-xl border-t border-border/30 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-5 md:pt-5 md:pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.4)] pointer-events-auto">
           <div className="flex flex-col gap-4">
             {/* Precio y detalles */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              {/* El precio vive solo en el boton. Repetirlo arriba no agrega
+                  informacion y compite con el CTA por la misma mirada. */}
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  <span className="text-xl md:text-2xl font-bold text-white">Gs. {selectedPrice.toLocaleString('es-PY')}</span>
-                </p>
                 {!ALL_VARIANTS_SOLD_OUT && (
                   <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                     <TruckIcon className="w-4 h-4 text-gold/90" />
@@ -116,18 +109,7 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
             </div>
 
             {/* Botón de compra - Only animate when visible */}
-            <motion.div
-              animate={isVisible && !ALL_VARIANTS_SOLD_OUT ? {
-                scale: [1, 1.02, 1],
-              } : { scale: 1 }}
-              transition={isVisible && !ALL_VARIANTS_SOLD_OUT ? {
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "loop",
-                ease: "easeInOut"
-              } : { duration: 0 }}
-              style={{ willChange: 'transform' }}
-            >
+            <div className={isVisible && !ALL_VARIANTS_SOLD_OUT ? "nocte-cta-pulse" : undefined}>
               <Button
                 variant="hero"
                 size="lg"
@@ -139,10 +121,10 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
                   ? "Agotado · Reponemos pronto"
                   : `Comprar Ahora · Gs. ${selectedPrice.toLocaleString('es-PY')}`}
               </Button>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };

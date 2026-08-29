@@ -8,7 +8,7 @@ interface ReportActionsProps {
 // abre escaneando un QR con datos moviles, no hay por que arrastrar una
 // libreria de iconos entera para decorar dos botones.
 const BASE_ACTION =
-  "flex items-center justify-center rounded-lg px-5 py-3.5 text-sm font-medium transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-variant-active";
+  "flex items-center justify-center rounded-lg px-5 py-3.5 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-variant-active";
 
 export const ReportActions = ({ report }: ReportActionsProps) => (
   <div>

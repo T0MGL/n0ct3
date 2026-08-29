@@ -5,19 +5,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 rounded-lg",
+  // Sin transition-all: la transicion base (color, borde, sombra en 250ms y el
+  // press en 120ms) la define el sistema global de index.css. Una utilidad de
+  // Tailwind aca la pisaria entera, y transition-all ease-in-out era ademas la
+  // combinacion equivocada: ease-in retrasa el arranque justo en el momento que
+  // el usuario esta mirando, y 300ms para un press se siente tarde.
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 rounded-lg",
   {
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(180deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.78))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-lg active:scale-[0.98]",
+          "bg-[linear-gradient(180deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.78))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-lg",
         destructive: "bg-destructive text-destructive-foreground shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-destructive/90 hover:shadow-lg",
         outline: "border border-gold/30 bg-transparent hover:bg-gold/10 hover:border-gold/50 shadow-sm",
         secondary: "bg-secondary text-secondary-foreground shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-secondary/80 hover:shadow-lg",
         ghost: "hover:bg-muted/50 hover:text-accent-foreground",
         link: "text-variant-active underline-offset-4 hover:underline hover:text-variant-active/80",
         hero:
-          "bg-[linear-gradient(90deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.82),hsl(var(--variant-active)))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_hsl(var(--variant-active)/0.35)] active:scale-[0.98] font-semibold animate-gradient-shift animate-shine",
+          "bg-[linear-gradient(90deg,hsl(var(--variant-active)),hsl(var(--variant-active)/0.82),hsl(var(--variant-active)))] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_hsl(var(--variant-active)/0.35)] font-semibold animate-gradient-shift animate-shine",
         premium: "bg-secondary/50 text-card-foreground border border-gold/30 shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:border-gold/50 hover:bg-secondary/70 hover:shadow-lg",
       },
       size: {

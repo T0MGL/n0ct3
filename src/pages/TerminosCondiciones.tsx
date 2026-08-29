@@ -110,13 +110,13 @@ const TerminosCondiciones = () => {
           <section className="space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-white">5. Envíos y Entregas</h2>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Zona de cobertura:</strong> Asunción y Departamento Central
+              <strong>Zona de cobertura:</strong> todo el territorio de la República del Paraguay
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Costo de envío:</strong> GRATIS para todas las compras dentro de la zona de cobertura
+              <strong>Costo de envío:</strong> GRATIS en todos los pedidos, sin monto mínimo y sin importar el departamento de destino
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Plazo de entrega:</strong> 1-2 días hábiles después de confirmada la compra
+              <strong>Plazo de entrega:</strong> 24 a 48 horas en Asunción y Departamento Central, 2 a 4 días hábiles en el interior del país, contados desde la confirmación de la compra
             </p>
             <p className="text-muted-foreground leading-relaxed mt-4">
               Los plazos de entrega son estimados y pueden variar por factores externos como clima o
@@ -266,7 +266,7 @@ const TerminosCondiciones = () => {
 
           {/* Marco Legal */}
           <section className="mt-12 pt-8 border-t border-border/30">
-            <p className="text-xs text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Estos Términos y Condiciones se rigen por la legislación de la República del Paraguay,
               en particular la Ley N° 1334/98 "De Defensa del Consumidor y del Usuario", el Código Civil paraguayo,
               la Ley N° 6534/2020 "De Protección de Datos Personales Crediticios" y demás normativas aplicables.
@@ -279,7 +279,7 @@ const TerminosCondiciones = () => {
       <footer className="bg-black border-t border-border/30 py-8 px-4">
         <div className="container max-w-[900px] mx-auto text-center">
           <p className="text-2xl font-bold tracking-tighter opacity-70">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></p>
-          <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light mt-4">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-light mt-4">
             © {new Date().getFullYear()} NOCTE® Todos los Derechos Reservados
           </p>
         </div>

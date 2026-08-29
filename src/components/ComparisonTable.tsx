@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { CheckIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { Reveal } from "@/components/Reveal";
 import { cn } from "@/lib/utils";
 
 // Honest comparison vs other blue-light brands and generic glasses. Competitor
@@ -40,10 +40,10 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
     highlight: true,
   },
   {
-    feature: "Envío Asunción y Central",
+    feature: "Envío a todo el país",
     competidor: { text: "Gratis, sin plazo publicado", tone: "neutral" },
     generico: { text: "Pago", tone: "weak" },
-    nocte: { text: "Gratis 24 a 48hs", tone: "good" },
+    nocte: { text: "Gratis, 24 a 48 h en Central", tone: "good" },
   },
   {
     feature: "Estuche y accesorios incluidos",
@@ -68,11 +68,6 @@ const ROWS: ReadonlyArray<ComparisonRow> = [
   },
 ];
 
-const ROW_VARIANTS = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-};
-
 export const ComparisonTable = () => {
   return (
     <section
@@ -81,13 +76,7 @@ export const ComparisonTable = () => {
       className="relative bg-gradient-to-b from-black via-[#0a0000] to-black px-4 py-20 md:px-6 md:py-28"
     >
       <div className="mx-auto max-w-[980px]">
-        <motion.header
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mb-10 max-w-2xl text-center md:mb-14"
-        >
+        <Reveal as="header" className="mx-auto mb-10 max-w-2xl text-center md:mb-14">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             Compara antes de comprar
           </p>
@@ -95,22 +84,16 @@ export const ComparisonTable = () => {
             id="comparison-title"
             className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[1.05] tracking-tighter text-foreground"
           >
-            Otras marcas son <span className="text-muted-foreground/70">más baratas.</span>
+            Otras marcas son <span className="text-muted-foreground">más baratas.</span>
             <br />
             NOCTE es <span className="text-variant-active">más completo.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
             Hay opciones más baratas y están bien si querés lo más básico. Si dormís mal en serio, esto es lo que cambia con NOCTE: tres lentes para tres momentos del día, treinta días de garantía y respaldo científico real.
           </p>
-        </motion.header>
+        </Reveal>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ staggerChildren: 0.05, delayChildren: 0.1 }}
-          className="overflow-hidden rounded-2xl border border-border/40 bg-secondary/10"
-        >
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-secondary/10">
           <div
             role="table"
             aria-label="Comparación entre NOCTE, otras marcas y lentes genéricos"
@@ -127,7 +110,7 @@ export const ComparisonTable = () => {
                   scope="col"
                   className="bg-secondary/20 px-3 py-5 text-center"
                 >
-                  <p className="text-sm font-bold text-foreground/70">Otras marcas</p>
+                  <p className="text-sm font-bold text-foreground">Otras marcas</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Competencia
                   </p>
@@ -137,7 +120,7 @@ export const ComparisonTable = () => {
                   scope="col"
                   className="bg-secondary/20 px-3 py-5 text-center"
                 >
-                  <p className="text-sm font-bold text-foreground/70">Genéricos</p>
+                  <p className="text-sm font-bold text-foreground">Genéricos</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Mercado libre
                   </p>
@@ -159,10 +142,11 @@ export const ComparisonTable = () => {
 
             <div role="rowgroup">
               {ROWS.map((row, i) => (
-                <motion.div
+                <Reveal
                   key={row.feature}
                   role="row"
-                  variants={ROW_VARIANTS}
+                  from="fade"
+                  delay={80 + i * 50}
                   className={cn(
                     "grid grid-cols-[1.6fr_1fr_1fr_1.2fr]",
                     i < ROWS.length - 1 && "border-b border-border/20",
@@ -171,20 +155,20 @@ export const ComparisonTable = () => {
                   <div
                     role="rowheader"
                     scope="row"
-                    className="px-4 py-4 text-[13px] text-foreground/75"
+                    className="px-4 py-4 text-[13px] text-foreground"
                   >
                     {row.feature}
                   </div>
                   <ComparisonCell value={row.competidor} />
                   <ComparisonCell value={row.generico} />
                   <ComparisonCell value={row.nocte} highlight nocte />
-                </motion.div>
+                </Reveal>
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
           Datos de competidores tomados de sus páginas públicas. Pueden variar sin aviso.
         </p>
       </div>
@@ -213,17 +197,21 @@ const ComparisonCell = ({ value, highlight, nocte }: ComparisonCellProps) => {
           className={cn(
             "h-4 w-4",
             value.tone === "good" && (nocte ? "text-variant-active" : "text-emerald-400"),
-            value.tone === "weak" && "text-muted-foreground/40",
+            value.tone === "weak" && "text-white/45",
           )}
           strokeWidth={2.5}
           aria-hidden="true"
         />
       )}
+      {/* La tabla existe para que se note la diferencia. Cuando las tres
+          columnas se pintan del mismo blanco deja de comparar: la celda debil
+          va atenuada y la de NOCTE en blanco pleno. Los dos ternarios que
+          estaban aca tenian las dos ramas identicas, o sea no decidian nada. */}
       <span
         className={cn(
           "font-semibold leading-tight",
-          nocte ? "text-foreground" : "text-foreground/65",
-          value.tone === "weak" && !nocte && "text-foreground/45",
+          nocte ? "text-white" : "text-white/70",
+          value.tone === "weak" && !nocte && "text-white/45",
         )}
       >
         {value.text}

@@ -13,6 +13,7 @@ import tarjetasImage from "@/assets/tarjetas.webp";
 import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
 import { BundleSelector } from "@/components/BundleSelector";
 import { ProductHero } from "@/components/ProductHero";
+import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
@@ -27,6 +28,10 @@ interface HeroSectionProps {
   selectedQuantity: number;
   picks: VariantId[];
   onPickChange: (unitIndex: number, next: VariantId) => void;
+  /** El badge de autoridad vive aca hasta que se posa en el header. */
+  badgeCollapsed: boolean;
+  badgeDocked: boolean;
+  onGalleryInteract: () => void;
 }
 
 export const HeroSection = ({
@@ -37,6 +42,9 @@ export const HeroSection = ({
   selectedQuantity,
   picks,
   onPickChange,
+  badgeCollapsed,
+  badgeDocked,
+  onGalleryInteract,
 }: HeroSectionProps) => {
   const { activeVariant, setActiveVariant } = useActiveVariant();
 
@@ -56,16 +64,9 @@ export const HeroSection = ({
     onPickChange(unitIndex, next);
     if (unitIndex === 0) setActiveVariant(next);
   };
-  const [badgeCollapsed, setBadgeCollapsed] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { amount: 0.5 });
   const variant = VARIANTS[activeVariant];
-
-  // Auto-collapse the authority badge once, 2s after mount, never expands again.
-  useEffect(() => {
-    const timer = setTimeout(() => setBadgeCollapsed(true), 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Live purchase notification
   const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
@@ -188,41 +189,29 @@ export const HeroSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-1 w-full lg:self-center lg:-mt-10"
+            // Arriba y no centrada. La columna de contenido mide casi el doble
+            // que la galeria, asi que centrarla dejaba 300px de negro arriba de
+            // la foto con el titulo ya empezado al costado. Pegarla con sticky
+            // tampoco sirve: la galeria mide 783px y en un portatil de 800 de
+            // alto, con el header fijo arriba, las miniaturas de color quedarian
+            // permanentemente fuera de pantalla.
+            className="relative order-1 w-full lg:self-start"
           >
-            {/* Authority Badge, auto-collapses to the left after 2s, one-way.
-                #1 and the flag stay mounted; only the middle copy collapses. */}
-            <motion.div
-              layout
-              className="absolute top-4 left-2 md:top-2 md:left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-lg overflow-hidden text-white text-xs md:text-sm font-semibold whitespace-nowrap"
-              style={{
-                background: `linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.75))`,
-                willChange: "width, transform",
-              }}
-              transition={{ layout: { duration: 0.85, ease: [0.22, 0.61, 0.36, 1] } }}
-              initial={false}
-            >
-              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>#1</motion.span>
-              <AnimatePresence mode="popLayout" initial={false}>
-                {!badgeCollapsed && (
-                  <motion.span
-                    key="mid"
-                    layout="position"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
-                  >
-                    Lentes Anti-Luz Azul en Paraguay
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <motion.span layout="position" transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1] }}>🇵🇾</motion.span>
-            </motion.div>
+            {/* Badge de autoridad. Vive sobre la esquina de la foto hasta
+                que el cliente toca la galeria: ahi se va al header. Ver
+                AuthorityBadge para el vuelo. */}
+            {!badgeDocked && (
+              <AuthorityBadge
+                collapsed={badgeCollapsed}
+                docked={false}
+                className="absolute left-2 top-4 z-20 md:left-4 md:top-2"
+              />
+            )}
 
             <ProductHero
               activeVariant={activeVariant}
               onVariantChange={(next) => handlePickChange(0, next)}
+              onGalleryInteract={onGalleryInteract}
             />
           </motion.div>
 
@@ -249,53 +238,51 @@ export const HeroSection = ({
                   <span style={{ color: variant.accent }}>
                     {variant.blockedPercent}%
                   </span>{" "}
-                  <span className="font-medium text-white/70">luz azul</span>
+                  <span className="font-medium text-white">luz azul</span>
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white">
                   Modo {variant.moment}
                 </span>
               </div>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={variant.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                    className="block"
-                  >
-                    {variant.displayTitle}
-                  </motion.span>
-                </AnimatePresence>
+              {/* El titulo nombra el sistema, no el SKU. La mayoria del
+                  trafico entra por el ad de los tres momentos, asi que abrir
+                  con "Lentes Rojos" le habla al color que se llevo el click y
+                  no a lo que se vende. Efecto lateral: al ser fijo, cambiar de
+                  lente ya no reescribe el h1 ni empuja la pagina. */}
+              <h1 className="text-[28px] font-bold leading-[1.08] tracking-tight text-white md:text-4xl lg:text-5xl">
+                Un lente para cada momento del día
               </h1>
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p
-                  key={`tagline-${variant.id}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-base md:text-lg font-medium text-white/80"
-                >
-                  {variant.tagline}
-                </motion.p>
-              </AnimatePresence>
+              {/* Cada color va pintado de su propio tono: la bajada es el mapa
+                  de las tres miniaturas de arriba, no una frase mas. */}
+              <p className="max-w-md text-base leading-snug text-white md:text-lg">
+                De mañana el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.amarillo.accent }}>
+                  amarillo
+                </span>{" "}
+                para enfocarte, de tarde el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.naranja.accent }}>
+                  naranja
+                </span>{" "}
+                para no apagarte, de noche el{" "}
+                <span className="font-semibold" style={{ color: VARIANTS.rojo.accent }}>
+                  rojo
+                </span>{" "}
+                para dormir profundo.
+              </p>
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p
-                  key={`desc-${variant.id}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-sm md:text-base text-white/70 max-w-md"
-                >
-                  {variant.description}
-                </motion.p>
-              </AnimatePresence>
+              {/* La unica linea que cambia con el color: confirma la eleccion.
+                  Reserva su alto maximo porque las tres descripciones no miden
+                  lo mismo, y el swap va por CSS y no por AnimatePresence: con
+                  mode="wait" el nodo viejo se iba, quedaba el hueco 280ms y
+                  recien despues entraba el nuevo. Ese hueco era el salto. */}
+              <p
+                key={`desc-${variant.id}`}
+                className="nocte-swap min-h-[60px] max-w-md text-sm text-white/80 md:min-h-[48px] md:text-base"
+              >
+                {variant.description}
+              </p>
 
               {/* Star Rating + Social Proof */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -304,14 +291,18 @@ export const HeroSection = ({
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
                   <StarIcon className="w-5 h-5 star-gold" />
+                  {/* El fondo de la media estrella tiene que verse apagado o
+                      el 4.8 se lee como 5 lleno. Va con un blanco al 20% y no
+                      con text-muted-foreground, que es blanco pleno a proposito
+                      en todo el sitio: aca el atenuado ES el dato. */}
                   <div className="relative w-5 h-5">
-                    <StarIcon className="w-5 h-5 text-muted-foreground/30 absolute" />
+                    <StarIcon className="w-5 h-5 text-white/20 absolute" />
                     <div className="overflow-hidden absolute inset-0" style={{ width: '80%' }}>
                       <StarIcon className="w-5 h-5 star-gold" />
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-foreground/80 font-medium">
+                <p className="text-sm text-foreground font-medium">
                   4.8/5 (+5.380 Clientes Satisfechos)
                 </p>
               </div>
@@ -355,7 +346,9 @@ export const HeroSection = ({
 
             {/* Price */}
             <div className="flex items-center gap-3">
-              <span className="text-base text-foreground/40 line-through">
+              {/* El precio de referencia va atenuado: al mismo blanco que el
+                  precio real competian y el ancla dejaba de anclar. */}
+              <span className="text-base text-white/50 line-through">
                 Gs. {originalPrice.toLocaleString('es-PY')}
               </span>
               <span className="text-4xl md:text-5xl font-bold text-white">
@@ -367,7 +360,7 @@ export const HeroSection = ({
             {ALL_VARIANTS_SOLD_OUT ? (
               <div className="inline-flex items-center gap-2 px-4 py-2 border border-white/15 bg-white/[0.04] rounded-lg">
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white/40" />
-                <span className="text-sm font-semibold text-white/70">
+                <span className="text-sm font-semibold text-white">
                   Stock agotado. Reponemos pronto.
                 </span>
               </div>
@@ -422,17 +415,9 @@ export const HeroSection = ({
 
             {/* CTA Button */}
             <div className="space-y-3">
-              <motion.div
+              <div
                 ref={ctaRef}
-                animate={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
-                  scale: [1, 1.02, 1],
-                } : { scale: 1 }}
-                transition={ctaInView && !ALL_VARIANTS_SOLD_OUT ? {
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  ease: "easeInOut"
-                } : { duration: 0 }}
+                className={ctaInView && !ALL_VARIANTS_SOLD_OUT ? "nocte-cta-pulse" : undefined}
               >
                 <Button
                   data-hero-cta
@@ -447,7 +432,7 @@ export const HeroSection = ({
                     ? "AGOTADO · VUELVE PRONTO"
                     : `COMPRAR AHORA · Gs. ${selectedPrice.toLocaleString('es-PY')}`}
                 </Button>
-              </motion.div>
+              </div>
 
               {/* Dynamic Delivery Date */}
               {!ALL_VARIANTS_SOLD_OUT && (
@@ -462,7 +447,7 @@ export const HeroSection = ({
               <img
                 src={tarjetasImage}
                 alt="Visa, Mastercard, Apple Pay, Google Pay"
-                className="h-8 md:h-9 w-auto opacity-80"
+                className="h-11 w-auto opacity-95 md:h-12"
               />
             </div>
 

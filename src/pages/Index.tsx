@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { DeliveryBanner } from "@/components/DeliveryBanner";
+import { NocteMark } from "@/components/NocteMark";
+import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { HeroSection } from "@/components/HeroSection";
 import { StickyBuyButton } from "@/components/StickyBuyButton";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -15,7 +17,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resizePicks, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -27,6 +29,8 @@ const PURCHASE_ID_WAIT_MS = 6000;
 getStripe();
 
 // Lazy load heavy sections that are below the fold
+const ProblemSection = lazy(() => import("@/components/ProblemSection"));
+const MomentsSection = lazy(() => import("@/components/MomentsSection"));
 const CelebritiesMarquee = lazy(() => import("@/components/CelebritiesMarquee"));
 const ProductVideo = lazy(() => import("@/components/ProductVideo"));
 const BlueLightMorph = lazy(() => import("@/components/BlueLightMorph"));
@@ -149,18 +153,13 @@ const Index = () => {
     }
   }, [checkoutData.orderNumber]);
 
-  // Keep picks array sized to selectedQuantity. Preserve any colors already chosen,
-  // pad with the first pick (or DEFAULT_VARIANT) when growing.
+  // Mantiene picks del largo de selectedQuantity. Al agrandar conserva lo ya
+  // elegido y completa con los colores que faltan (ver resizePicks): pasar al
+  // pack de tres deja el color elegido en la unidad 1 y suma los otros dos, en
+  // vez de tres veces el mismo lente. Con algun color agotado vuelve a repetir
+  // el primero, porque el set completo no se puede armar.
   useEffect(() => {
-    setPicks((prev) => {
-      if (prev.length === selectedQuantity) return prev;
-      if (prev.length > selectedQuantity) return prev.slice(0, selectedQuantity);
-      const fill = prev[0] ?? DEFAULT_VARIANT;
-      return [
-        ...prev,
-        ...Array.from({ length: selectedQuantity - prev.length }, () => fill),
-      ];
-    });
+    setPicks((prev) => (prev.length === selectedQuantity ? prev : resizePicks(prev, selectedQuantity)));
   }, [selectedQuantity]);
 
   const handlePickChange = useCallback((unitIndex: number, next: VariantId) => {
@@ -171,6 +170,7 @@ const Index = () => {
       return copy;
     });
   }, []);
+
 
   // Track InitiateCheckout when phone form opens
   useEffect(() => {
@@ -509,6 +509,46 @@ const Index = () => {
   const lastScrollYRef = useRef(0);
   const [showHeader, setShowHeader] = useState(true);
 
+  // El badge de autoridad se comparte entre el hero y el header, asi que su
+  // estado vive aca arriba: los dos puntos de montaje lo tienen que ver.
+  const [badgeCollapsed, setBadgeCollapsed] = useState(false);
+  const [badgeDocked, setBadgeDocked] = useState(false);
+
+  // La cuenta para encogerlo arranca cuando el preloader se va, no al montar.
+  // Antes corria debajo del overlay y el badge llegaba a la pantalla ya
+  // colapsado: nadie alcanzaba a leer que decia.
+  useEffect(() => {
+    let collapse: ReturnType<typeof setTimeout> | undefined;
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      collapse = setTimeout(() => setBadgeCollapsed(true), 4200);
+    };
+    if (document.documentElement.dataset.npl === "done") start();
+    window.addEventListener("nocte:ready", start, { once: true });
+    // El preloader puede no estar (build sin el, o ya removido). Sin este
+    // respaldo el badge se quedaria abierto para siempre.
+    const fallback = setTimeout(start, 2600);
+    return () => {
+      clearTimeout(fallback);
+      clearTimeout(collapse);
+      window.removeEventListener("nocte:ready", start);
+    };
+  }, []);
+
+  // Tocar la galeria es la senal de que el cliente esta mirando las fotos. El
+  // badge se va al header y no vuelve: una vez que estorbo, estorbo.
+  const handleGalleryInteract = useCallback(() => {
+    setBadgeCollapsed(true);
+    setBadgeDocked(true);
+    // El header se esconde al scrollear hacia abajo. Si el badge aterriza en un
+    // header oculto, el vuelo termina fuera de pantalla y se lee como que
+    // desaparecio.
+    setShowHeader(true);
+  }, []);
+
+
   useEffect(() => {
     let ticking = false;
     let mounted = true;
@@ -555,10 +595,28 @@ const Index = () => {
       >
         {/* We want the header to be transparent. bg-transparent. */}
         <div className="w-full">
-          <div className="container max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-between">
-            <span className="text-2xl md:text-3xl font-bold tracking-tighter mix-blend-difference text-white">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup> PARAGUAY</span>
+          <div className="container relative max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-2 md:py-3 flex items-center justify-end">
+            {/* El wordmark va como marca vectorial, no como texto: es el logo,
+                no una palabra. El drop-shadow lo sostiene sobre las fotos claras
+                sin recurrir a mix-blend-difference, que obliga al compositor a
+                leer el fondo en cada frame y este header es fixed. */}
+            {/* La marca va centrada en el viewport, no en el hueco que le deja
+                el CTA: por eso es absoluta y no un item mas del flex. */}
+            {/* Marca y badge viajan como un bloque centrado: el badge se
+                cuelga a la izquierda del wordmark con right-full, asi la marca
+                queda en el centro exacto del viewport se pose o no el badge. */}
+            <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center">
+              {badgeDocked && (
+                <AuthorityBadge
+                  collapsed
+                  docked
+                  className="absolute right-full mr-2"
+                />
+              )}
+              <NocteMark className="h-[22px] w-auto text-white md:h-[26px] [filter:drop-shadow(0_1px_10px_rgba(0,0,0,0.6))]" />
+            </div>
             {ALL_VARIANTS_SOLD_OUT ? (
-              <span className="text-white/40 font-medium text-sm md:text-base tracking-tight">
+              <span className="text-white font-medium text-sm md:text-base tracking-tight">
                 Agotado
               </span>
             ) : (
@@ -586,18 +644,33 @@ const Index = () => {
           selectedQuantity={selectedQuantity}
           picks={picks}
           onPickChange={handlePickChange}
+          badgeCollapsed={badgeCollapsed}
+          badgeDocked={badgeDocked}
+          onGalleryInteract={handleGalleryInteract}
         />
 
-        <Suspense fallback={null}>
-          <CelebritiesMarquee />
-        </Suspense>
+        {/*
+          ORDEN DE LA PAGINA. Cada seccion responde UNA objecion y va en el
+          orden en que la objecion aparece en la cabeza del cliente:
+
+            1. ¿esto es para mi?      -> ProblemSection
+            2. ¿por que me pasa?      -> BlueLightMorph
+            3. ¿de verdad funciona?   -> ProductVideo (prueba fisica)
+            4. ¿que gano yo?          -> BenefitsSection
+            5. ¿le sirvio a alguien?  -> Testimonials, y despues Celebrities
+            6. ¿cual me llevo?        -> MomentsSection
+            7. ¿es complicado usarlo? -> LifestyleSection
+            8. ¿que me llega?         -> UnboxingSection
+            9. ¿por que cuesta esto?  -> ComparisonTable
+           10. ¿y si no me sirve?     -> FAQ y Guarantee
+
+          Mover una seccion sin mover su objecion rompe la cadena: el precio
+          antes de la prueba se lee caro, y la eleccion de color antes del
+          deseo es una decision que todavia no le importa a nadie.
+        */}
 
         <Suspense fallback={null}>
-          <ProductVideo />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <UnboxingSection />
+          <ProblemSection />
         </Suspense>
 
         <Suspense fallback={null}>
@@ -607,29 +680,50 @@ const Index = () => {
         {/* ScienceDemo oculto: duplica el demo de espectro por color de BlueLightMorph. */}
 
         <Suspense fallback={null}>
+          <ProductVideo />
+        </Suspense>
+
+        <Suspense fallback={null}>
           <BenefitsSection />
         </Suspense>
 
-        {/* CTA 1: After Benefits */}
-        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
+        <Suspense fallback={null}>
+          <TestimonialsSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <CelebritiesMarquee />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <MomentsSection onPickChange={handlePickChange} />
+        </Suspense>
 
         <Suspense fallback={null}>
           <LifestyleSection />
+        </Suspense>
+
+        {/* CTA 1: cae cuando el cliente ya sabe cual es el suyo y como se usa. */}
+        <OfferCTA
+          onBuyClick={handleBuyClick}
+          selectedPrice={selectedPrice}
+          headline="Ya sabés cuál te toca. Llevátelo."
+        />
+
+        <Suspense fallback={null}>
+          <UnboxingSection />
         </Suspense>
 
         <Suspense fallback={null}>
           <ComparisonTable />
         </Suspense>
 
-        {/* CTA 2: After Comparison */}
-        <OfferCTA onBuyClick={handleBuyClick} selectedPrice={selectedPrice} />
-
-        <Suspense fallback={null}>
-          <TestimonialsSection />
-        </Suspense>
-
-        {/* CTA 3: After Testimonials (minimal) */}
-        <OfferCTA onBuyClick={handleBuyClick} variant="minimal" selectedPrice={selectedPrice} />
+        {/* CTA 2: cae con el precio recien justificado, asi que reencuadra el precio. */}
+        <OfferCTA
+          onBuyClick={handleBuyClick}
+          selectedPrice={selectedPrice}
+          headline="Más caro que un genérico. Más barato que otra noche sin dormir."
+        />
 
         <Suspense fallback={null}>
           <FAQSection />
@@ -638,6 +732,7 @@ const Index = () => {
         <Suspense fallback={null}>
           <GuaranteeSection onBuyClick={handleBuyClick} />
         </Suspense>
+
       </main>
 
       {/* Sticky Buy Button */}
@@ -697,20 +792,20 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-black border-t border-border/30 py-12 md:py-16 px-4 md:px-6 pb-32 md:pb-40">
         <div className="container max-w-[1400px] mx-auto text-center space-y-5 md:space-y-6">
-          <p className="text-2xl font-bold tracking-tighter opacity-70">NOCTE<sup className="text-[0.5em] ml-0.5">®</sup></p>
+          <NocteMark className="mx-auto h-4 w-auto text-white md:h-[18px]" />
           <p className="text-muted-foreground font-light text-xs md:text-sm">
-            Úsalos antes de dormir. Dormí profundo.
+            Usalos antes de dormir. Dormí profundo.
           </p>
 
           {/* Legal Links */}
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground/60">
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
             <Link
               to="/terminos-y-condiciones"
               className="hover:text-white transition-colors"
             >
               Términos y Condiciones
             </Link>
-            <span className="text-muted-foreground/30">|</span>
+            <span className="text-muted-foreground">|</span>
             <Link
               to="/politica-de-privacidad"
               className="hover:text-white transition-colors"
@@ -719,7 +814,7 @@ const Index = () => {
             </Link>
           </div>
 
-          <p className="text-[10px] md:text-xs text-muted-foreground/60 font-light">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-light">
             © {new Date().getFullYear()} NOCTE® Todos los Derechos Reservados
           </p>
         </div>

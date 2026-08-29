@@ -6,6 +6,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
+import { Reveal } from "@/components/Reveal";
 
 // Single-beat reveal: as the section enters the viewport, the blue spectral peak
 // at 455nm collapses, going from "sin proteccion" to "con proteccion". One pass,
@@ -234,18 +235,8 @@ export const BlueLightMorph = () => {
       className="relative bg-background px-4 py-20 md:px-6 md:py-28"
     >
       <div className="mx-auto max-w-[1100px]">
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 24 }}
-          whileInView={
-            reduced
-              ? undefined
-              : { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-          }
-          viewport={{ once: true, amount: 0.4 }}
-          onViewportEnter={playOnce}
-          className="mx-auto mb-10 max-w-2xl text-center md:mb-14"
-        >
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
+        <Reveal className="mx-auto mb-10 max-w-2xl text-center md:mb-14">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             La ciencia detrás de NOCTE
           </p>
           <h2
@@ -253,27 +244,24 @@ export const BlueLightMorph = () => {
             className="text-[clamp(2rem,5vw,3.75rem)] font-black uppercase leading-[0.98] tracking-tighter text-foreground"
           >
             {isProtected ? "Con" : "Sin"} protección de{" "}
-            <span className="text-primary">luz azul.</span>
+            <span className="text-variant-active">luz azul.</span>
           </h2>
           <p className="mx-auto mt-4 min-h-[2.5rem] max-w-xl text-base text-muted-foreground">
             {isProtected
               ? "Bloqueás el 99% de la luz azul dañina antes de que llegue a tus ojos."
               : "Toda la luz azul de la pantalla llega directo a tus ojos."}
           </p>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 24 }}
-          whileInView={
-            reduced
-              ? undefined
-              : { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } }
-          }
-          viewport={{ once: true, amount: 0.2 }}
-          className="rounded-2xl border border-primary/25 bg-secondary/10 p-4 md:p-8"
+        {/* La curva arranca cuando entra el grafico, no cuando entra el titulo:
+            si arrancara arriba el morph termina antes de que se vea. */}
+        <Reveal
+          delay={60}
+          onReveal={playOnce}
+          className="rounded-2xl border border-variant-active/25 bg-secondary/10 p-4 md:p-8"
         >
           <MorphChart t={t} reduced={reduced} />
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { Reveal } from "@/components/Reveal";
 import robertDowney from "@/assets/Robert-Downey-Jr-Glasses-5.jpg";
 import lewisHamilton from "@/assets/lewis-hamilton.webp";
 import cbum from "@/assets/cbum.jpeg";
@@ -45,15 +45,12 @@ export const CelebritiesMarquee = () => {
         <section className="py-12 md:py-20 bg-black overflow-hidden">
             <div className="container max-w-[1400px] mx-auto px-4">
                 {/* Title */}
-                <motion.h2
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                <Reveal
+                    as="h2"
                     className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-12 md:mb-16 text-white"
                 >
                     CUANDO ALGO FUNCIONA, SE NOTA...
-                </motion.h2>
+                </Reveal>
 
                 {/* Infinite Marquee */}
                 <div className="relative">
@@ -65,20 +62,9 @@ export const CelebritiesMarquee = () => {
                     <div className="flex overflow-hidden">
                         {/* Create seamless infinite loop - render celebrities 3 times */}
                         {[0, 1, 2].map((setIndex) => (
-                            <motion.div
+                            <div
                                 key={setIndex}
-                                className="flex flex-shrink-0 gap-8 md:gap-16 lg:gap-24 pr-8 md:pr-16 lg:pr-24"
-                                initial={{ x: "0%" }}
-                                animate={{ x: "-100%" }}
-                                transition={{
-                                    x: {
-                                        repeat: Infinity,
-                                        repeatType: "loop",
-                                        duration: 50,
-                                        ease: "linear",
-                                    },
-                                }}
-                                style={{ willChange: "transform" }}
+                                className="nocte-marquee-track flex flex-shrink-0 gap-8 md:gap-16 lg:gap-24 pr-8 md:pr-16 lg:pr-24"
                             >
                                 {celebrities.map((celebrity, index) => (
                                     <div
@@ -114,21 +100,20 @@ export const CelebritiesMarquee = () => {
                                         </div>
                                     </div>
                                 ))}
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Subtle trust indicator */}
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-center mt-12 md:mt-16 text-sm md:text-base text-white/50 font-light tracking-wide"
+                <Reveal
+                    as="p"
+                    from="fade"
+                    delay={160}
+                    className="text-center mt-12 md:mt-16 text-sm md:text-base text-white font-light tracking-wide"
                 >
                     Confiado por profesionales y celebridades alrededor del mundo
-                </motion.p>
+                </Reveal>
             </div>
         </section>
     );

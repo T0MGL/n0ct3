@@ -8,12 +8,18 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { VARIANT_IDS, VARIANTS, isVariantSoldOut, type VariantId } from "@/lib/variants";
+import { VARIANT_IDS, VARIANTS, isVariantSoldOut, momentWindowLabel, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
 
 interface ProductHeroProps {
   activeVariant?: VariantId;
   onVariantChange?: (next: VariantId) => void;
+  /**
+   * Se dispara la primera vez que el cliente cambia lo que se ve en la galeria
+   * (swipe, punto, flecha o miniatura de color). El badge de autoridad lo usa
+   * para irse al header: mirar las fotos y tener algo encima son incompatibles.
+   */
+  onGalleryInteract?: () => void;
   className?: string;
 }
 
@@ -75,19 +81,10 @@ const SHARED_SLIDES: readonly SharedSlide[] = [
 // bounds and aria labels all derive from this, never a hardcoded literal.
 const SLIDE_COUNT = SHARED_SLIDES.length + 1;
 
-const IMAGE_TRANSITION = {
-  duration: 0.28,
-  ease: [0.16, 1, 0.3, 1] as const,
-};
-
-const HALO_TRANSITION = {
-  duration: 0.6,
-  ease: [0.16, 1, 0.3, 1] as const,
-};
-
 export const ProductHero = ({
   activeVariant: activeVariantProp,
   onVariantChange,
+  onGalleryInteract,
   className,
 }: ProductHeroProps) => {
   const ctx = useActiveVariant();
@@ -105,6 +102,11 @@ export const ProductHero = ({
   const trackRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
 
+  // Ref y no prop directa: el observer y el efecto de variante se montan una
+  // sola vez, y no queremos re-suscribirlos porque el padre re-renderizo.
+  const interactRef = useRef(onGalleryInteract);
+  interactRef.current = onGalleryInteract;
+
   // Native horizontal scroll-snap owns the motion. The browser handles the
   // touch physics, momentum and snapping, so there is no drag motion value
   // fighting an animated transform: the swipe is smooth and the slide commits
@@ -121,7 +123,11 @@ export const ProductHero = ({
           const index = slideRefs.current.indexOf(
             entry.target as HTMLDivElement,
           );
-          if (index !== -1) setSlide(index);
+          if (index === -1) continue;
+          setSlide(index);
+          // Slide 0 tambien es el estado inicial y el destino del reset por
+          // color, asi que solo cuenta como interaccion salir de ella.
+          if (index !== 0) interactRef.current?.();
         }
       },
       { root: track, threshold: 0.6 },
@@ -177,18 +183,18 @@ export const ProductHero = ({
       <div className="relative mx-auto w-full max-w-[560px]">
         {/* Accent halo behind the product. Contained to the product area so the
             page background stays pure black, but rich enough to keep the lens
-            color reading saturated. */}
-        <motion.div
+            color reading saturated.
+
+            El latido va por CSS y el cambio de color por transition. En Framer
+            eran un rAF permanente (la respiracion nunca termina) mas un
+            backgroundColor animado en el main thread, los dos sobre un div con
+            64px de blur, que es lo mas caro de repintar de la pagina. */}
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-2 inset-y-6 -z-10 rounded-[45%] blur-3xl"
-          initial={false}
-          animate={{
+          className="nocte-halo-breathe pointer-events-none absolute inset-x-2 inset-y-6 -z-10 rounded-[45%] blur-3xl transition-[background-color] duration-[600ms]"
+          style={{
             backgroundColor: variant.lensGlow,
-            opacity: [0.34, 0.45, 0.34],
-          }}
-          transition={{
-            backgroundColor: HALO_TRANSITION,
-            opacity: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+            transitionTimingFunction: "var(--ease-smooth)",
           }}
         />
 
@@ -219,23 +225,24 @@ export const ProductHero = ({
               aria-label={`1 de ${SLIDE_COUNT}: foto del producto`}
               className="relative h-full w-full shrink-0 snap-start"
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.img
-                  key={activeVariant}
-                  src={source.src}
-                  alt={altText}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
-                  draggable={false}
-                  initial={{ opacity: 0, scale: 1.02 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={IMAGE_TRANSITION}
-                  style={source.filter ? { filter: source.filter } : undefined}
-                  className="h-full w-full object-cover"
-                />
-              </AnimatePresence>
+              {/* Con mode="wait" el cambio de color costaba 560ms: 280 de
+                  salida contra negro y 280 de entrada. La clave por variante
+                  mas una animation CSS lo hace en un commit y 280ms totales. */}
+              <img
+                key={activeVariant}
+                src={source.src}
+                alt={altText}
+                loading="eager"
+                decoding="async"
+                // React 18 no reconoce fetchPriority en camelCase: lo avisa por
+                // consola y no lo escribe en el DOM, o sea que la prioridad de
+                // la imagen del hero nunca llegaba. El atributo HTML real va en
+                // minusculas y por spread pasa derecho.
+                {...{ fetchpriority: "high" }}
+                draggable={false}
+                style={source.filter ? { filter: source.filter } : undefined}
+                className="nocte-swap-image h-full w-full object-cover"
+              />
 
               {/* Soft floor shadow that absorbs the active accent. */}
               <div
@@ -255,7 +262,7 @@ export const ProductHero = ({
                     transition={{ duration: 0.25 }}
                     className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/15 bg-black/60 px-3 py-1 backdrop-blur-md"
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
                       Vista previa, llegando pronto
                     </p>
                   </motion.div>
@@ -306,7 +313,10 @@ export const ProductHero = ({
                 <button
                   key={index}
                   type="button"
-                  onClick={() => scrollToSlide(index, "smooth")}
+                  onClick={() => {
+                    scrollToSlide(index, "smooth");
+                    onGalleryInteract?.();
+                  }}
                   aria-label={`Ir a la imagen ${index + 1} de ${SLIDE_COUNT}`}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
@@ -329,12 +339,12 @@ export const ProductHero = ({
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: variant.lensColor, boxShadow: `0 0 10px ${variant.lensGlow}` }}
             />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/85">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
               Modo {variant.moment}
             </span>
           </div>
-          <span className="text-[10px] uppercase tracking-[0.18em] text-white/55">
-            {variant.momentTimeWindow}
+          <span className="text-[10px] uppercase tracking-[0.18em] text-white">
+            {momentWindowLabel(variant.id)}
           </span>
         </div>
 
@@ -356,7 +366,11 @@ export const ProductHero = ({
                 aria-disabled={soldOut || undefined}
                 disabled={soldOut}
                 aria-label={soldOut ? `${v.name}, agotado` : `Ver ${v.name}`}
-                onClick={() => { if (!soldOut) selectVariant(id); }}
+                onClick={() => {
+                  if (soldOut) return;
+                  selectVariant(id);
+                  onGalleryInteract?.();
+                }}
                 className={cn(
                   "group relative overflow-hidden rounded-lg aspect-square bg-black/40 transition-all duration-200",
                   soldOut
@@ -378,7 +392,7 @@ export const ProductHero = ({
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90"
+                  className="absolute inset-x-0 bottom-0 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white"
                   style={{
                     background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.85) 100%)`,
                   }}
@@ -388,7 +402,7 @@ export const ProductHero = ({
                 {soldOut && (
                   <span
                     aria-hidden="true"
-                    className="absolute right-1.5 top-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/90 ring-1 ring-white/15"
+                    className="absolute right-1.5 top-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white ring-1 ring-white/15"
                   >
                     Agotado
                   </span>

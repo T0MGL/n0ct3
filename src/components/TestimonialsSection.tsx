@@ -1,7 +1,7 @@
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
-import { motion } from "framer-motion";
+import { Reveal } from "@/components/Reveal";
 import testimonial1 from "@/assets/testimonial1.webp";
 import testimonial2 from "@/assets/testimonial2.webp";
 import testimonial3 from "@/assets/testimonial3.webp";
@@ -56,29 +56,6 @@ const testimonials = [
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  },
-};
-
 export const TestimonialsSection = () => {
   return (
     <section className="py-8 md:py-16 px-4 md:px-6 bg-black relative">
@@ -94,18 +71,12 @@ export const TestimonialsSection = () => {
           </p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5">
           {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              className="group p-5 md:p-6 bg-gradient-to-b from-card to-black border border-border/50 hover:border-variant-active/30 transition-all duration-300"
+            <Reveal
+              key={testimonial.name}
+              delay={index * 70}
+              className="group p-5 md:p-6 bg-gradient-to-b from-card to-black border border-border/50 transition-colors duration-300 hover:border-variant-active/30"
             >
               <div className="space-y-4 md:space-y-5">
                 <div className="flex items-center gap-3">
@@ -135,20 +106,20 @@ export const TestimonialsSection = () => {
                       i < testimonial.rating ? (
                         <StarIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 star-gold" />
                       ) : (
-                        <StarOutlineIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground/30" />
+                        <StarOutlineIcon key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground" />
                       )
                     ))}
                   </div>
-                  <span className="text-[10px] text-muted-foreground/60">{testimonial.date}</span>
+                  <span className="text-[10px] text-muted-foreground">{testimonial.date}</span>
                 </div>
 
-                <p className="text-foreground/80 leading-relaxed font-light text-sm">
+                <p className="text-foreground leading-relaxed font-light text-sm">
                   &ldquo;{testimonial.quote}&rdquo;
                 </p>
               </div>
-            </motion.div>
+            </Reveal>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
