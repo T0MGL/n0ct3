@@ -227,11 +227,6 @@ export function resolveSelectableVariant(id: VariantId): VariantId {
 export const FULL_SET_AVAILABLE: boolean = VARIANT_IDS.every((id) => !isVariantSoldOut(id));
 
 /**
- * Los tres colores en orden de dia, para el pack que cubre la jornada entera.
- */
-export const FULL_SET: readonly VariantId[] = MOMENT_ORDER;
-
-/**
  * Ajusta una lista de picks al largo pedido. Al agrandar conserva lo ya elegido
  * y completa con los colores que faltan, en orden de dia: el que pasa de un
  * lente al pack de tres se lleva los tres momentos y no tres veces el mismo

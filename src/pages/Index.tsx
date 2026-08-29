@@ -17,7 +17,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, FULL_SET, FULL_SET_AVAILABLE, resizePicks, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resizePicks, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -211,23 +211,6 @@ const Index = () => {
     }
     setSelectedBundleIndex(index);
   }, [selectedBundleIndex]);
-
-  /**
-   * Salta al pack que cubre el dia entero: elige el bundle cuya cantidad es
-   * igual a la cantidad de colores y carga los tres. Setea bundle y picks en el
-   * mismo batch, asi el efecto de arriba ya encuentra el largo correcto y no
-   * pisa la seleccion.
-   */
-  const fullSetBundleIndex = useMemo(
-    () => BUNDLES.findIndex((bundle) => bundle.quantity === FULL_SET.length),
-    [],
-  );
-
-  const handleSelectFullSet = useCallback(() => {
-    if (fullSetBundleIndex < 0 || !FULL_SET_AVAILABLE) return;
-    handleBundleSelect(fullSetBundleIndex);
-    setPicks(FULL_SET.slice());
-  }, [fullSetBundleIndex, handleBundleSelect]);
 
   const startBuyFlow = useCallback((bundleIndex: number, hasAtcFired: boolean) => {
     // Hard gate: with every color sold out there is nothing sellable, so the
@@ -664,7 +647,6 @@ const Index = () => {
           badgeCollapsed={badgeCollapsed}
           badgeDocked={badgeDocked}
           onGalleryInteract={handleGalleryInteract}
-          onSelectFullSet={handleSelectFullSet}
         />
 
         {/*

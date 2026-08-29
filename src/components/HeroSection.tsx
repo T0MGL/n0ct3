@@ -32,8 +32,6 @@ interface HeroSectionProps {
   badgeCollapsed: boolean;
   badgeDocked: boolean;
   onGalleryInteract: () => void;
-  /** Carga el pack de tres con los tres colores de una. */
-  onSelectFullSet: () => void;
 }
 
 export const HeroSection = ({
@@ -47,7 +45,6 @@ export const HeroSection = ({
   badgeCollapsed,
   badgeDocked,
   onGalleryInteract,
-  onSelectFullSet,
 }: HeroSectionProps) => {
   const { activeVariant, setActiveVariant } = useActiveVariant();
 
@@ -341,7 +338,6 @@ export const HeroSection = ({
               onSelect={onBundleSelect}
               picks={picks}
               onPickChange={handlePickChange}
-              onSelectFullSet={onSelectFullSet}
             />
 
             {/* Price */}
