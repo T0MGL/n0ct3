@@ -1,9 +1,11 @@
 import { useEffect } from "react";
-import { TruckIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, TruckIcon } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
 import { BUNDLES, ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 import { VariantPicker } from "@/components/VariantPicker";
 import {
+  FULL_SET,
+  FULL_SET_AVAILABLE,
   VARIANTS,
   VARIANT_IDS,
   isVariantSoldOut,
@@ -16,7 +18,12 @@ interface BundleSelectorProps {
   onSelect: (index: number) => void;
   picks: VariantId[];
   onPickChange: (unitIndex: number, next: VariantId) => void;
+  /** Carga el pack de tres con los tres colores de una. */
+  onSelectFullSet: () => void;
 }
+
+/** Precio del pack que cubre el dia entero, para mostrarlo en la tira. */
+const FULL_SET_BUNDLE = BUNDLES.find((bundle) => bundle.quantity === FULL_SET.length);
 
 const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
 
@@ -40,7 +47,13 @@ export const BundleSelector = ({
   onSelect,
   picks,
   onPickChange,
+  onSelectFullSet,
 }: BundleSelectorProps) => {
+  // El set esta completo cuando el pack tiene tantas unidades como colores y
+  // no hay dos iguales. Sirve para saber si la tira todavia tiene algo que
+  // ofrecer o si ya cumplio.
+  const hasFullSet =
+    picks.length === FULL_SET.length && new Set(picks).size === FULL_SET.length;
   // Defense in depth: if any slot resolves to a sold-out color (deep link,
   // stale localStorage, a flag flipped after the pick was made) correct it back
   // to a sellable color so the checkout snapshot can never carry it.
@@ -230,6 +243,63 @@ export const BundleSelector = ({
           </motion.div>
         );
       })}
+
+      {/* El pack completo necesitaba su propio empujon: el cliente que llega
+          por el ad del rojo no sabe que puede llevarse los tres, y armar tres
+          colores distintos a mano son tres toques que casi nadie da. Un click
+          lo deja hecho. Si falta algun color el set no existe, asi que la tira
+          no aparece y el selector queda como estaba. */}
+      {FULL_SET_AVAILABLE && FULL_SET_BUNDLE && (
+        <div
+          className="rounded-lg border p-3.5 transition-colors duration-300"
+          style={{
+            borderColor: hasFullSet ? "rgba(16,185,129,0.35)" : "hsl(var(--variant-active) / 0.35)",
+            background: hasFullSet
+              ? "rgba(16,185,129,0.06)"
+              : "linear-gradient(120deg, hsl(var(--variant-active) / 0.1), transparent 70%)",
+          }}
+        >
+          {hasFullSet ? (
+            <div className="flex items-center gap-2.5">
+              <CheckIcon className="h-4 w-4 flex-shrink-0 text-emerald-400" strokeWidth={2.5} />
+              <p className="text-[12px] leading-snug text-white">
+                <span className="font-semibold text-emerald-400">Día entero cubierto.</span>{" "}
+                <span className="text-white/70">
+                  Te mandamos los tres: amarillo, naranja y rojo.
+                </span>
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2.5">
+                <span aria-hidden="true" className="mt-[3px] flex flex-shrink-0 gap-1">
+                  {FULL_SET.map((id) => (
+                    <span
+                      key={id}
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: VARIANTS[id].accent }}
+                    />
+                  ))}
+                </span>
+                <p className="text-[12px] leading-snug text-white">
+                  <span className="font-semibold">Protegete el día entero.</span>{" "}
+                  <span className="text-white/70">
+                    Un lente para cada momento, los tres en un solo pack.
+                  </span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onSelectFullSet}
+                className="w-full flex-shrink-0 rounded-md bg-variant-active px-3.5 py-2 text-[12px] font-bold text-white transition-transform duration-150 hover:brightness-110 active:scale-[0.98] sm:w-auto"
+              >
+                Llevar los tres · Gs. {FULL_SET_BUNDLE.price.toLocaleString("es-PY")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* El envio gratis va pegado a los packs, no en el footer ni en la
           garantia: la duda de cuanto sale mandarlo aparece exactamente cuando

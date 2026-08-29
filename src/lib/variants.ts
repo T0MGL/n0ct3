@@ -223,6 +223,44 @@ export function resolveSelectableVariant(id: VariantId): VariantId {
   return isVariantSoldOut(id) ? DEFAULT_VARIANT : id;
 }
 
+/** True cuando los tres colores estan disponibles y se puede armar el set completo. */
+export const FULL_SET_AVAILABLE: boolean = VARIANT_IDS.every((id) => !isVariantSoldOut(id));
+
+/**
+ * Los tres colores en orden de dia, para el pack que cubre la jornada entera.
+ */
+export const FULL_SET: readonly VariantId[] = MOMENT_ORDER;
+
+/**
+ * Ajusta una lista de picks al largo pedido. Al agrandar conserva lo ya elegido
+ * y completa con los colores que faltan, en orden de dia: el que pasa de un
+ * lente al pack de tres se lleva los tres momentos y no tres veces el mismo
+ * lente, que es lo que pasaba antes y obligaba a corregir a mano.
+ *
+ * Si algun color esta agotado el set completo no se puede armar, asi que en ese
+ * caso completa repitiendo el primer pick, que es el comportamiento anterior.
+ */
+export function resizePicks(
+  prev: readonly VariantId[],
+  quantity: number,
+): VariantId[] {
+  if (prev.length === quantity) return prev.slice();
+  if (prev.length > quantity) return prev.slice(0, quantity);
+
+  const filled = prev.slice();
+  const fallback = resolveSelectableVariant(prev[0] ?? DEFAULT_VARIANT);
+
+  if (FULL_SET_AVAILABLE) {
+    const missing = MOMENT_ORDER.filter((id) => !filled.includes(id));
+    while (filled.length < quantity && missing.length > 0) {
+      filled.push(missing.shift() as VariantId);
+    }
+  }
+
+  while (filled.length < quantity) filled.push(fallback);
+  return filled;
+}
+
 export interface VariantCount {
   variant: Variant;
   count: number;

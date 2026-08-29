@@ -17,7 +17,7 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, FULL_SET, FULL_SET_AVAILABLE, resizePicks, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -153,18 +153,13 @@ const Index = () => {
     }
   }, [checkoutData.orderNumber]);
 
-  // Keep picks array sized to selectedQuantity. Preserve any colors already chosen,
-  // pad with the first pick (or DEFAULT_VARIANT) when growing.
+  // Mantiene picks del largo de selectedQuantity. Al agrandar conserva lo ya
+  // elegido y completa con los colores que faltan (ver resizePicks): pasar al
+  // pack de tres deja el color elegido en la unidad 1 y suma los otros dos, en
+  // vez de tres veces el mismo lente. Con algun color agotado vuelve a repetir
+  // el primero, porque el set completo no se puede armar.
   useEffect(() => {
-    setPicks((prev) => {
-      if (prev.length === selectedQuantity) return prev;
-      if (prev.length > selectedQuantity) return prev.slice(0, selectedQuantity);
-      const fill = prev[0] ?? DEFAULT_VARIANT;
-      return [
-        ...prev,
-        ...Array.from({ length: selectedQuantity - prev.length }, () => fill),
-      ];
-    });
+    setPicks((prev) => (prev.length === selectedQuantity ? prev : resizePicks(prev, selectedQuantity)));
   }, [selectedQuantity]);
 
   const handlePickChange = useCallback((unitIndex: number, next: VariantId) => {
@@ -175,6 +170,7 @@ const Index = () => {
       return copy;
     });
   }, []);
+
 
   // Track InitiateCheckout when phone form opens
   useEffect(() => {
@@ -215,6 +211,23 @@ const Index = () => {
     }
     setSelectedBundleIndex(index);
   }, [selectedBundleIndex]);
+
+  /**
+   * Salta al pack que cubre el dia entero: elige el bundle cuya cantidad es
+   * igual a la cantidad de colores y carga los tres. Setea bundle y picks en el
+   * mismo batch, asi el efecto de arriba ya encuentra el largo correcto y no
+   * pisa la seleccion.
+   */
+  const fullSetBundleIndex = useMemo(
+    () => BUNDLES.findIndex((bundle) => bundle.quantity === FULL_SET.length),
+    [],
+  );
+
+  const handleSelectFullSet = useCallback(() => {
+    if (fullSetBundleIndex < 0 || !FULL_SET_AVAILABLE) return;
+    handleBundleSelect(fullSetBundleIndex);
+    setPicks(FULL_SET.slice());
+  }, [fullSetBundleIndex, handleBundleSelect]);
 
   const startBuyFlow = useCallback((bundleIndex: number, hasAtcFired: boolean) => {
     // Hard gate: with every color sold out there is nothing sellable, so the
@@ -651,6 +664,7 @@ const Index = () => {
           badgeCollapsed={badgeCollapsed}
           badgeDocked={badgeDocked}
           onGalleryInteract={handleGalleryInteract}
+          onSelectFullSet={handleSelectFullSet}
         />
 
         {/*

@@ -236,7 +236,7 @@ export const BlueLightMorph = () => {
     >
       <div className="mx-auto max-w-[1100px]">
         <Reveal className="mx-auto mb-10 max-w-2xl text-center md:mb-14">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
             La ciencia detrás de NOCTE
           </p>
           <h2
@@ -244,7 +244,7 @@ export const BlueLightMorph = () => {
             className="text-[clamp(2rem,5vw,3.75rem)] font-black uppercase leading-[0.98] tracking-tighter text-foreground"
           >
             {isProtected ? "Con" : "Sin"} protección de{" "}
-            <span className="text-primary">luz azul.</span>
+            <span className="text-variant-active">luz azul.</span>
           </h2>
           <p className="mx-auto mt-4 min-h-[2.5rem] max-w-xl text-base text-muted-foreground">
             {isProtected
@@ -258,7 +258,7 @@ export const BlueLightMorph = () => {
         <Reveal
           delay={60}
           onReveal={playOnce}
-          className="rounded-2xl border border-primary/25 bg-secondary/10 p-4 md:p-8"
+          className="rounded-2xl border border-variant-active/25 bg-secondary/10 p-4 md:p-8"
         >
           <MorphChart t={t} reduced={reduced} />
         </Reveal>
