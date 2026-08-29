@@ -422,6 +422,25 @@
         // pantalla negra eterna esperando que pase.
         var MIN = 900, CAP = 1800, RESOLVE = 620, HOLD = 280, FADE = 320;
         var t0 = Date.now(), done = false;
+        var SEEN = 'nocte-npl-seen';
+
+        // La animacion cuesta 2,1 segundos de pantalla tapada antes de que se
+        // vea la oferta. Vale la pena una vez, la primera, que es la que llega
+        // del anuncio. El que vuelve del carrito, del WhatsApp o de una pestana
+        // que dejo abierta ya la vio y solo esta esperando. Se marca por sesion
+        // y no por dispositivo: manana vuelve a ser la primera vez.
+        var seen = false;
+        try { seen = sessionStorage.getItem(SEEN) === '1'; } catch (e) { seen = false; }
+
+        if (seen) {
+          // Sin lock y sin evento: React todavia no monto, asi que nadie
+          // escucharia el dispatch. El dataset lo lee al montar (ver el efecto
+          // del badge en Index.tsx), que es el camino que ya existia para
+          // cuando el preloader termina antes que React.
+          root.dataset.npl = 'done';
+          el.remove();
+          return;
+        }
 
         root.classList.add('npl-lock');
 
@@ -437,6 +456,7 @@
               // cliente despierto (el badge de autoridad, por ejemplo). Contar
               // desde el mount de React es contar debajo de esta pantalla.
               root.dataset.npl = 'done';
+              try { sessionStorage.setItem(SEEN, '1'); } catch (e) { /* modo privado */ }
               window.dispatchEvent(new Event('nocte:ready'));
               setTimeout(function () { el.remove(); }, FADE);
             }, RESOLVE + HOLD);
