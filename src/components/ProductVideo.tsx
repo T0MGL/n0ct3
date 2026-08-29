@@ -49,10 +49,27 @@ export const ProductVideo = () => {
       { threshold: 0.5 },
     );
 
+    // Precarga adelantada. Con preload="metadata" el archivo empezaba a bajar
+    // recien cuando el video ya estaba a media pantalla, asi que se veia el
+    // poster quieto un rato y despues arrancaba de golpe. Este segundo
+    // observador dispara la descarga 800px antes de que se vea, y para cuando
+    // le toca reproducir ya tiene buffer.
+    const warmup = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        warmup.disconnect();
+        videoElement.preload = "auto";
+        videoElement.load();
+      },
+      { rootMargin: "800px 0px" },
+    );
+
+    warmup.observe(videoElement);
     observer.observe(videoElement);
 
     return () => {
       isMounted = false;
+      warmup.disconnect();
       observer.disconnect();
     };
   }, []);
@@ -92,6 +109,11 @@ export const ProductVideo = () => {
             <video
               ref={videoRef}
               src={productVideo}
+              // El poster es el cuadro 0 exacto del archivo. El anterior era
+              // otra toma, un poco mas cerrada, asi que al aparecer el primer
+              // cuadro real el encuadre saltaba: eso era el "aparece de
+              // repente". Si se recorta o se reencoda el video, este poster se
+              // regenera con el, o vuelve el salto.
               poster={videoPoster}
               loop
               muted
