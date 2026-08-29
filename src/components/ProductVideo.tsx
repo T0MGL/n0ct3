@@ -1,3 +1,4 @@
+import { PlayIcon } from "@heroicons/react/24/solid";
 import { Reveal } from "@/components/Reveal";
 import productVideo from "@/assets/nocteglasses.mp4";
 import videoPoster from "@/assets/nocte-video-poster.webp";
@@ -6,11 +7,11 @@ import { useRef, useEffect, useState } from "react";
 export const ProductVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // El video corre sin controles, en loop y mudo: se comporta como un gif y
-  // esa es la lectura que queremos. Pero si el navegador bloquea el autoplay
-  // (ahorro de datos, reduced motion del sistema, alguna politica de iOS) sin
-  // controles queda un poster congelado sin forma de arrancarlo. Ahi y solo
-  // ahi aparecen los controles.
+  // El video corre sin barra de controles nunca: mudo, en loop y arrancando
+  // solo. Se lee como un gif y esa es la idea. Lo unico que puede fallar es el
+  // autoplay (ahorro de datos, reduced motion del sistema, alguna politica de
+  // iOS) y ahi sin nada quedaria un poster congelado sin forma de arrancarlo,
+  // asi que en ese caso aparece un boton de play propio, no la barra nativa.
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export const ProductVideo = () => {
     const playVideo = async () => {
       try {
         await videoElement.play();
+        if (isMounted) setAutoplayBlocked(false);
       } catch (error) {
         if (!isMounted) return;
         setAutoplayBlocked(true);
@@ -31,16 +33,20 @@ export const ProductVideo = () => {
       }
     };
 
-    // Usa Intersection Observer para reproducir cuando esté visible
+    // Fuera de pantalla se pausa. Un loop de 17 segundos corriendo mientras el
+    // cliente lee el resto de la pagina gasta bateria por nada.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && isMounted) {
+          if (!isMounted) return;
+          if (entry.isIntersecting) {
             playVideo();
+          } else if (!videoElement.paused) {
+            videoElement.pause();
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     observer.observe(videoElement);
@@ -50,6 +56,13 @@ export const ProductVideo = () => {
       observer.disconnect();
     };
   }, []);
+
+  const handleManualPlay = () => {
+    videoRef.current?.play().then(
+      () => setAutoplayBlocked(false),
+      () => undefined,
+    );
+  };
 
   return (
     <section data-section="product-video" className="py-6 md:py-8 lg:py-12 px-4 bg-gradient-to-b from-black via-secondary/20 to-black">
@@ -80,15 +93,28 @@ export const ProductVideo = () => {
               ref={videoRef}
               src={productVideo}
               poster={videoPoster}
-              controls={autoplayBlocked}
               loop
               muted
               playsInline
+              disablePictureInPicture
               className="relative z-10 h-auto w-full rounded-lg"
               preload="metadata"
             >
               Tu navegador no soporta el elemento de video.
             </video>
+
+            {autoplayBlocked && (
+              <button
+                type="button"
+                onClick={handleManualPlay}
+                aria-label="Reproducir la prueba de la tarjeta"
+                className="absolute inset-0 z-20 grid place-items-center bg-black/30 transition-colors duration-200 hover:bg-black/20"
+              >
+                <span className="grid h-16 w-16 place-items-center rounded-full bg-white/90 shadow-lg transition-transform duration-200 active:scale-95">
+                  <PlayIcon className="ml-1 h-7 w-7 text-black" />
+                </span>
+              </button>
+            )}
           </Reveal>
         </div>
       </div>
