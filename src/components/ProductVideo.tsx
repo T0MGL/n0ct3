@@ -1,10 +1,17 @@
 import { Reveal } from "@/components/Reveal";
 import productVideo from "@/assets/nocteglasses.mp4";
 import videoPoster from "@/assets/nocte-video-poster.webp";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 export const ProductVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // El video corre sin controles, en loop y mudo: se comporta como un gif y
+  // esa es la lectura que queremos. Pero si el navegador bloquea el autoplay
+  // (ahorro de datos, reduced motion del sistema, alguna politica de iOS) sin
+  // controles queda un poster congelado sin forma de arrancarlo. Ahi y solo
+  // ahi aparecen los controles.
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -12,14 +19,13 @@ export const ProductVideo = () => {
 
     let isMounted = true;
 
-    // Intenta reproducir el video cuando el componente se monta
     const playVideo = async () => {
       try {
         await videoElement.play();
       } catch (error) {
-        // Autoplay puede ser bloqueado por el navegador. No es un error accionable:
-        // el usuario reproduce manualmente con los controles.
-        if (isMounted && import.meta.env.DEV) {
+        if (!isMounted) return;
+        setAutoplayBlocked(true);
+        if (import.meta.env.DEV) {
           console.warn("Autoplay bloqueado por el navegador:", error);
         }
       }
@@ -63,21 +69,22 @@ export const ProductVideo = () => {
             </p>
           </Reveal>
 
-          {/* Video Container - Integrado en la página */}
-          <Reveal delay={70} className="relative w-full mx-auto overflow-hidden rounded-lg">
-            {/* Ambient glow effect - más sutil */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.1),transparent_70%)] pointer-events-none" />
+          {/* El video es vertical 9:16. Sin tope de ancho se estiraba a los 900
+              del contenedor, o sea 836 por 1486 en desktop: un bloque mas alto
+              que la pantalla, y ademas escalando la fuente de 720 hacia arriba.
+              Con el tope entra entero en el viewport y se ve nitido. */}
+          <Reveal delay={70} className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-lg">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.1),transparent_70%)]" />
 
-            {/* Video element */}
             <video
               ref={videoRef}
               src={productVideo}
               poster={videoPoster}
-              controls
+              controls={autoplayBlocked}
               loop
               muted
               playsInline
-              className="w-full h-auto relative z-10 rounded-lg"
+              className="relative z-10 h-auto w-full rounded-lg"
               preload="metadata"
             >
               Tu navegador no soporta el elemento de video.
