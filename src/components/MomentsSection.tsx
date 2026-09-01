@@ -28,6 +28,20 @@ const spanHours = (id: VariantId): number => {
   return from < to ? to - from : 24 - from + to;
 };
 
+/**
+ * El siguiente color vendible en el orden del dia. Cuando el que le toca a la
+ * hora del visitante esta agotado, la linea del encabezado manda aca en vez de
+ * seguir empujando un lente que no esta.
+ */
+const nextSellable = (id: VariantId): VariantId => {
+  const start = MOMENT_ORDER.indexOf(id);
+  for (let step = 1; step < MOMENT_ORDER.length; step += 1) {
+    const next = MOMENT_ORDER[(start + step) % MOMENT_ORDER.length];
+    if (!isVariantSoldOut(next)) return next;
+  }
+  return id;
+};
+
 /** Posicion 0 a 1 de una hora decimal sobre la barra que arranca a las 7. */
 const positionOf = (hourDecimal: number): number =>
   (((hourDecimal - DAY_START) % 24) + 24) % 24 / 24;
@@ -48,6 +62,8 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
   const { activeVariant, setActiveVariant } = useActiveVariant();
   const now = useLocalNow();
   const currentId = variantForHour(now.getHours());
+  const currentSoldOut = isVariantSoldOut(currentId);
+  const fallbackId = nextSellable(currentId);
   const needle = positionOf(now.getHours() + now.getMinutes() / 60);
 
   const pick = (id: VariantId) => {
@@ -80,13 +96,32 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
           {/* El reloj del visitante convertido en argumento: no le contamos
               cual usar en abstracto, le decimos cual le toca en este momento.
               La hora exacta la lleva la aguja de la barra, no esta linea, asi
-              que el mismo dato no aparece dos veces. */}
-          <p className="max-w-[26ch] text-lg font-medium leading-snug text-white/70 md:text-right md:text-xl">
-            Ahora mismo te toca el{" "}
-            <span className="font-bold" style={{ color: VARIANTS[currentId].accent }}>
-              {currentId}
-            </span>
-            .
+              que el mismo dato no aparece dos veces.
+              Con el color de la hora agotado la linea lo nombra igual y manda
+              al siguiente vendible: negarlo se contradice con la aguja de la
+              barra, que a esa hora esta parada sobre esa misma franja. El
+              agotado va apagado y el que se puede comprar se lleva el color,
+              asi el acento marca lo accionable. */}
+          <p className="max-w-[30ch] text-lg font-medium leading-snug text-white/70 md:text-right md:text-xl">
+            {currentSoldOut ? (
+              <>
+                Ahora te tocaría el{" "}
+                <span className="font-bold text-white/45">{currentId}</span>, pero está agotado.
+                Seguí con el{" "}
+                <span className="font-bold" style={{ color: VARIANTS[fallbackId].accent }}>
+                  {fallbackId}
+                </span>
+                .
+              </>
+            ) : (
+              <>
+                Ahora mismo te toca el{" "}
+                <span className="font-bold" style={{ color: VARIANTS[currentId].accent }}>
+                  {currentId}
+                </span>
+                .
+              </>
+            )}
           </p>
         </Reveal>
 
@@ -171,6 +206,9 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
             const isNow = currentId === id;
             const isSelected = activeVariant === id;
             const soldOut = isVariantSoldOut(id);
+            // El agotado no se pinta como el heroe de la seccion aunque sea el
+            // que le toca a la hora: el realce vende, y esto no se vende.
+            const highlighted = (isNow || isSelected) && !soldOut;
 
             return (
               <Reveal
@@ -179,8 +217,8 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                 delay={index * 80}
                 className="relative flex flex-col overflow-hidden rounded-xl border p-6 transition-colors duration-300 md:p-7"
                 style={{
-                  borderColor: isNow || isSelected ? `${variant.accent}59` : "rgba(255,255,255,0.08)",
-                  background: isNow
+                  borderColor: highlighted ? `${variant.accent}59` : "rgba(255,255,255,0.08)",
+                  background: highlighted && isNow
                     ? `linear-gradient(160deg, ${variant.accent}14, transparent 62%)`
                     : "rgba(255,255,255,0.015)",
                 }}
@@ -188,7 +226,7 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                 <span
                   aria-hidden="true"
                   className="absolute inset-x-0 top-0 h-[3px]"
-                  style={{ backgroundColor: variant.accent, opacity: isNow || isSelected ? 1 : 0.3 }}
+                  style={{ backgroundColor: variant.accent, opacity: highlighted ? 1 : 0.3 }}
                 />
 
                 <div className="flex items-start justify-between gap-3">
@@ -204,14 +242,22 @@ export const MomentsSection = ({ onPickChange }: MomentsSectionProps) => {
                     </p>
                   </div>
 
-                  {isNow && (
+                  {/* Un badge por tarjeta y el agotado gana el slot: entre las
+                      17 y las 20 el naranja es el que toca Y el que no esta, y
+                      decirle "te toca ahora" a un lente que no se puede comprar
+                      es justamente la contradiccion que hay que sacar. */}
+                  {soldOut ? (
+                    <span className="whitespace-nowrap rounded-full bg-black/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white ring-1 ring-white/15">
+                      Agotado
+                    </span>
+                  ) : isNow ? (
                     <span
                       className="whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em]"
                       style={{ backgroundColor: variant.accent, color: "#000" }}
                     >
                       Te toca ahora
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 <p className="mt-5 flex items-baseline gap-1.5 font-bold leading-none tracking-tighter text-white">
