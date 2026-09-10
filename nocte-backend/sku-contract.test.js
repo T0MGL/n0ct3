@@ -17,6 +17,8 @@ const {
   buildProductLineItem,
   buildOrdefyItems,
   describeOrderForN8n,
+  buildN8nItems,
+  readOrderLines,
 } = require('./server');
 
 test('single lens keeps the chosen color', () => {
@@ -60,25 +62,101 @@ test('normalizeColor accepts es/en spellings and falls back to rojo on garbage',
 // Sept 2026: el antifaz paso a tener dos colores en Ordefy y NOCTE-SLEEPMASK-3D
 // quedo como padre con variantes. Ordefy rechaza un padre con variantes
 // (AMBIGUOUS_PARENT_SKU) y ese rechazo tumba la orden entera, lentes incluidos.
-test('el antifaz sale con el SKU de la variante negra, nunca con el padre', () => {
-  const items = buildOrdefyItems([
+const itemsFor = (rawLines) => buildOrdefyItems(readOrderLines(rawLines).lines);
+
+test('cada color del antifaz sale con el SKU de su variante, nunca con el padre', () => {
+  const items = itemsFor([
     { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
-    { product: 'sleepmask', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
   ]);
-  const mask = items.find((item) => item.sku.startsWith('NOCTE-SLEEPMASK'));
-  assert.equal(mask.sku, 'NOCTE-SLEEPMASK-3D-NEGRO');
-  assert.equal(mask.price, 119000);
-  assert.equal(mask.name, 'NOCTE Sleep Mask 3D Negro');
+  const masks = items.filter((item) => item.sku.startsWith('NOCTE-SLEEPMASK'));
+  assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity} @${m.price} ${m.name}`), [
+    'NOCTE-SLEEPMASK-3D-NEGRO x1 @119000 NOCTE Sleep Mask 3D Negro',
+    'NOCTE-SLEEPMASK-3D-ROSADO x1 @119000 NOCTE Sleep Mask 3D Rosado',
+  ]);
   assert.ok(items.every((item) => item.sku !== 'NOCTE-SLEEPMASK-3D'));
 });
 
-// El texto para n8n lo lee el cliente en la plantilla de WhatsApp en espanol:
-// tiene que decir antifaz, no el nombre de catalogo de Ordefy.
-test('el texto para n8n nombra el antifaz como lo lee el cliente', () => {
-  const text = describeOrderForN8n([
-    { product: 'clipon', quantity: 1, amount: 189000 },
-    { product: 'sleepmask', quantity: 1, amount: 119000 },
+test('dos negros y un rosado son dos items, uno por SKU con su cantidad', () => {
+  const masks = itemsFor([
+    { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
   ]);
-  assert.match(text, /Antifaz 3D negro/);
+  assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity} @${m.price}`), [
+    'NOCTE-SLEEPMASK-3D-NEGRO x2 @119000',
+    'NOCTE-SLEEPMASK-3D-ROSADO x1 @119000',
+  ]);
+});
+
+test('dos lineas del mismo color se juntan en un solo item', () => {
+  const masks = itemsFor([
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
+  ]);
+  assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity}`), ['NOCTE-SLEEPMASK-3D-NEGRO x2']);
+});
+
+test('antifaz sin color es un checkout viejo y va negro; un color desconocido se separa', () => {
+  const legacy = readOrderLines([{ product: 'sleepmask', quantity: 1, amount: 119000 }]);
+  assert.equal(legacy.lines[0].color, 'negro');
+  const unknown = readOrderLines([{ product: 'sleepmask', color: 'verde', quantity: 1, amount: 119000 }]);
+  assert.equal(unknown.lines.length, 0);
+  assert.match(unknown.dropped[0], /color de antifaz desconocido/);
+  const garbage = readOrderLines([{ product: 'sleepmask', color: 7, quantity: 1, amount: 119000 }]);
+  assert.equal(garbage.lines.length, 0);
+});
+
+// El texto para n8n lo lee el cliente en la plantilla de WhatsApp en espanol:
+// tiene que decir antifaz y el color, no el nombre de catalogo de Ordefy.
+test('el texto para n8n nombra el antifaz con su color, como lo lee el cliente', () => {
+  const text = describeOrderForN8n(readOrderLines([
+    { product: 'clipon', quantity: 1, amount: 189000 },
+    { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+  ]).lines);
+  assert.equal(
+    text,
+    '1x NOCTE Clip-On Rojo + 2x NOCTE® Antifaz 3D negro para dormir + 1x NOCTE® Antifaz 3D rosado para dormir',
+  );
   assert.doesNotMatch(text, /Sleep Mask/);
+});
+
+// Contrato con n8n (PR #8). El flujo de confirmacion por WhatsApp se construye
+// contra esta forma: si este test falla, avisar antes de cambiarla.
+test('contrato de order.items para n8n: lentes + 2 antifaces negros + 1 rosado', () => {
+  const items = buildN8nItems(readOrderLines([
+    { product: 'lentes', quantity: 2, amount: 389000, colors: ['amarillo', 'rojo'] },
+    { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+  ]).lines);
+  assert.deepEqual(items, [
+    {
+      product: 'lentes',
+      quantity: 2,
+      unit_price: 194500,
+      subtotal: 389000,
+      sku: 'NOCTE-GLASSES-PAREJA',
+      name: 'NOCTE® Lentes Anti-Luz Azul',
+      colors: ['amarillo', 'rojo'],
+    },
+    {
+      product: 'sleepmask',
+      quantity: 2,
+      unit_price: 119000,
+      subtotal: 238000,
+      sku: 'NOCTE-SLEEPMASK-3D-NEGRO',
+      name: 'NOCTE® Antifaz 3D negro para dormir',
+      color: 'negro',
+    },
+    {
+      product: 'sleepmask',
+      quantity: 1,
+      unit_price: 119000,
+      subtotal: 119000,
+      sku: 'NOCTE-SLEEPMASK-3D-ROSADO',
+      name: 'NOCTE® Antifaz 3D rosado para dormir',
+      color: 'rosado',
+    },
+  ]);
 });

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment, PaymentAmountError } from '@/hooks/useStripePayment';
@@ -11,6 +11,19 @@ import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { buildWhatsAppUrl } from '@/lib/contact';
 import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { ColorSwatchPicker, type SwatchOption } from '@/components/ColorSwatchPicker';
+import {
+  ALL_MASK_COLORS_SOLD_OUT,
+  DEFAULT_MASK_COLOR,
+  MASK_COLORS,
+  MASK_COLOR_IDS,
+  MASK_SOLD_OUT_NOTICE,
+  MAX_MASK_QUANTITY,
+  resizeMaskPicks,
+  resolveSelectableMaskColor,
+  type MaskColorId,
+} from '@/lib/mask-colors';
 import { summarizeVariantCounts } from '@/lib/variants';
 import {
   CLIP_ON,
@@ -65,12 +78,19 @@ interface UpsellRowProps {
   icon?: typeof RocketLaunchIcon;
   /** Miniatura del producto. Cuando falta, la fila queda igual pero sin foto. */
   image?: string;
+  /** Lo que se despliega al marcarla, como la eleccion de color del antifaz. */
+  children?: ReactNode;
 }
 
+// Misma curva y duracion que el despliegue de colores de los packs de lentes.
+const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
+
 /**
- * Una de las dos filas de upsell del resumen. Es un button con role=switch, no
- * un div con onClick como era antes: la fila anterior no se podia tocar con
- * teclado y un lector de pantalla no tenia como saber si estaba marcada.
+ * Una de las filas de upsell del resumen. El switch es un button con
+ * role=switch, no un div con onClick como era antes: la fila anterior no se
+ * podia tocar con teclado y un lector de pantalla no tenia como saber si estaba
+ * marcada. La tarjeta es un div porque adentro puede ir un panel con controles
+ * propios, y un button no puede contener otros.
  */
 const UpsellRow = ({
   checked,
@@ -81,87 +101,211 @@ const UpsellRow = ({
   listPrice,
   icon: Icon,
   image,
-}: UpsellRowProps) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={onToggle}
-    className={cn(
-      'group relative w-full rounded-xl border p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out active:scale-[0.99]',
-      checked
-        ? 'border-variant-active/40 bg-variant-active/5 shadow-[0_8px_24px_-16px_hsl(var(--variant-active)/0.5)]'
-        : 'border-border/40 bg-secondary/30 hover:border-border/60 hover:bg-secondary/50',
-    )}
-  >
-    <div className="flex items-start gap-3">
-      <span
-        className={cn(
-          'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-[background-color,border-color] duration-200 ease-out',
-          checked
-            ? 'border-variant-active bg-variant-active'
-            : 'border-muted-foreground/40 group-hover:border-variant-active/50',
-        )}
-      >
-        <CheckIcon
-          className={cn(
-            'h-3.5 w-3.5 text-white transition-[opacity,transform] duration-200 ease-out',
-            checked ? 'scale-100 opacity-100' : 'scale-75 opacity-0',
-          )}
-          strokeWidth={3}
-        />
-      </span>
-
-      {image && (
-        <img
-          src={image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="h-14 w-14 flex-shrink-0 rounded-lg border border-border/40 object-cover"
-        />
+  children,
+}: UpsellRowProps) => {
+  const panelId = useId();
+  const reduceMotion = useReducedMotion();
+  return (
+    <div
+      className={cn(
+        // El press se ve en toda la tarjeta aunque lo reciba el switch: el
+        // switch lleva no-press para no hundirse solo dentro de la tarjeta.
+        'rounded-xl border transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out has-[>button:active]:scale-[0.99]',
+        checked
+          ? 'border-variant-active/40 bg-variant-active/5 shadow-[0_8px_24px_-16px_hsl(var(--variant-active)/0.5)]'
+          : 'border-border/40 bg-secondary/30 hover:border-border/60 hover:bg-secondary/50',
       )}
-
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className={cn('text-sm font-bold', checked ? 'text-variant-active' : 'text-foreground')}>
-              {title}
-            </span>
-            {Icon && (
-              <Icon
-                className={cn(
-                  'h-4 w-4 flex-shrink-0',
-                  checked ? 'text-variant-active' : 'text-muted-foreground',
-                )}
-              />
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-controls={children && checked ? panelId : undefined}
+        onClick={onToggle}
+        className="no-press group relative w-full rounded-xl p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-[background-color,border-color,transform] duration-200 ease-out group-active:scale-90',
+              checked
+                ? 'border-variant-active bg-variant-active'
+                : 'border-muted-foreground/40 group-hover:border-variant-active/50',
             )}
-          </div>
-          <span className="ml-2 flex flex-shrink-0 flex-col items-end leading-tight">
-            {listPrice !== undefined && (
-              <span className="text-[11px] text-white/50 line-through">
-                {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
-                    tachado, que es puramente visual, no significa nada. */}
-                <span className="sr-only">Precio de lista, </span>
-                {formatPrice(listPrice, 'pyg')}
-              </span>
-            )}
-            <span
+          >
+            <CheckIcon
               className={cn(
-                'whitespace-nowrap text-sm font-bold',
-                checked ? 'text-variant-active' : 'text-muted-foreground',
+                'h-3.5 w-3.5 text-white transition-[opacity,transform] duration-200 ease-out',
+                checked ? 'scale-100 opacity-100' : 'scale-75 opacity-0',
               )}
-            >
-              + {formatPrice(price, 'pyg')}
-            </span>
+              strokeWidth={3}
+            />
           </span>
-        </div>
 
-        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
-      </div>
+          {image && (
+            <img
+              src={image}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-14 w-14 flex-shrink-0 rounded-lg border border-border/40 object-cover"
+            />
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <span className={cn('text-sm font-bold', checked ? 'text-variant-active' : 'text-foreground')}>
+                  {title}
+                </span>
+                {Icon && (
+                  <Icon
+                    className={cn(
+                      'h-4 w-4 flex-shrink-0',
+                      checked ? 'text-variant-active' : 'text-muted-foreground',
+                    )}
+                  />
+                )}
+              </div>
+              <span className="ml-2 flex flex-shrink-0 flex-col items-end leading-tight">
+                {listPrice !== undefined && (
+                  <span className="text-[11px] text-white/50 line-through">
+                    {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
+                        tachado, que es puramente visual, no significa nada. */}
+                    <span className="sr-only">Precio de lista, </span>
+                    {formatPrice(listPrice, 'pyg')}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    'whitespace-nowrap text-sm font-bold',
+                    checked ? 'text-variant-active' : 'text-muted-foreground',
+                  )}
+                >
+                  + {formatPrice(price, 'pyg')}
+                </span>
+              </span>
+            </div>
+
+            <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </button>
+      <AnimatePresence initial={false}>
+        {checked && children && (
+          <motion.div
+            id={panelId}
+            key="panel"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={reduceMotion ? { duration: 0 } : EXPAND}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  </button>
-);
+  );
+};
+
+const MASK_OPTIONS: readonly SwatchOption<MaskColorId>[] = MASK_COLOR_IDS.map((id) => ({
+  id,
+  name: MASK_COLORS[id].name,
+  soldOutLabel: `${MASK_COLORS[id].name} agotado`,
+  swatch: MASK_COLORS[id].swatch,
+  ring: MASK_COLORS[id].ring,
+  needsOutline: MASK_COLORS[id].needsOutline,
+  soldOut: MASK_COLORS[id].soldOut,
+}));
+
+interface MaskUnitsProps {
+  picks: readonly MaskColorId[];
+  onChange: (next: MaskColorId[]) => void;
+}
+
+/**
+ * Cantidad y color de cada antifaz. Mismo patron que el pack de lentes: una
+ * fila por unidad, con su numero y el mismo selector de color, y el agotado
+ * visible pero deshabilitado.
+ */
+const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
+  const quantity = picks.length;
+  const setQuantity = (next: number) =>
+    onChange(resizeMaskPicks(picks, Math.max(1, Math.min(MAX_MASK_QUANTITY, next))));
+  const setPick = (index: number, color: MaskColorId) =>
+    onChange(picks.map((pick, i) => (i === index ? color : pick)));
+
+  return (
+    <div className="space-y-3">
+      <div className="h-px bg-white/8" />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[12px] font-medium text-white">Cantidad</p>
+        {/* Los botones miden 32px pero tocan en 44: el after los agranda sin pisar el numero. */}
+        <div role="group" aria-label="Cantidad de antifaces" className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity - 1)}
+            disabled={quantity <= 1}
+            aria-label="Quitar un antifaz"
+            className="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-30"
+          >
+            <MinusIcon className="h-4 w-4" strokeWidth={2} />
+          </button>
+          <span aria-live="polite" className="w-7 text-center text-sm font-semibold tabular-nums text-white">
+            {quantity}
+          </span>
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity + 1)}
+            disabled={quantity >= MAX_MASK_QUANTITY}
+            aria-label="Agregar otro antifaz"
+            className="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-30"
+          >
+            <PlusIcon className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-white">
+        {quantity === 1 ? 'Elegí el color' : 'Elegí el color de cada antifaz'}
+      </p>
+      {MASK_SOLD_OUT_NOTICE && (
+        <p className="text-[11px] font-medium text-white">{MASK_SOLD_OUT_NOTICE}</p>
+      )}
+      <ul className="space-y-2">
+        {picks.map((rawPick, index) => {
+          const pick = resolveSelectableMaskColor(rawPick);
+          return (
+            <li
+              key={index}
+              className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.02] px-3 py-2"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                {quantity > 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="grid h-5 w-5 place-items-center rounded-full bg-white/5 text-[10px] font-bold text-white ring-1 ring-white/10"
+                  >
+                    {index + 1}
+                  </span>
+                )}
+                <p className="text-[12px] font-medium leading-none text-white">{MASK_COLORS[pick].name}</p>
+              </div>
+              <ColorSwatchPicker
+                options={MASK_OPTIONS}
+                value={pick}
+                onChange={(next) => setPick(index, next)}
+                size="sm"
+                label={quantity === 1 ? 'Color del antifaz' : `Color del antifaz ${index + 1}`}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
 export interface PaymentResult {
   paymentIntentId: string;
@@ -215,7 +359,8 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
-  const [wantsSleepMask, setWantsSleepMask] = useState(false);
+  // Color de cada antifaz, uno por unidad. Vacio es sin antifaz.
+  const [maskPicks, setMaskPicks] = useState<MaskColorId[]>([]);
   const [email, setEmail] = useState(customerData.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
   // Si en el paso de la factura ya dejo el correo, no se le vuelve a pedir:
@@ -238,7 +383,7 @@ const CheckoutForm = ({
   // agregar un upsell es empujar una linea, no acordarse de sumar un numero
   // aca y de restarlo en el backend.
   const orderLines = buildOrderLines(item, {
-    sleepMask: wantsSleepMask,
+    sleepMaskPicks: maskPicks,
     priorityShipping: isPriorityShipping,
   });
   const finalTotal = sumLines(orderLines);
@@ -770,15 +915,25 @@ const CheckoutForm = ({
             icon={RocketLaunchIcon}
           />
 
-          <UpsellRow
-            checked={wantsSleepMask}
-            onToggle={() => setWantsSleepMask((prev) => !prev)}
-            title={SLEEP_MASK.name}
-            description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
-            price={SLEEP_MASK.price}
-            listPrice={SLEEP_MASK.listPrice}
-            image={SLEEP_MASK.image}
-          />
+          {/* Con todos los colores agotados el antifaz no se ofrece. Precio
+              unico por unidad: el total de la fila es precio por cantidad. */}
+          {!ALL_MASK_COLORS_SOLD_OUT && (
+            <UpsellRow
+              checked={maskPicks.length > 0}
+              onToggle={() => setMaskPicks((prev) => (prev.length > 0 ? [] : [DEFAULT_MASK_COLOR]))}
+              title={SLEEP_MASK.name}
+              description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
+              price={SLEEP_MASK.price * Math.max(1, maskPicks.length)}
+              listPrice={
+                SLEEP_MASK.listPrice === undefined
+                  ? undefined
+                  : SLEEP_MASK.listPrice * Math.max(1, maskPicks.length)
+              }
+              image={SLEEP_MASK.image}
+            >
+              <MaskUnits picks={maskPicks} onChange={setMaskPicks} />
+            </UpsellRow>
+          )}
         </div>
 
         {/* Total */}

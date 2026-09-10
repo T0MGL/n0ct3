@@ -12,18 +12,27 @@
 // contra la tienda de produccion. Duplicarlo aca seria dos fuentes de verdad.
 
 import { summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { MASK_COLORS, MASK_COLOR_IDS, resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
 
 export type OrderProduct = "lentes" | "sleepmask" | "clipon" | "envio-prioritario";
 
-export interface OrderLine {
-  product: OrderProduct;
+interface LineBase {
   /** Unidades que se lleva el cliente. Para lentes, los lentes del pack. */
   quantity: number;
   /** Importe total de la linea en guaranies, con el descuento ya aplicado. */
   amount: number;
-  /** Solo lentes: el color de cada unidad, en el orden en que los eligio. */
-  colors?: VariantId[];
 }
+
+/**
+ * Una linea por producto y, en el antifaz, una por color: cada color es un SKU
+ * distinto en Ordefy. Dos negros y un rosado son dos lineas. Los lentes van en
+ * una sola linea con el color de cada unidad, porque en Ordefy el pack es un
+ * solo item con su composicion adentro.
+ */
+export type OrderLine =
+  | (LineBase & { product: "lentes"; colors: VariantId[] })
+  | (LineBase & { product: "sleepmask"; color: MaskColorId })
+  | (LineBase & { product: "clipon" | "envio-prioritario" });
 
 interface AddOn {
   product: OrderProduct;
@@ -42,12 +51,12 @@ export const PRIORITY_SHIPPING: AddOn = {
   price: 10000,
 };
 
-// El checkout vende solo el antifaz negro, no el rosado. El color va en el
-// nombre porque es lo que el cliente lee en su confirmacion de WhatsApp, y
-// tiene que coincidir con lo que llega en la caja.
+// El color se elige por unidad en el bump (ver mask-colors.ts) y va en el nombre
+// de cada linea con maskName: es lo que el cliente lee en su confirmacion de
+// WhatsApp y tiene que coincidir con lo que llega en la caja.
 export const SLEEP_MASK: AddOn = {
   product: "sleepmask",
-  name: "Antifaz 3D negro para dormir",
+  name: "Antifaz 3D para dormir",
   price: 119000,
   listPrice: 169000,
   // Sin foto real todavia. El bump renderiza sin miniatura hasta que llegue:
@@ -67,18 +76,34 @@ export type CheckoutItem =
   | { product: "clipon"; quantity: 1; amount: number };
 
 export interface CheckoutUpsells {
-  sleepMask: boolean;
+  /** Color de cada antifaz, uno por unidad. Vacio es sin antifaz. */
+  sleepMaskPicks: readonly MaskColorId[];
   priorityShipping: boolean;
 }
+
+export const maskName = (color: MaskColorId): string =>
+  `Antifaz 3D ${MASK_COLORS[color].name.toLowerCase()} para dormir`;
 
 export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): OrderLine[] {
   const lines: OrderLine[] = [item];
 
-  if (upsells.sleepMask) {
-    lines.push({ product: SLEEP_MASK.product, quantity: 1, amount: SLEEP_MASK.price });
+  // Los picks por unidad se agrupan por color: una linea por SKU con su
+  // cantidad. resolveSelectableMaskColor es la ultima compuerta, un color
+  // agotado que se colo por un estado viejo no llega al pedido.
+  const perColor = new Map<MaskColorId, number>();
+  for (const pick of upsells.sleepMaskPicks) {
+    const color = resolveSelectableMaskColor(pick);
+    perColor.set(color, (perColor.get(color) ?? 0) + 1);
   }
+  for (const color of MASK_COLOR_IDS) {
+    const quantity = perColor.get(color);
+    if (quantity) {
+      lines.push({ product: "sleepmask", color, quantity, amount: SLEEP_MASK.price * quantity });
+    }
+  }
+
   if (upsells.priorityShipping) {
-    lines.push({ product: PRIORITY_SHIPPING.product, quantity: 1, amount: PRIORITY_SHIPPING.price });
+    lines.push({ product: "envio-prioritario", quantity: 1, amount: PRIORITY_SHIPPING.price });
   }
 
   return lines;
@@ -122,14 +147,14 @@ export function describeOrderLines(lines: readonly OrderLine[]): string {
   return lines
     .flatMap((line) => {
       if (line.product === "lentes") {
-        const byColor = summarizeVariantCounts(line.colors ?? []);
+        const byColor = summarizeVariantCounts(line.colors);
         // Sin colores el pedido igual tiene que nombrar el producto, si no la
         // linea de lentes desaparece del mensaje entero.
         if (byColor.length === 0) return [`🔴 ${line.quantity}x NOCTE® Lentes Anti-Luz Azul`];
         return byColor.map(({ variant, count }) => `${variant.emoji} ${count}x ${variant.productName}`);
       }
       if (line.product === "clipon") return [`🕶️ ${line.quantity}x NOCTE® ${CLIP_ON.name}`];
-      if (line.product === "sleepmask") return [`😴 ${line.quantity}x NOCTE® ${SLEEP_MASK.name}`];
+      if (line.product === "sleepmask") return [`😴 ${line.quantity}x NOCTE® ${maskName(line.color)}`];
       return [`🚀 ${PRIORITY_SHIPPING.name}`];
     })
     .join("\n");
