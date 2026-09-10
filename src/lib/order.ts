@@ -42,9 +42,12 @@ export const PRIORITY_SHIPPING: AddOn = {
   price: 10000,
 };
 
+// El checkout vende solo el antifaz negro, no el rosado. El color va en el
+// nombre porque es lo que el cliente lee en su confirmacion de WhatsApp, y
+// tiene que coincidir con lo que llega en la caja.
 export const SLEEP_MASK: AddOn = {
   product: "sleepmask",
-  name: "Antifaz 3D para dormir",
+  name: "Antifaz 3D negro para dormir",
   price: 119000,
   listPrice: 169000,
   // Sin foto real todavia. El bump renderiza sin miniatura hasta que llegue:

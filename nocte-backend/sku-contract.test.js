@@ -11,7 +11,13 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { resolveColors, normalizeColor, buildProductLineItem } = require('./server');
+const {
+  resolveColors,
+  normalizeColor,
+  buildProductLineItem,
+  buildOrdefyItems,
+  describeOrderForN8n,
+} = require('./server');
 
 test('single lens keeps the chosen color', () => {
   const line = buildProductLineItem('suelto', ['naranja'], 229000);
@@ -49,4 +55,30 @@ test('normalizeColor accepts es/en spellings and falls back to rojo on garbage',
   assert.equal(normalizeColor('Amarillo'), 'amarillo');
   assert.equal(normalizeColor('orange'), 'naranja');
   assert.equal(normalizeColor('fuxia'), 'rojo');
+});
+
+// Sept 2026: el antifaz paso a tener dos colores en Ordefy y NOCTE-SLEEPMASK-3D
+// quedo como padre con variantes. Ordefy rechaza un padre con variantes
+// (AMBIGUOUS_PARENT_SKU) y ese rechazo tumba la orden entera, lentes incluidos.
+test('el antifaz sale con el SKU de la variante negra, nunca con el padre', () => {
+  const items = buildOrdefyItems([
+    { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+    { product: 'sleepmask', quantity: 1, amount: 119000 },
+  ]);
+  const mask = items.find((item) => item.sku.startsWith('NOCTE-SLEEPMASK'));
+  assert.equal(mask.sku, 'NOCTE-SLEEPMASK-3D-NEGRO');
+  assert.equal(mask.price, 119000);
+  assert.equal(mask.name, 'NOCTE Sleep Mask 3D Negro');
+  assert.ok(items.every((item) => item.sku !== 'NOCTE-SLEEPMASK-3D'));
+});
+
+// El texto para n8n lo lee el cliente en la plantilla de WhatsApp en espanol:
+// tiene que decir antifaz, no el nombre de catalogo de Ordefy.
+test('el texto para n8n nombra el antifaz como lo lee el cliente', () => {
+  const text = describeOrderForN8n([
+    { product: 'clipon', quantity: 1, amount: 189000 },
+    { product: 'sleepmask', quantity: 1, amount: 119000 },
+  ]);
+  assert.match(text, /Antifaz 3D negro/);
+  assert.doesNotMatch(text, /Sleep Mask/);
 });

@@ -633,12 +633,28 @@ const MIXED_CONTAINER_SKU = {
   oficina: 'NOCTE-GLASSES-OFICINA',
 };
 
-// Productos sin variantes: una clave del payload, un SKU, un nombre. El precio
-// NO vive aca, viaja en la linea. Ordefy respeta el precio por linea del
+// Productos de un solo SKU: una clave del payload, un SKU y sus nombres. El
+// precio NO vive aca, viaja en la linea. Ordefy respeta el precio por linea del
 // payload (no hace lookup contra el catalogo), asi que el bump del antifaz
 // cobra 119.000 con el catalogo en 169.000 y eso es lo correcto.
+//
+// `name` es el que va a Ordefy y coincide con su catalogo. `label` es el que lee
+// el cliente: n8n lo usa tal cual en la plantilla de WhatsApp en espanol cuando
+// el pedido no trae colores (siempre, en los de clip-on). Sin label vale name.
+//
+// El SKU tiene que ser una variante o un producto SIN variantes activas.
+// Mandar un padre que tiene variantes lo rechaza Ordefy con
+// AMBIGUOUS_PARENT_SKU, y ese rechazo tumba la orden entera, lentes incluidos.
+// Es lo que paso con el antifaz cuando llego en dos colores:
+// NOCTE-SLEEPMASK-3D quedo como padre. El checkout vende solo el negro y no el
+// rosado: con pocas unidades, un selector se quedaria mostrando un color
+// agotado a las pocas semanas.
 const SIMPLE_PRODUCT = {
-  sleepmask: { sku: 'NOCTE-SLEEPMASK-3D', name: 'NOCTE Antifaz 3D para dormir' },
+  sleepmask: {
+    sku: 'NOCTE-SLEEPMASK-3D-NEGRO',
+    name: 'NOCTE Sleep Mask 3D Negro',
+    label: 'NOCTE® Antifaz 3D negro para dormir',
+  },
   clipon: { sku: 'NOCTE-CLIPON-ROJO', name: 'NOCTE Clip-On Rojo' },
   'envio-prioritario': { sku: 'NOCTE-ENVIO-PRIORITARIO', name: 'Envío Prioritario VIP' },
 };
@@ -867,14 +883,15 @@ function buildOrdefyItems(lines) {
 /**
  * El pedido en una linea de texto para n8n. Helena y las plantillas de
  * WhatsApp leen este campo, asi que tiene que nombrar lo que se compro de
- * verdad y no un producto fijo.
+ * verdad y no un producto fijo, y con el nombre que entiende el cliente (el
+ * label), no el de catalogo de Ordefy.
  */
 function describeOrderForN8n(lines) {
   return lines
     .map((line) => {
       const name = line.product === 'lentes'
         ? 'NOCTE® Red Light Blocking Glasses'
-        : SIMPLE_PRODUCT[line.product].name;
+        : (SIMPLE_PRODUCT[line.product].label ?? SIMPLE_PRODUCT[line.product].name);
       return `${line.quantity}x ${name}`;
     })
     .join(' + ');
@@ -1363,6 +1380,8 @@ Object.assign(app, {
   resolveColors,
   normalizeColor,
   buildProductLineItem,
+  buildOrdefyItems,
+  describeOrderForN8n,
   TIER,
   UNITS_PER_PACK,
   LENS_SKU,
