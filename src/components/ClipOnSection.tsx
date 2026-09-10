@@ -171,31 +171,32 @@ const ClipOnGallery = () => {
         {`Imagen ${slide + 1} de ${SLIDE_COUNT}`}
       </p>
 
-      {/* Los puntos del hero, sobre una capsula oscura: aca las fotos son de
-          fondo blanco y los puntos blancos sueltos desaparecen. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
-        <div className="flex items-center rounded-full bg-black/55 px-1 py-0.5 backdrop-blur-md">
-          {SLIDES.map((item, index) => {
-            const isActive = index === slide;
-            return (
-              <button
-                key={item.src}
-                type="button"
-                onClick={() => scrollToSlide(index)}
-                aria-label={`Ir a la imagen ${index + 1} de ${SLIDE_COUNT}`}
-                aria-current={isActive ? "true" : undefined}
-                className="pointer-events-auto flex h-7 items-center rounded-full px-2 outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <span
-                  className={cn(
-                    "block h-2 rounded-full transition-[width,background-color] duration-200 ease-out motion-reduce:transition-none",
-                    isActive ? "w-6 bg-white" : "w-2 bg-white/45",
-                  )}
-                />
-              </button>
-            );
-          })}
-        </div>
+      {/* Puntos oscuros finos, sin capsula: la capsula tapaba foto. Cuatro de
+          las cinco fotos son de fondo blanco, asi que el punto va oscuro; el
+          filete blanco de 1px no se ve sobre el blanco y es lo que lo recorta
+          sobre el sueter azul de la foto en uso. El punto mide 6px pero el
+          boton sigue en 24x28 para el dedo. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center">
+        {SLIDES.map((item, index) => {
+          const isActive = index === slide;
+          return (
+            <button
+              key={item.src}
+              type="button"
+              onClick={() => scrollToSlide(index)}
+              aria-label={`Ir a la imagen ${index + 1} de ${SLIDE_COUNT}`}
+              aria-current={isActive ? "true" : undefined}
+              className="pointer-events-auto flex h-7 items-center justify-center rounded-full px-[9px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span
+                className={cn(
+                  "block h-1.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.55)] transition-[width,background-color] duration-200 ease-out motion-reduce:transition-none",
+                  isActive ? "w-4 bg-black/80" : "w-1.5 bg-black/45",
+                )}
+              />
+            </button>
+          );
+        })}
       </div>
     </div>
   );
