@@ -844,15 +844,17 @@ function buildOrdefyItems(lines) {
       return buildProductLineItem(resolveTier(line.quantity), line.colors, line.amount);
     }
     // Ordefy lee `price` como precio unitario (unitPrice: item.price en su
-    // webhook), no como total de linea, asi que hay que dividir. Si no divide
-    // exacto los items dejan de sumar totals.total y la conciliacion arranca
-    // torcida, asi que se corta: hoy es inalcanzable (todo simple product va
-    // con quantity 1), el primer pack de antifaces lo activa.
+    // webhook), no como total de linea, asi que hay que dividir.
+    //
+    // Se redondea en vez de cortar. Un importe que no divide exacto ya fallo
+    // priceMismatches (el esperado es siempre precio unitario por cantidad),
+    // asi que a esta altura la politica ya se decidio arriba: en COD el
+    // pedido se rechazo, y si llego hasta aca es porque ya se cobro y va con
+    // su 🚨. Tirar justo aca daria 500 y devolveria a ese pedido cobrado al
+    // estado que este camino existe para evitar: plata movida, nada
+    // registrado.
     const product = SIMPLE_PRODUCT[line.product];
-    const unitPrice = line.amount / line.quantity;
-    if (!Number.isInteger(unitPrice)) {
-      throw new Error(`${line.product}: ${line.amount} no divide exacto entre ${line.quantity}`);
-    }
+    const unitPrice = Math.round(line.amount / line.quantity);
     return {
       sku: product.sku,
       name: product.name,
