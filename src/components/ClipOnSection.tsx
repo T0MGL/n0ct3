@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { CLIP_ON_GALLERY_ID, CLIP_ON_TITLE_ID } from "@/lib/clip-on-anchor";
 import { CLIP_ON } from "@/lib/order";
 import { formatPrice } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
@@ -212,21 +213,30 @@ const ClipOnGallery = () => {
 export const ClipOnSection = ({ onBuyClick }: ClipOnSectionProps) => {
   return (
     <section
-      aria-labelledby="clipon-title"
+      aria-labelledby={CLIP_ON_TITLE_ID}
       className="bg-[hsl(0_0%_3%)] py-16 md:py-24"
     >
       {/* px sobre el container, como en el hero: pisa el padding de 2rem del config. */}
       <div className="container mx-auto max-w-[1200px] px-4 md:px-6">
         <div className="grid items-center gap-8 md:gap-12 lg:grid-cols-2 lg:gap-16">
-          <Reveal>
-            <ClipOnGallery />
-          </Reveal>
+          {/* Destino del gancho del hero. El scroll-mt deja la galeria justo
+              debajo de la franja fija de arriba (36px mobile, 40 desktop). El
+              id va en un wrapper quieto y no en el Reveal, que anima un
+              translate y le correria la medicion al reapuntado. */}
+          <div id={CLIP_ON_GALLERY_ID} className="scroll-mt-14 md:scroll-mt-16">
+            <Reveal>
+              <ClipOnGallery />
+            </Reveal>
+          </div>
 
           <div>
             <Reveal delay={80}>
+              {/* tabIndex -1: el gancho del hero le pasa el foco al aterrizar,
+                  asi el Tab siguiente sigue desde aca y no desde el hero. */}
               <h2
-                id="clipon-title"
-                className="text-3xl font-bold leading-[1.05] tracking-tighter md:text-4xl lg:text-5xl"
+                id={CLIP_ON_TITLE_ID}
+                tabIndex={-1}
+                className="text-3xl font-bold leading-[1.05] tracking-tighter outline-none md:text-4xl lg:text-5xl"
               >
                 Usás lentes con aumento?
               </h2>
