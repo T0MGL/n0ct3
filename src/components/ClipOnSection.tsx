@@ -34,9 +34,9 @@ const SLIDE_COUNT = SLIDES.length;
  * galerias de la landing tienen que sentirse de la misma familia. Scroll-snap
  * nativo, asi la inercia y el snap los pone el sistema operativo.
  *
- * Duplicado y no extraido: el hero queda fuera de este cambio, son solo dos
- * usos, y la galeria del hero tiene requisitos propios (se resetea al cambiar
- * el color, avisa la primera interaccion para mover el badge).
+ * Duplicado y no extraido: son solo dos usos, y la galeria del hero tiene
+ * requisitos propios (se resetea al cambiar el color, avisa la primera
+ * interaccion para mover el badge).
  */
 const ClipOnGallery = () => {
   const reduceMotion = useReducedMotion();
@@ -117,10 +117,10 @@ const ClipOnGallery = () => {
 
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-2xl bg-black/40 ring-1 ring-white/5">
-      {/* Sin touch-action pan-x como en el hero: por spec deshabilita el paneo
-          vertical que arranca sobre el elemento (medido, la pagina no baja), y
-          cualquier valor sin pinch-zoom bloquea el zoom sobre la foto del
-          mecanismo. manipulation deja los dos y solo apaga el zoom por doble tap. */}
+      {/* touch-manipulation y no pan-x: pan-x deshabilita el paneo vertical que
+          arranca sobre el elemento (medido, la pagina no baja), y cualquier
+          valor sin pinch-zoom bloquea el zoom sobre la foto del mecanismo.
+          manipulation deja los dos y solo apaga el zoom por doble tap. */}
       <div
         ref={trackRef}
         role="group"
@@ -171,11 +171,11 @@ const ClipOnGallery = () => {
         {`Imagen ${slide + 1} de ${SLIDE_COUNT}`}
       </p>
 
-      {/* Puntos oscuros finos, sin capsula: la capsula tapaba foto. Cuatro de
-          las cinco fotos son de fondo blanco, asi que el punto va oscuro; el
-          filete blanco de 1px no se ve sobre el blanco y es lo que lo recorta
-          sobre el sueter azul de la foto en uso. El punto mide 6px pero el
-          boton sigue en 24x28 para el dedo. */}
+      {/* Punto oscuro porque la mayoria de las fotos son de fondo blanco. El
+          filete blanco no se ve sobre el blanco y es lo que lo recorta sobre el
+          sueter azul y sobre la lente roja del mecanismo: a 0.8 queda en 3:1
+          en todas las fotos y anchos. El boton mide 24x28 aunque el punto
+          mida 6px: es el minimo para el dedo. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center">
         {SLIDES.map((item, index) => {
           const isActive = index === slide;
@@ -190,7 +190,7 @@ const ClipOnGallery = () => {
             >
               <span
                 className={cn(
-                  "block h-1.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.55)] transition-[width,background-color] duration-200 ease-out motion-reduce:transition-none",
+                  "block h-1.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.8)] transition-[width,background-color] duration-200 ease-out motion-reduce:transition-none",
                   isActive ? "w-4 bg-black/80" : "w-1.5 bg-black/45",
                 )}
               />

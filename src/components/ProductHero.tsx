@@ -146,9 +146,10 @@ export const ProductHero = ({
   const reduceMotion = useReducedMotion();
   const navBehavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
 
-  // Scroll the track to a slide. Smooth for taps and keyboard; the caller asks
-  // for an instant jump when the lens color changes so the reset to slide 0 is
-  // not a visible scroll animation.
+  // Scroll the track to a slide. El reset por color pide "auto", que sigue al
+  // scroll-behavior del track: con movimiento normal es suave y con reduced
+  // motion es instantaneo. Si se quiere que el reset no se vea nunca, va
+  // "instant".
   const scrollToSlide = useCallback(
     (next: number, behavior: ScrollBehavior) => {
       const track = trackRef.current;
