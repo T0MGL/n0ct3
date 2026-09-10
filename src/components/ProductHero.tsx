@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { VARIANT_IDS, VARIANTS, isVariantSoldOut, momentWindowLabel, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ProductHeroProps {
   activeVariant?: VariantId;
@@ -139,6 +140,12 @@ export const ProductHero = ({
     return () => observer.disconnect();
   }, []);
 
+  // Taps y teclado van suaves, salvo con reduced motion: ahi el salto es
+  // directo. "auto" sirve porque el scroll-smooth del track tambien queda
+  // apagado con reduced motion (motion-safe).
+  const reduceMotion = useReducedMotion();
+  const navBehavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
+
   // Scroll the track to a slide. Smooth for taps and keyboard; the caller asks
   // for an instant jump when the lens color changes so the reset to slide 0 is
   // not a visible scroll animation.
@@ -163,13 +170,13 @@ export const ProductHero = ({
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        scrollToSlide(slide + 1, "smooth");
+        scrollToSlide(slide + 1, navBehavior);
       } else if (event.key === "ArrowLeft") {
         event.preventDefault();
-        scrollToSlide(slide - 1, "smooth");
+        scrollToSlide(slide - 1, navBehavior);
       }
     },
-    [slide, scrollToSlide],
+    [slide, scrollToSlide, navBehavior],
   );
 
   const altText = useMemo(
@@ -202,8 +209,12 @@ export const ProductHero = ({
             the shared slides (science, ritmo del dia, lifestyle). Motion is
             native CSS scroll-snap: the track is a horizontal scroller with
             mandatory snap on each slide, so touch swipes are as smooth as the
-            OS allows and a short flick commits reliably. touch-action pan-x
-            keeps vertical page scroll intact. */}
+            OS allows and a short flick commits reliably.
+
+            touch-manipulation y no pan-x: pan-x deshabilita el paneo vertical
+            que arranca sobre el elemento (medido: con el dedo sobre la galeria
+            la pagina no bajaba) y bloquea el pinch-zoom. manipulation deja los
+            dos y solo apaga el zoom por doble tap. */}
         <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black/40 ring-1 ring-white/5">
           <div
             ref={trackRef}
@@ -212,8 +223,7 @@ export const ProductHero = ({
             aria-label="Galeria del producto"
             tabIndex={0}
             onKeyDown={handleKeyDown}
-            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth outline-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
-            style={{ touchAction: "pan-x" }}
+            className="peer flex h-full w-full touch-manipulation snap-x snap-mandatory overflow-x-auto overflow-y-hidden outline-none motion-safe:scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {/* Slide 0: active color photo. */}
             <div
@@ -304,6 +314,15 @@ export const ProductHero = ({
             ))}
           </div>
 
+          {/* El foco del track va en una capa por encima: un ring sobre el
+              propio scroller se pinta debajo de las fotos, que son opacas, y
+              no se veia. Linea blanca con un filete oscuro por dentro para que
+              se lea sobre las fotos oscuras y sobre la placa blanca de ciencia. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[5] rounded-2xl peer-focus-visible:shadow-[inset_0_0_0_4px_rgba(0,0,0,0.55)] peer-focus-visible:ring-2 peer-focus-visible:ring-inset peer-focus-visible:ring-white"
+          />
+
           {/* Page indicators. Clickable, keyboard reachable, and the live label
               announces the active slide for assistive tech. */}
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2">
@@ -314,7 +333,7 @@ export const ProductHero = ({
                   key={index}
                   type="button"
                   onClick={() => {
-                    scrollToSlide(index, "smooth");
+                    scrollToSlide(index, navBehavior);
                     onGalleryInteract?.();
                   }}
                   aria-label={`Ir a la imagen ${index + 1} de ${SLIDE_COUNT}`}
