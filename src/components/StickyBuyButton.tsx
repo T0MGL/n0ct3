@@ -16,13 +16,20 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
 
   // Use refs to cache DOM element references
   const heroButtonRef = useRef<Element | null>(null);
-  const guaranteeButtonRef = useRef<Element | null>(null);
+  // CTAs de seccion que apagan la barra mientras estan en pantalla. La garantia
+  // porque compite con el mismo boton; el clip-on porque vende OTRO producto:
+  // el que llego hasta ahi es justamente el que no puede usar los lentes de
+  // marco, y tocar la barra le compraria lo que no le sirve.
+  const sectionCtasRef = useRef<Element[]>([]);
+  const lastCacheAtRef = useRef(0);
 
   // Cache DOM references on mount and after lazy-loaded sections render
   useEffect(() => {
     const cacheRefs = () => {
       heroButtonRef.current = document.querySelector('[data-hero-cta]');
-      guaranteeButtonRef.current = document.querySelector('[data-guarantee-cta]');
+      sectionCtasRef.current = Array.from(
+        document.querySelectorAll('[data-guarantee-cta],[data-clipon-cta]'),
+      );
     };
 
     // Try immediately and retry once after lazy sections load
@@ -39,8 +46,19 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
       // Retry caching if hero button not found yet (lazy load)
       if (!heroButtonRef.current) {
         heroButtonRef.current = document.querySelector('[data-hero-cta]');
-        guaranteeButtonRef.current = document.querySelector('[data-guarantee-cta]');
         if (!heroButtonRef.current) return;
+      }
+
+      // Las secciones lazy montan despues del cacheo inicial, asi que la lista
+      // se rearma mientras siga faltando alguna de las dos. Con techo de dos
+      // por segundo: esto corre en un rAF de scroll y si un chunk nunca monta
+      // el reintento no se apaga solo.
+      const now = performance.now();
+      if (sectionCtasRef.current.length < 2 && now - lastCacheAtRef.current > 500) {
+        lastCacheAtRef.current = now;
+        sectionCtasRef.current = Array.from(
+          document.querySelectorAll('[data-guarantee-cta],[data-clipon-cta]'),
+        );
       }
 
       const heroRect = heroButtonRef.current.getBoundingClientRect();
@@ -48,13 +66,12 @@ export const StickyBuyButton = ({ onBuyClick, selectedPrice }: StickyBuyButtonPr
 
       const hasScrolledDown = window.scrollY > 300;
 
-      let guaranteeInView = false;
-      if (guaranteeButtonRef.current) {
-        const guaranteeRect = guaranteeButtonRef.current.getBoundingClientRect();
-        guaranteeInView = guaranteeRect.top < window.innerHeight && guaranteeRect.bottom > 0;
-      }
+      const sectionCtaInView = sectionCtasRef.current.some((el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      });
 
-      setIsVisible(hasScrolledDown && heroOutOfView && !guaranteeInView);
+      setIsVisible(hasScrolledDown && heroOutOfView && !sectionCtaInView);
     };
 
     const onScroll = () => {

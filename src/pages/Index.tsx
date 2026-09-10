@@ -17,7 +17,16 @@ import {
 } from "@/lib/meta-pixel";
 import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
 import { BUNDLES, DEFAULT_BUNDLE_INDEX } from "@/lib/bundles";
-import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resizePicks, resolveSelectableVariant, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { ALL_VARIANTS_SOLD_OUT, DEFAULT_VARIANT, resizePicks, resolveSelectableVariant, type VariantId } from "@/lib/variants";
+import {
+  CLIP_ON,
+  clipOnItem,
+  describeOrderLines,
+  metaContent,
+  sumLines,
+  type CheckoutItem,
+  type OrderLine,
+} from "@/lib/order";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -41,6 +50,7 @@ const ComparisonTable = lazy(() => import("@/components/ComparisonTable"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const FAQSection = lazy(() => import("@/components/FAQSection"));
 const GuaranteeSection = lazy(() => import("@/components/GuaranteeSection"));
+const ClipOnSection = lazy(() => import("@/components/ClipOnSection"));
 
 // Lazy load checkout modals (only loaded when user clicks buy)
 const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
@@ -72,6 +82,24 @@ if (typeof window !== "undefined") {
 
 const defaultBundle = BUNDLES[DEFAULT_BUNDLE_INDEX];
 
+/**
+ * Congela el pack elegido como linea de pedido. Los colores se resuelven aca y
+ * no despues: resolveSelectableVariant es la ultima compuerta, un color
+ * agotado que se colo por un estado viejo o un deep link no puede llegar al
+ * pedido. Una vez armado el item, reabrir el picker ya no lo cambia.
+ */
+const lensItem = (bundleIndex: number, picks: readonly VariantId[]): CheckoutItem => {
+  const bundle = BUNDLES[bundleIndex];
+  return {
+    product: "lentes",
+    quantity: bundle.quantity,
+    amount: bundle.price,
+    colors: Array.from({ length: bundle.quantity }, (_, i) =>
+      resolveSelectableVariant(picks[i] ?? picks[0] ?? DEFAULT_VARIANT),
+    ),
+  };
+};
+
 const Index = () => {
   // Bundle selection state (visible on landing page)
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(DEFAULT_BUNDLE_INDEX);
@@ -99,9 +127,10 @@ const Index = () => {
   );
 
   const [checkoutData, setCheckoutData] = useState({
-    quantity: defaultBundle.quantity,
-    totalPrice: defaultBundle.price,
-    colors: null as string[] | null,
+    /** Que se esta comprando. Se congela al abrir el checkout. */
+    item: lensItem(DEFAULT_BUNDLE_INDEX, [DEFAULT_VARIANT]) as CheckoutItem,
+    /** El pedido cerrado, con upsells. Existe recien cuando el pago se confirma. */
+    lines: null as OrderLine[] | null,
     location: "",
     name: "",
     phone: "",
@@ -109,7 +138,6 @@ const Index = () => {
     isGeolocated: false,
     lat: undefined as number | undefined,
     long: undefined as number | undefined,
-    paymentMethod: "digital" as "digital" | "cash",
     orderNumber: "",
     paymentIntentId: "",
     ruc: "" as string | undefined,
@@ -173,21 +201,16 @@ const Index = () => {
 
 
   // Track InitiateCheckout when phone form opens
+  const checkoutItem = checkoutData.item;
   useEffect(() => {
-    if (showPhoneForm && checkoutData.quantity > 0) {
-      trackInitiateCheckout({
-        content_name: checkoutData.quantity === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses - Pack x${checkoutData.quantity}`,
-        content_ids: checkoutData.quantity === 1
-          ? ['nocte-red-glasses']
-          : [`nocte-red-glasses-${checkoutData.quantity}pack`],
-        num_items: checkoutData.quantity,
-        value: checkoutData.totalPrice,
-        currency: 'PYG',
-      });
-    }
-  }, [showPhoneForm, checkoutData.quantity, checkoutData.totalPrice]);
+    if (!showPhoneForm) return;
+    trackInitiateCheckout({
+      ...metaContent(checkoutItem),
+      num_items: checkoutItem.quantity,
+      value: checkoutItem.amount,
+      currency: 'PYG',
+    });
+  }, [showPhoneForm, checkoutItem]);
 
   const handleBundleSelect = useCallback((index: number) => {
     // Only emit AddToCart when the user actually switches to a different pack.
@@ -195,78 +218,64 @@ const Index = () => {
     // with redundant events, and Personal (the default) never fires ATC from
     // here because it is pre-selected.
     if (index !== selectedBundleIndex) {
-      const bundle = BUNDLES[index];
+      const item = lensItem(index, picks);
       trackAddToCart({
-        content_name: bundle.quantity === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
-        content_ids: bundle.quantity === 1
-          ? ['nocte-red-glasses']
-          : [`nocte-red-glasses-${bundle.quantity}pack`],
-        num_items: bundle.quantity,
-        value: bundle.price,
+        ...metaContent(item),
+        num_items: item.quantity,
+        value: item.amount,
         currency: 'PYG',
       });
       setAtcFired(true);
     }
     setSelectedBundleIndex(index);
-  }, [selectedBundleIndex]);
+  }, [selectedBundleIndex, picks]);
 
-  const startBuyFlow = useCallback((bundleIndex: number, hasAtcFired: boolean) => {
-    // Hard gate: with every color sold out there is nothing sellable, so the
-    // checkout never opens no matter which CTA fired the click.
-    if (ALL_VARIANTS_SOLD_OUT) return;
-
-    const bundle = BUNDLES[bundleIndex];
-
-    // Snapshot the per-unit colors at the moment of buy so the checkout payload
-    // stays stable even if the user reopens the picker afterwards.
-    // resolveSelectableVariant is the final gate: a sold-out color can never
-    // reach the order payload, even if a stale pick slipped past the UI.
-    const colorsSnapshot = Array.from(
-      { length: bundle.quantity },
-      (_, i) => resolveSelectableVariant(picks[i] ?? picks[0] ?? DEFAULT_VARIANT),
-    );
+  /**
+   * Abre el checkout para un producto cualquiera. Los lentes llegan con su
+   * pack y sus colores, el clip-on llega solo. Un unico camino de compra: si
+   * el clip-on tuviera el suyo, cada arreglo del checkout habria que hacerlo
+   * dos veces.
+   */
+  const startBuyFlow = useCallback((item: CheckoutItem, trackAtc: boolean) => {
+    // Los colores agotados solo bloquean la venta de lentes. El clip-on no
+    // depende del stock de los tres tonos.
+    if (item.product === "lentes" && ALL_VARIANTS_SOLD_OUT) return;
 
     setCheckoutInProgress(true);
-    setSelectedBundleIndex(bundleIndex);
-    setCheckoutData((prev) => ({
-      ...prev,
-      quantity: bundle.quantity,
-      totalPrice: bundle.price,
-      colors: colorsSnapshot,
-    }));
+    setCheckoutData((prev) => ({ ...prev, item, lines: null }));
 
-    if (!hasAtcFired) {
+    if (trackAtc) {
       trackAddToCart({
-        content_name: bundle.quantity === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses - Pack x${bundle.quantity}`,
-        content_ids: bundle.quantity === 1
-          ? ['nocte-red-glasses']
-          : [`nocte-red-glasses-${bundle.quantity}pack`],
-        num_items: bundle.quantity,
-        value: bundle.price,
+        ...metaContent(item),
+        num_items: item.quantity,
+        value: item.amount,
         currency: 'PYG',
       });
-      setAtcFired(true);
     }
 
     setShowPhoneForm(true);
 
     import("@/components/checkout/StripeCheckoutModal");
     import("@/components/checkout/ExitIntentModal");
-  }, [picks]);
+  }, []);
 
   const handleBuyClick = useCallback(() => {
-    startBuyFlow(selectedBundleIndex, atcFired);
-  }, [startBuyFlow, selectedBundleIndex, atcFired]);
+    startBuyFlow(lensItem(selectedBundleIndex, picks), !atcFired);
+    setAtcFired(true);
+  }, [startBuyFlow, selectedBundleIndex, picks, atcFired]);
+
+  // El clip-on emite siempre su propio AddToCart y no toca atcFired: es otro
+  // producto, el ATC de los lentes no lo cubre y este no cubre al de ellos.
+  const handleClipOnBuyClick = useCallback(() => {
+    startBuyFlow(clipOnItem(), true);
+  }, [startBuyFlow]);
 
   const handlePaymentSuccess = useCallback((result: {
     paymentIntentId: string;
     paymentType: 'Card' | 'COD';
     isPaid: boolean;
     deliveryType: 'común' | 'premium';
+    lines: OrderLine[];
     finalTotal: number;
     email?: string;
   }) => {
@@ -288,7 +297,8 @@ const Index = () => {
         lat: prev.lat,
         long: prev.long,
         ruc: prev.ruc,
-        quantity: prev.quantity,
+        lines: result.lines,
+        quantity: prev.item.quantity,
         total: result.finalTotal,
         orderNumber: prev.orderNumber,
         paymentIntentId: result.paymentIntentId,
@@ -296,21 +306,18 @@ const Index = () => {
         paymentType: result.paymentType,
         isPaid: result.isPaid,
         deliveryType: result.deliveryType,
-        colors: prev.colors ?? undefined,
+        colors: prev.item.product === 'lentes' ? prev.item.colors : undefined,
         fbp: getFbp(),
         fbc: getFbc(),
       });
 
+      // El value del Purchase es el total real cobrado, upsells incluidos, no
+      // el precio del producto: sale de la suma de las lineas del pedido.
       const purchaseParams = {
         value: result.finalTotal,
         currency: 'PYG',
-        content_name: prev.quantity === 1
-          ? 'NOCTE® Red Light Blocking Glasses'
-          : `NOCTE® Red Light Blocking Glasses - Pack x${prev.quantity}`,
-        content_ids: prev.quantity === 1
-          ? ['nocte-red-glasses']
-          : [`nocte-red-glasses-${prev.quantity}pack`],
-        num_items: prev.quantity,
+        ...metaContent(prev.item),
+        num_items: prev.item.quantity,
         order_id: prev.orderNumber,
       };
 
@@ -358,7 +365,7 @@ const Index = () => {
         }
       })();
 
-      return { ...prev, paymentIntentId: result.paymentIntentId, totalPrice: result.finalTotal, email: effectiveEmail };
+      return { ...prev, paymentIntentId: result.paymentIntentId, lines: result.lines, email: effectiveEmail };
     });
 
     // INSTANT UI update - show success immediately
@@ -372,15 +379,13 @@ const Index = () => {
   }, []);
 
   const resetCheckoutData = useCallback(() => ({
-    quantity: defaultBundle.quantity,
-    totalPrice: defaultBundle.price,
-    colors: null as [string, string] | null,
+    item: lensItem(DEFAULT_BUNDLE_INDEX, [DEFAULT_VARIANT]) as CheckoutItem,
+    lines: null as OrderLine[] | null,
     location: "",
     name: "",
     phone: "",
     address: "",
     isGeolocated: false,
-    paymentMethod: "digital" as "digital" | "cash",
     orderNumber: generateOrderNumber(),
     paymentIntentId: "",
     lat: undefined as number | undefined,
@@ -416,11 +421,9 @@ const Index = () => {
       email: data.email,
     }));
 
-    const bundle = BUNDLES[selectedBundleIndex];
-    const colorsSnapshot = Array.from(
-      { length: bundle.quantity },
-      (_, i) => resolveSelectableVariant(picks[i] ?? picks[0] ?? DEFAULT_VARIANT),
-    );
+    // El recupero de carrito abandonado describe lo que el cliente iba a
+    // comprar, asi que sale del item congelado y no del pack seleccionado en
+    // la landing: quien entro por el clip-on nunca eligio un pack.
     notifyCheckoutStarted({
       name: data.name,
       phone: data.phone,
@@ -428,15 +431,18 @@ const Index = () => {
       address: data.address,
       lat: data.lat,
       long: data.long,
-      bundleLabel: bundle.label,
-      quantity: bundle.quantity,
-      price: bundle.price,
-      colors: colorsSnapshot,
+      bundleLabel:
+        checkoutItem.product === "lentes"
+          ? BUNDLES[selectedBundleIndex].label
+          : `NOCTE® ${CLIP_ON.name}`,
+      quantity: checkoutItem.quantity,
+      price: checkoutItem.amount,
+      colors: checkoutItem.product === "lentes" ? checkoutItem.colors : undefined,
     });
 
     setShowPhoneForm(false);
     setShowStripeCheckout(true); // Show payment with all info collected
-  }, [selectedBundleIndex, picks]);
+  }, [checkoutItem, selectedBundleIndex]);
 
   const handlePhoneFormClose = useCallback(() => {
     if (!exitIntentShown) {
@@ -466,24 +472,16 @@ const Index = () => {
       googleMapsLink = `https://www.google.com/maps?q=${checkoutData.lat},${checkoutData.long}`;
     }
 
-    // Break the order down per chosen color so a mixed pack (e.g. 1 amarillo +
-    // 1 rojo) lists each variant with its own emoji and count, instead of
-    // collapsing everything into one generic line. Falls back to the default
-    // variant filled to quantity when no explicit picks were captured.
-    const picks: VariantId[] = (
-      (checkoutData.colors as VariantId[] | null)?.length
-        ? (checkoutData.colors as VariantId[])
-        : Array.from({ length: checkoutData.quantity }, () => DEFAULT_VARIANT)
-    ).map(resolveSelectableVariant);
-
-    const products = summarizeVariantCounts(picks)
-      .map(({ variant, count }) => `${variant.emoji} ${count}x ${variant.productName}`)
-      .join('\n');
+    // El pedido cerrado incluye los upsells, asi que el resumen y el mensaje
+    // de WhatsApp salen de las lineas: un antifaz que no figura aca es un
+    // antifaz que el cliente no sabe que compro hasta que le llega. Antes de
+    // confirmar el pago todavia no hay lineas y vale el item solo.
+    const lines: OrderLine[] = checkoutData.lines ?? [checkoutData.item];
 
     return {
       orderNumber: checkoutData.orderNumber,
-      products,
-      total: `${checkoutData.totalPrice.toLocaleString('es-PY')} Gs`,
+      products: describeOrderLines(lines),
+      total: `${sumLines(lines).toLocaleString('es-PY')} Gs`,
       location: checkoutData.location,
       phone: checkoutData.phone,
       name: checkoutData.name,
@@ -500,10 +498,8 @@ const Index = () => {
     address: checkoutData.address,
     isGeolocated: checkoutData.isGeolocated,
     orderNumber: checkoutData.orderNumber,
-    quantity: checkoutData.quantity,
     email: checkoutData.email,
-    colors: checkoutData.colors ?? undefined,
-  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.quantity, checkoutData.email, checkoutData.colors]);
+  }), [checkoutData.name, checkoutData.phone, checkoutData.location, checkoutData.address, checkoutData.isGeolocated, checkoutData.orderNumber, checkoutData.email]);
 
   // Scroll detection for header - uses ref to avoid re-renders on every scroll
   const lastScrollYRef = useRef(0);
@@ -725,6 +721,12 @@ const Index = () => {
           headline="Más caro que un genérico. Más barato que otra noche sin dormir."
         />
 
+        {/* La objecion de la receta, contestada justo antes del FAQ que la
+            plantea. Ver el comentario del componente para el porque del lugar. */}
+        <Suspense fallback={null}>
+          <ClipOnSection onBuyClick={handleClipOnBuyClick} />
+        </Suspense>
+
         <Suspense fallback={null}>
           <FAQSection />
         </Suspense>
@@ -759,7 +761,7 @@ const Index = () => {
             onClose={handleStripeCheckoutClose}
             onBack={handleBackToPhoneForm}
             onSuccess={handlePaymentSuccess}
-            amount={checkoutData.totalPrice}
+            item={checkoutItem}
             currency="pyg"
             isProcessingOrder={false}
             customerData={customerData}
