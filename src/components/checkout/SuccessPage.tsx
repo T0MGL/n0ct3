@@ -2,12 +2,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { buildWhatsAppUrl } from "@/lib/contact";
+import type { OrderSummary } from "@/lib/order";
 
 interface SuccessPageProps {
   isOpen: boolean;
   orderData: {
     orderNumber: string;
+    /** El pedido en texto para el mensaje de WhatsApp. */
     products: string;
+    /** El pedido para la pantalla: nombres cortos, un renglon por producto y color. */
+    summary: OrderSummary;
     total: string;
     location: string;
     phone: string;
@@ -95,9 +99,31 @@ Quedo atento a la confirmación de envío. ¡Gracias! 🙌`;
                   <span className="text-xs md:text-sm font-bold text-foreground">{orderData.orderNumber}</span>
                 </div>
 
-                <div className="flex justify-between items-start gap-3">
-                  <span className="text-xs md:text-sm text-muted-foreground flex-shrink-0">Productos:</span>
-                  <span className="text-xs md:text-sm font-semibold text-foreground text-right whitespace-pre-line">{orderData.products}</span>
+                {/* Lista y no texto alineado a la derecha: con nombres de dos
+                    renglones la columna derecha quedaba rota. La cantidad va
+                    en su propia columna y el nombre, si no entra, se parte
+                    dentro de la suya. */}
+                <div className="space-y-2">
+                  <span className="text-xs md:text-sm text-muted-foreground">Productos:</span>
+                  <ul className="space-y-1.5">
+                    {orderData.summary.items.map((item) => (
+                      <li key={item.key} className="flex items-baseline gap-2 text-xs md:text-sm font-semibold">
+                        <span className="w-6 flex-shrink-0 text-right tabular-nums text-muted-foreground">
+                          {item.quantity}×
+                        </span>
+                        <span className="min-w-0 text-foreground">{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* El envio es un servicio, no un producto: va como fila propia,
+                    igual que el total. */}
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-xs md:text-sm text-muted-foreground">Envío:</span>
+                  <span className="text-xs md:text-sm font-semibold text-foreground">
+                    {orderData.summary.priorityShipping ? 'Prioritario VIP' : 'Gratis'}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center gap-3">
