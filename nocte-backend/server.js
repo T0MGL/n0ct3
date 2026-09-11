@@ -786,10 +786,14 @@ const PRICE_BY_PRODUCT = {
 
 const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
 
+// Mismo tope que el checkout: desde 6 unidades es precio mayorista y va por
+// WhatsApp. Los lentes ya topean solos, solo hay precio para packs de 1 a 3.
+const MAX_UNITS = { sleepmask: 5, clipon: 5, 'envio-prioritario': 1 };
+
 function expectedLineAmount(product, quantity) {
   if (product === 'lentes') return LENS_PACK_PRICE[quantity];
   const prices = PRICE_BY_PRODUCT[product];
-  if (!prices) return undefined;
+  if (!prices || quantity > MAX_UNITS[product]) return undefined;
   return prices[0] * quantity;
 }
 
@@ -1471,6 +1475,7 @@ Object.assign(app, {
   describeOrderForN8n,
   buildN8nLines,
   readOrderLines,
+  priceMismatches,
   TIER,
   UNITS_PER_PACK,
   LENS_SKU,

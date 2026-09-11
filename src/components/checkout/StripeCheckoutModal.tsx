@@ -247,7 +247,7 @@ const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
     onChange(picks.map((pick, i) => (i === index ? color : pick)));
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[12px] font-medium text-white">Cantidad</p>
