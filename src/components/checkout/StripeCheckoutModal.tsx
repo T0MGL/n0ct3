@@ -219,16 +219,14 @@ const UpsellRow = ({
 };
 
 /**
- * Icono del envio prioritario arriba de su tarjeta, en el mismo lugar que la
- * foto del antifaz en la suya. Al costado del texto le quitaba el ancho: en
- * 390px el titulo se partia y el texto de las dos tarjetas arrancaba en
- * columnas distintas. El archivo no es transparente, trae fondo blanco, y la
- * franja es blanca para que no se vea el borde. Proporcion original, sin
- * estirar ni recortar.
+ * Icono del envio prioritario, arriba de su tarjeta como la foto del antifaz
+ * en la suya, asi el texto de las dos arranca en la misma columna. El archivo
+ * trae fondo blanco opaco: la franja es blanca para que no se vea el borde.
+ * alt vacio porque es decorativo; el titulo al lado ya dice que es.
  */
-const ShippingIcon = ({ src, alt }: { src: string; alt: string }) => (
+const ShippingIcon = ({ src, width, height }: { src: string; width: number; height: number }) => (
   <div className="flex h-16 items-center justify-center bg-white">
-    <img src={src} alt={alt} width={421} height={431} decoding="async" className="h-[52px] w-auto" />
+    <img src={src} alt="" width={width} height={height} decoding="async" className="h-[52px] w-auto" />
   </div>
 );
 

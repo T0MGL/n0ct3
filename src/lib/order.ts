@@ -43,8 +43,12 @@ interface AddOn {
   price: number;
   /** Precio de catalogo, tachado. Ausente cuando no hay descuento. */
   listPrice?: number;
-  /** Imagen arriba de la tarjeta del bump. El antifaz no la usa: su foto cambia con el color (mask-photos.ts). */
-  image?: { src: string; alt: string };
+  /**
+   * Icono arriba de la tarjeta del bump, decorativo: el titulo ya dice que es.
+   * Las medidas van con el archivo para reservar su lugar antes de que cargue.
+   * El antifaz no lo usa: su foto cambia con el color (mask-photos.ts).
+   */
+  image?: { src: string; width: number; height: number };
 }
 
 export const PRIORITY_SHIPPING: AddOn = {
@@ -53,10 +57,7 @@ export const PRIORITY_SHIPPING: AddOn = {
   price: 10000,
   // Servido desde el repo y no desde la URL que tiene cargada Ordefy: esa
   // apunta al CDN de otra tienda y se rompe el dia que la borren.
-  image: {
-    src: envioPrioritarioIcon,
-    alt: "Ícono de un escudo con un tilde y un reloj",
-  },
+  image: { src: envioPrioritarioIcon, width: 421, height: 431 },
 };
 
 // El color se elige por unidad en el bump (ver mask-colors.ts) y va en el nombre
