@@ -5,8 +5,10 @@ export type VariantMoment = "NOCHE" | "TARDE" | "DÍA";
 export interface Variant {
   id: VariantId;
   name: string;
-  /** Full product title used in order confirmations (WhatsApp, success screen). */
+  /** Full product title used in the WhatsApp order confirmation. */
   productName: string;
+  /** Nombre corto de la pantalla de exito, un renglon por color. */
+  shortName: string;
   /** Colored circle that prefixes the variant in the WhatsApp order breakdown. */
   emoji: string;
   displayTitle: string;
@@ -58,6 +60,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     id: "rojo",
     name: "NOCTE Rojo",
     productName: "NOCTE® Lentes Rojos",
+    shortName: "Lentes Rojos",
     emoji: "🔴",
     displayTitle: "Lentes Rojos Anti-Luz Azul",
     moment: "NOCHE",
@@ -91,6 +94,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     id: "naranja",
     name: "NOCTE Naranja",
     productName: "NOCTE® Lentes Naranjas",
+    shortName: "Lentes Naranjas",
     emoji: "🟠",
     displayTitle: "Lentes Naranjas Anti-Luz Azul",
     moment: "TARDE",
@@ -124,6 +128,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
     id: "amarillo",
     name: "NOCTE Amarillo",
     productName: "NOCTE® Lentes Amarillos",
+    shortName: "Lentes Amarillos",
     emoji: "🟡",
     displayTitle: "Lentes Amarillos Anti-Luz Azul",
     moment: "DÍA",

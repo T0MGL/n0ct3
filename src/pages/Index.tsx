@@ -22,6 +22,7 @@ import {
   CLIP_ON,
   clipOnItem,
   describeOrderLines,
+  summarizeOrder,
   metaContent,
   sumLines,
   type CheckoutItem,
@@ -485,6 +486,7 @@ const Index = () => {
     return {
       orderNumber: checkoutData.orderNumber,
       products: describeOrderLines(lines),
+      summary: summarizeOrder(lines),
       total: `${sumLines(lines).toLocaleString('es-PY')} Gs`,
       location: checkoutData.location,
       phone: checkoutData.phone,

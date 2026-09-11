@@ -142,11 +142,51 @@ export function metaContent(item: CheckoutItem): { content_name: string; content
   };
 }
 
+export interface OrderSummaryItem {
+  /** Producto y color: la clave de la fila en la lista. */
+  key: string;
+  quantity: number;
+  /** Nombre corto. El largo, con marca y "para dormir", va a WhatsApp y a Ordefy. */
+  name: string;
+}
+
+export interface OrderSummary {
+  items: OrderSummaryItem[];
+  priorityShipping: boolean;
+}
+
 /**
- * El pedido en texto, una linea por producto. Es lo que el cliente recibe por
- * WhatsApp y lo que ve en la pantalla de confirmacion, asi que se arma desde
- * las lineas y no desde el producto principal: un antifaz que no aparece aca
- * es un antifaz que el cliente no sabe que compro hasta que le llega.
+ * Lo que la pantalla de exito muestra del pedido: un renglon por producto y
+ * color con su nombre corto, y el envio aparte porque es un servicio y no se
+ * cuenta por unidades. Dos lineas del mismo producto y color se juntan en una.
+ */
+export function summarizeOrder(lines: readonly OrderLine[]): OrderSummary {
+  const items = new Map<string, OrderSummaryItem>();
+  const add = (key: string, name: string, quantity: number) =>
+    items.set(key, { key, name, quantity: (items.get(key)?.quantity ?? 0) + quantity });
+
+  let priorityShipping = false;
+  for (const line of lines) {
+    if (line.product === "lentes") {
+      const byColor = summarizeVariantCounts(line.colors);
+      if (byColor.length === 0) add("lentes", "Lentes Anti-Luz Azul", line.quantity);
+      byColor.forEach(({ variant, count }) => add(`lentes-${variant.id}`, variant.shortName, count));
+    } else if (line.product === "sleepmask") {
+      add(`sleepmask-${line.color}`, `Antifaz 3D ${MASK_COLORS[line.color].name}`, line.quantity);
+    } else if (line.product === "clipon") {
+      add("clipon", CLIP_ON.name, line.quantity);
+    } else {
+      priorityShipping = true;
+    }
+  }
+  return { items: [...items.values()], priorityShipping };
+}
+
+/**
+ * El pedido en texto, una linea por producto, para el mensaje de WhatsApp que
+ * el cliente le manda a NOCTE. Se arma desde las lineas y no desde el producto
+ * principal: un antifaz que no aparece aca es un antifaz que el cliente no
+ * sabe que compro hasta que le llega. La pantalla de exito usa summarizeOrder.
  */
 export function describeOrderLines(lines: readonly OrderLine[]): string {
   return lines
