@@ -19,10 +19,11 @@ interface MaskPhoto {
   alt: string;
 }
 
-// Ancho real de la tarjeta del bump: el modal es max-w-[550px] con p-10 desde
-// md, y en mobile pierde 138px entre los paddings del overlay, del modal y del
-// resumen. Si esos paddings cambian, esto tambien.
-export const MASK_PHOTO_SIZES = "(min-width: 600px) 430px, calc(100vw - 138px)";
+// Ancho real de la foto: en mobile pierde 142px (paddings del overlay, del
+// modal y del resumen, 68 por lado, mas tres bordes de 1px por lado). El modal
+// topea en 550px: 440 de foto con p-8 y 424 con el p-10 de md. Si esos
+// paddings cambian, esto tambien.
+export const MASK_PHOTO_SIZES = "(min-width: 768px) 424px, (min-width: 600px) 440px, calc(100vw - 142px)";
 
 export const MASK_PHOTOS: Readonly<Record<MaskColorId, MaskPhoto>> = {
   negro: {

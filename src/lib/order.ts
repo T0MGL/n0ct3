@@ -175,7 +175,7 @@ export function summarizeOrder(lines: readonly OrderLine[]): OrderSummary {
       add(`sleepmask-${line.color}`, `Antifaz 3D ${MASK_COLORS[line.color].name}`, line.quantity);
     } else if (line.product === "clipon") {
       add("clipon", CLIP_ON.name, line.quantity);
-    } else {
+    } else if (line.product === "envio-prioritario") {
       priorityShipping = true;
     }
   }

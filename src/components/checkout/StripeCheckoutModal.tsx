@@ -182,13 +182,14 @@ const UpsellRow = ({
           )}
 
           <div className="min-w-0 flex-1">
-            <p
+            {/* span y no p: dentro de un button solo va contenido en linea. */}
+            <span
               id={titleId}
-              className={cn('text-sm font-bold leading-snug', checked ? 'text-variant-active' : 'text-foreground')}
+              className={cn('block text-sm font-bold leading-snug', checked ? 'text-variant-active' : 'text-foreground')}
             >
               {title}
-            </p>
-            <p id={priceId} className="mt-0.5 flex flex-wrap items-baseline gap-x-2 leading-tight">
+            </span>
+            <span id={priceId} className="mt-0.5 flex flex-wrap items-baseline gap-x-2 leading-tight">
               {listPrice !== undefined && (
                 <span className="text-[11px] text-white/50 line-through">
                   {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
@@ -205,10 +206,10 @@ const UpsellRow = ({
               >
                 + {formatPrice(price, 'pyg')}
               </span>
-            </p>
-            <p id={descriptionId} className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            </span>
+            <span id={descriptionId} className="mt-1.5 block text-xs leading-relaxed text-muted-foreground">
               {description}
-            </p>
+            </span>
           </div>
         </div>
       </button>
