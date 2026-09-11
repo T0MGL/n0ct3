@@ -13,6 +13,7 @@
 
 import { summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { MASK_COLORS, MASK_COLOR_IDS, resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
+import envioPrioritarioIcon from "@/assets/checkout/envio-prioritario.webp";
 
 export type OrderProduct = "lentes" | "sleepmask" | "clipon" | "envio-prioritario";
 
@@ -42,13 +43,20 @@ interface AddOn {
   price: number;
   /** Precio de catalogo, tachado. Ausente cuando no hay descuento. */
   listPrice?: number;
-  image?: string;
+  /** Miniatura del bump. El antifaz no la usa: su foto cambia con el color (mask-photos.ts). */
+  image?: { src: string; alt: string };
 }
 
 export const PRIORITY_SHIPPING: AddOn = {
   product: "envio-prioritario",
   name: "Envío Prioritario VIP",
   price: 10000,
+  // Servido desde el repo y no desde la URL que tiene cargada Ordefy: esa
+  // apunta al CDN de otra tienda y se rompe el dia que la borren.
+  image: {
+    src: envioPrioritarioIcon,
+    alt: "Ícono de un escudo con un tilde y un reloj",
+  },
 };
 
 // El color se elige por unidad en el bump (ver mask-colors.ts) y va en el nombre
@@ -59,9 +67,6 @@ export const SLEEP_MASK: AddOn = {
   name: "Antifaz 3D para dormir",
   price: 119000,
   listPrice: 169000,
-  // Sin foto real todavia. El bump renderiza sin miniatura hasta que llegue:
-  // importar el .webp aca y asignarlo es todo lo que hace falta.
-  image: undefined,
 };
 
 export const CLIP_ON: AddOn = {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, EnvelopeIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment, PaymentAmountError } from '@/hooks/useStripePayment';
@@ -20,10 +20,12 @@ import {
   MASK_COLOR_IDS,
   MASK_SOLD_OUT_NOTICE,
   MAX_MASK_QUANTITY,
+  isMaskColorSoldOut,
   resizeMaskPicks,
   resolveSelectableMaskColor,
   type MaskColorId,
 } from '@/lib/mask-colors';
+import { MASK_PHOTOS, MASK_PHOTO_SIZES } from '@/lib/mask-photos';
 import { summarizeVariantCounts } from '@/lib/variants';
 import {
   CLIP_ON,
@@ -74,10 +76,10 @@ interface UpsellRowProps {
   price: number;
   /** Precio de catalogo, tachado arriba del real. Ausente cuando no hay descuento. */
   listPrice?: number;
-  /** Glifo al lado del titulo. Para servicios, que no tienen foto. */
-  icon?: typeof RocketLaunchIcon;
-  /** Miniatura del producto. Cuando falta, la fila queda igual pero sin foto. */
-  image?: string;
+  /** Miniatura al lado del titulo, para servicios. Un producto lleva `media`. */
+  image?: { src: string; alt: string };
+  /** Foto a todo el ancho arriba de la tarjeta. Tocarla marca el bump. */
+  media?: ReactNode;
   /** Lo que se despliega al marcarla, como la eleccion de color del antifaz. */
   children?: ReactNode;
 }
@@ -91,6 +93,10 @@ const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
  * podia tocar con teclado y un lector de pantalla no tenia como saber si estaba
  * marcada. La tarjeta es un div porque adentro puede ir un panel con controles
  * propios, y un button no puede contener otros.
+ *
+ * El precio va debajo del titulo y no al costado: en 390px la columna del
+ * precio partia el titulo en tres renglones, y ese alto es el que ahora paga
+ * la foto del antifaz.
  */
 const UpsellRow = ({
   checked,
@@ -99,30 +105,52 @@ const UpsellRow = ({
   description,
   price,
   listPrice,
-  icon: Icon,
   image,
+  media,
   children,
 }: UpsellRowProps) => {
   const panelId = useId();
+  const titleId = useId();
+  const priceId = useId();
+  const descriptionId = useId();
   const reduceMotion = useReducedMotion();
   return (
     <div
       className={cn(
-        // El press se ve en toda la tarjeta aunque lo reciba el switch: el
-        // switch lleva no-press para no hundirse solo dentro de la tarjeta.
-        'rounded-xl border transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out has-[>button:active]:scale-[0.99]',
+        // El press se ve en toda la tarjeta aunque lo reciba el switch o la
+        // foto: los dos llevan data-press y el switch no-press, para no
+        // hundirse solo dentro de la tarjeta.
+        'rounded-xl border transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out has-[>[data-press]:active]:scale-[0.99]',
         checked
           ? 'border-variant-active/40 bg-variant-active/5 shadow-[0_8px_24px_-16px_hsl(var(--variant-active)/0.5)]'
           : 'border-border/40 bg-secondary/30 hover:border-border/60 hover:bg-secondary/50',
       )}
     >
+      {media && (
+        // Solo marca, nunca desmarca: quien toca la foto de un bump ya
+        // marcado la esta mirando, no arrepintiendose. Es un atajo para el
+        // dedo; el control accesible es el switch de abajo.
+        <div
+          data-press={checked ? undefined : true}
+          onClick={checked ? undefined : onToggle}
+          className={cn('overflow-hidden rounded-t-[11px]', !checked && 'cursor-pointer')}
+        >
+          {media}
+        </div>
+      )}
       <button
         type="button"
         role="switch"
+        data-press
         aria-checked={checked}
+        aria-labelledby={titleId}
+        aria-describedby={`${priceId} ${descriptionId}`}
         aria-controls={children && checked ? panelId : undefined}
         onClick={onToggle}
-        className="no-press group relative w-full rounded-xl p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
+        className={cn(
+          'no-press group relative w-full p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40',
+          media ? 'rounded-b-xl' : 'rounded-xl',
+        )}
       >
         <div className="flex items-start gap-3">
           <span
@@ -144,50 +172,43 @@ const UpsellRow = ({
 
           {image && (
             <img
-              src={image}
-              alt=""
-              loading="lazy"
+              src={image.src}
+              alt={image.alt}
+              width={44}
+              height={44}
               decoding="async"
-              className="h-14 w-14 flex-shrink-0 rounded-lg border border-border/40 object-cover"
+              className="h-11 w-11 flex-shrink-0 rounded-lg object-cover"
             />
           )}
 
           <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-start justify-between gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className={cn('text-sm font-bold', checked ? 'text-variant-active' : 'text-foreground')}>
-                  {title}
+            <p
+              id={titleId}
+              className={cn('text-sm font-bold leading-snug', checked ? 'text-variant-active' : 'text-foreground')}
+            >
+              {title}
+            </p>
+            <p id={priceId} className="mt-0.5 flex flex-wrap items-baseline gap-x-2 leading-tight">
+              {listPrice !== undefined && (
+                <span className="text-[11px] text-white/50 line-through">
+                  {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
+                      tachado, que es puramente visual, no significa nada. */}
+                  <span className="sr-only">Precio de lista, </span>
+                  {formatPrice(listPrice, 'pyg')}
                 </span>
-                {Icon && (
-                  <Icon
-                    className={cn(
-                      'h-4 w-4 flex-shrink-0',
-                      checked ? 'text-variant-active' : 'text-muted-foreground',
-                    )}
-                  />
+              )}{' '}
+              <span
+                className={cn(
+                  'whitespace-nowrap text-sm font-bold',
+                  checked ? 'text-variant-active' : 'text-muted-foreground',
                 )}
-              </div>
-              <span className="ml-2 flex flex-shrink-0 flex-col items-end leading-tight">
-                {listPrice !== undefined && (
-                  <span className="text-[11px] text-white/50 line-through">
-                    {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
-                        tachado, que es puramente visual, no significa nada. */}
-                    <span className="sr-only">Precio de lista, </span>
-                    {formatPrice(listPrice, 'pyg')}
-                  </span>
-                )}
-                <span
-                  className={cn(
-                    'whitespace-nowrap text-sm font-bold',
-                    checked ? 'text-variant-active' : 'text-muted-foreground',
-                  )}
-                >
-                  + {formatPrice(price, 'pyg')}
-                </span>
+              >
+                + {formatPrice(price, 'pyg')}
               </span>
-            </div>
-
-            <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+            </p>
+            <p id={descriptionId} className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              {description}
+            </p>
           </div>
         </div>
       </button>
@@ -210,6 +231,52 @@ const UpsellRow = ({
   );
 };
 
+// Los colores agotados no se bajan: nadie los puede elegir.
+const MASK_PHOTO_COLORS = MASK_COLOR_IDS.filter((id) => !isMaskColorSoldOut(id));
+
+interface MaskPhotoProps {
+  color: MaskColorId;
+  expanded: boolean;
+}
+
+/**
+ * Foto del antifaz en uso. Sin marcar es una franja centrada en el antifaz;
+ * al marcar crece hasta el recorte entero con la misma curva y duracion que el
+ * panel de colores, asi foto y panel se abren como un solo movimiento. Los
+ * colores estan apilados y cambian por opacidad: como es la misma escena, el
+ * cruce solo cambia el antifaz.
+ */
+const MaskPhoto = ({ color, expanded }: MaskPhotoProps) => (
+  <div
+    className={cn(
+      // duration-[] y ease-[] chocan con los de tailwindcss-animate y Tailwind no
+      // los genera: van como propiedad. --ease-smooth es la curva de EXPAND.
+      'relative bg-white/[0.04] transition-[padding-top] [transition-duration:320ms] [transition-timing-function:var(--ease-smooth)] motion-reduce:transition-none',
+      // Sin marcar, una franja con el antifaz al centro. Marcado, casi todo el
+      // recorte (700/1200 seria el 58%): con 52% la foto crece pero empuja el
+      // boton de confirmar menos de lo que ya lo empuja el panel de colores.
+      expanded ? 'pt-[52%]' : 'pt-[38%]',
+    )}
+  >
+    {MASK_PHOTO_COLORS.map((id) => (
+      <img
+        key={id}
+        src={MASK_PHOTOS[id].src}
+        srcSet={MASK_PHOTOS[id].srcSet}
+        sizes={MASK_PHOTO_SIZES}
+        alt={MASK_PHOTOS[id].alt}
+        aria-hidden={id === color ? undefined : true}
+        loading="lazy"
+        decoding="async"
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ease-out motion-reduce:transition-none',
+          id === color ? 'opacity-100' : 'opacity-0',
+        )}
+      />
+    ))}
+  </div>
+);
+
 const MASK_OPTIONS: readonly SwatchOption<MaskColorId>[] = MASK_COLOR_IDS.map((id) => ({
   id,
   name: MASK_COLORS[id].name,
@@ -228,6 +295,8 @@ const STEP_BUTTON =
 interface MaskUnitsProps {
   picks: readonly MaskColorId[];
   onChange: (next: MaskColorId[]) => void;
+  /** El color que se acaba de elegir en cualquier unidad: la foto lo sigue. */
+  onColorPick: (color: MaskColorId) => void;
 }
 
 /**
@@ -235,7 +304,7 @@ interface MaskUnitsProps {
  * fila por unidad, con su numero y el mismo selector de color, y el agotado
  * visible pero deshabilitado.
  */
-const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
+const MaskUnits = ({ picks, onChange, onColorPick }: MaskUnitsProps) => {
   const quantity = picks.length;
   const atMin = quantity <= 1;
   const atMax = quantity >= MAX_MASK_QUANTITY;
@@ -243,8 +312,10 @@ const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
     const clamped = Math.max(1, Math.min(MAX_MASK_QUANTITY, next));
     if (clamped !== quantity) onChange(resizeMaskPicks(picks, clamped));
   };
-  const setPick = (index: number, color: MaskColorId) =>
+  const setPick = (index: number, color: MaskColorId) => {
     onChange(picks.map((pick, i) => (i === index ? color : pick)));
+    onColorPick(color);
+  };
 
   return (
     <div className="space-y-3 pt-3">
@@ -374,6 +445,20 @@ const CheckoutForm = ({
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
   // Color de cada antifaz, uno por unidad. Vacio es sin antifaz.
   const [maskPicks, setMaskPicks] = useState<MaskColorId[]>([]);
+  // La foto del antifaz muestra el ultimo color que se toco. Si ese color ya
+  // no esta entre las unidades (se bajo la cantidad), muestra el de la ultima.
+  const [pickedMaskColor, setPickedMaskColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
+  const maskPhotoColor = resolveSelectableMaskColor(
+    maskPicks.length === 0 || maskPicks.includes(pickedMaskColor)
+      ? pickedMaskColor
+      : maskPicks[maskPicks.length - 1],
+  );
+  const toggleMask = () => {
+    // Al marcar la primera unidad es el color por defecto y la foto la sigue;
+    // al desmarcar vuelve al por defecto, que es lo que se ve sin marcar.
+    setPickedMaskColor(DEFAULT_MASK_COLOR);
+    setMaskPicks((prev) => (prev.length > 0 ? [] : [DEFAULT_MASK_COLOR]));
+  };
   const [email, setEmail] = useState(customerData.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
   // Si en el paso de la factura ya dejo el correo, no se le vuelve a pedir:
@@ -925,7 +1010,7 @@ const CheckoutForm = ({
             title={PRIORITY_SHIPPING.name}
             description="Despacho inmediato en 24hs"
             price={PRIORITY_SHIPPING.price}
-            icon={RocketLaunchIcon}
+            image={PRIORITY_SHIPPING.image}
           />
 
           {/* Con todos los colores agotados el antifaz no se ofrece. Precio
@@ -933,7 +1018,7 @@ const CheckoutForm = ({
           {!ALL_MASK_COLORS_SOLD_OUT && (
             <UpsellRow
               checked={maskPicks.length > 0}
-              onToggle={() => setMaskPicks((prev) => (prev.length > 0 ? [] : [DEFAULT_MASK_COLOR]))}
+              onToggle={toggleMask}
               title={SLEEP_MASK.name}
               description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
               price={SLEEP_MASK.price * Math.max(1, maskPicks.length)}
@@ -942,9 +1027,9 @@ const CheckoutForm = ({
                   ? undefined
                   : SLEEP_MASK.listPrice * Math.max(1, maskPicks.length)
               }
-              image={SLEEP_MASK.image}
+              media={<MaskPhoto color={maskPhotoColor} expanded={maskPicks.length > 0} />}
             >
-              <MaskUnits picks={maskPicks} onChange={setMaskPicks} />
+              <MaskUnits picks={maskPicks} onChange={setMaskPicks} onColorPick={setPickedMaskColor} />
             </UpsellRow>
           )}
         </div>

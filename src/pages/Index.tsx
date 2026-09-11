@@ -27,6 +27,7 @@ import {
   type CheckoutItem,
   type OrderLine,
 } from "@/lib/order";
+import { preloadMaskPhoto } from "@/lib/mask-photos";
 import { useExitIntent } from "@/hooks/useExitIntent";
 import { getStripe } from "@/lib/stripe";
 
@@ -254,6 +255,9 @@ const Index = () => {
     }
 
     setShowPhoneForm(true);
+    // La foto del antifaz se pide recien aca, al abrir el checkout: la landing
+    // no la carga, y cuando el cliente llega al resumen ya esta en cache.
+    preloadMaskPhoto();
 
     import("@/components/checkout/StripeCheckoutModal");
     import("@/components/checkout/ExitIntentModal");
