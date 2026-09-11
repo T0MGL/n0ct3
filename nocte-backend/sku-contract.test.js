@@ -17,7 +17,7 @@ const {
   buildProductLineItem,
   buildOrdefyItems,
   describeOrderForN8n,
-  buildN8nItems,
+  buildN8nLines,
   readOrderLines,
 } = require('./server');
 
@@ -75,7 +75,22 @@ test('cada color del antifaz sale con el SKU de su variante, nunca con el padre'
     'NOCTE-SLEEPMASK-3D-NEGRO x1 @119000 NOCTE Sleep Mask 3D Negro',
     'NOCTE-SLEEPMASK-3D-ROSADO x1 @119000 NOCTE Sleep Mask 3D Rosado',
   ]);
-  assert.ok(items.every((item) => item.sku !== 'NOCTE-SLEEPMASK-3D'));
+  assert.ok(items.every((item) => typeof item.sku === 'string' && item.sku !== 'NOCTE-SLEEPMASK-3D'));
+});
+
+// Un indice pelado sobre el catalogo acepta las claves de cualquier objeto: el
+// item salia sin SKU y Ordefy tumbaba la orden entera.
+test('colores y productos con nombre de propiedad del prototipo se separan', () => {
+  for (const raw of [
+    { product: 'sleepmask', color: 'constructor', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: '__proto__', quantity: 1, amount: 119000 },
+    { product: 'constructor', quantity: 1, amount: 119000 },
+    { product: 'toString', quantity: 1, amount: 119000 },
+  ]) {
+    const { lines, dropped } = readOrderLines([raw]);
+    assert.equal(lines.length, 0, JSON.stringify(raw));
+    assert.equal(dropped.length, 1, JSON.stringify(raw));
+  }
 });
 
 test('dos negros y un rosado son dos items, uno por SKU con su cantidad', () => {
@@ -124,18 +139,18 @@ test('el texto para n8n nombra el antifaz con su color, como lo lee el cliente',
 
 // Contrato con n8n (PR #8). El flujo de confirmacion por WhatsApp se construye
 // contra esta forma: si este test falla, avisar antes de cambiarla.
-test('contrato de order.items para n8n: lentes + 2 antifaces negros + 1 rosado', () => {
-  const items = buildN8nItems(readOrderLines([
+test('contrato de order.lines para n8n: lentes + 2 antifaces negros + 1 rosado', () => {
+  const { lines } = readOrderLines([
     { product: 'lentes', quantity: 2, amount: 389000, colors: ['amarillo', 'rojo'] },
     { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
     { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
-  ]).lines);
-  assert.deepEqual(items, [
+  ]);
+  assert.deepEqual(buildN8nLines(lines), [
     {
       product: 'lentes',
       quantity: 2,
+      amount: 389000,
       unit_price: 194500,
-      subtotal: 389000,
       sku: 'NOCTE-GLASSES-PAREJA',
       name: 'NOCTE® Lentes Anti-Luz Azul',
       colors: ['amarillo', 'rojo'],
@@ -143,8 +158,8 @@ test('contrato de order.items para n8n: lentes + 2 antifaces negros + 1 rosado',
     {
       product: 'sleepmask',
       quantity: 2,
+      amount: 238000,
       unit_price: 119000,
-      subtotal: 238000,
       sku: 'NOCTE-SLEEPMASK-3D-NEGRO',
       name: 'NOCTE® Antifaz 3D negro para dormir',
       color: 'negro',
@@ -152,11 +167,13 @@ test('contrato de order.items para n8n: lentes + 2 antifaces negros + 1 rosado',
     {
       product: 'sleepmask',
       quantity: 1,
+      amount: 119000,
       unit_price: 119000,
-      subtotal: 119000,
       sku: 'NOCTE-SLEEPMASK-3D-ROSADO',
       name: 'NOCTE® Antifaz 3D rosado para dormir',
       color: 'rosado',
     },
   ]);
+  // El flujo nombra una linea que no conoce con su segmento de order.product.
+  assert.equal(describeOrderForN8n(lines).split(' + ').length, lines.length);
 });

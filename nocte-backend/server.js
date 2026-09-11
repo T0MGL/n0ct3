@@ -667,6 +667,11 @@ const SLEEP_MASK_VARIANT = {
   },
 };
 
+// Object.hasOwn y no un indice pelado: "constructor" o "__proto__" existen en
+// cualquier objeto y pasarian como color o producto validos, sin SKU.
+const isSimpleProduct = (product) => Object.hasOwn(SIMPLE_PRODUCT, product);
+const isSleepMaskColor = (color) => Object.hasOwn(SLEEP_MASK_VARIANT, color);
+
 /** SKU y nombres de una linea que no es de lentes. */
 function catalogEntry(line) {
   return line.product === 'sleepmask' ? SLEEP_MASK_VARIANT[line.color] : SIMPLE_PRODUCT[line.product];
@@ -803,7 +808,7 @@ function readOrderLines(rawLines) {
 
   for (const line of rawLines) {
     const product = line && typeof line.product === 'string' ? line.product : null;
-    const known = product === 'lentes' || product === 'sleepmask' || Boolean(SIMPLE_PRODUCT[product]);
+    const known = product === 'lentes' || product === 'sleepmask' || isSimpleProduct(product);
     if (!product || !known) {
       dropped.push(`producto desconocido: ${product}`);
       continue;
@@ -822,7 +827,7 @@ function readOrderLines(rawLines) {
       const color = line.color == null
         ? 'negro'
         : typeof line.color === 'string' ? line.color.trim().toLowerCase() : '';
-      if (!SLEEP_MASK_VARIANT[color]) {
+      if (!isSleepMaskColor(color)) {
         dropped.push(`color de antifaz desconocido: ${line.color}`);
         continue;
       }
@@ -925,45 +930,50 @@ function buildOrdefyItems(lines) {
 function describeOrderForN8n(lines) {
   return lines
     .map((line) => {
-      const name = line.product === 'lentes'
-        ? 'NOCTE® Red Light Blocking Glasses'
-        : (catalogEntry(line).label ?? catalogEntry(line).name);
-      return `${line.quantity}x ${name}`;
+      if (line.product === 'lentes') return `${line.quantity}x NOCTE® Red Light Blocking Glasses`;
+      const entry = catalogEntry(line);
+      return `${line.quantity}x ${entry.label ?? entry.name}`;
     })
     .join(' + ');
 }
 
 /**
- * Los items del pedido para n8n, con forma fija. Es un contrato: el flujo de
- * confirmacion por WhatsApp se construye contra esta forma, asi que no se
- * cambia sin avisar. Documentado en el PR #8.
+ * Las lineas del pedido para n8n (order.lines), con forma fija. Es un
+ * contrato: el flujo de confirmacion por WhatsApp se construye contra esta
+ * forma, asi que no se cambia sin avisar. Documentado en el PR #8.
  *
  *   product     'lentes' | 'sleepmask' | 'clipon' | 'envio-prioritario'.
  *               Es lo que distingue un antifaz de un lente.
- *   sku         el mismo SKU que va a Ordefy.
+ *   quantity    unidades. En lentes, los lentes del pack: un Pareja es 2,
+ *               aunque a Ordefy vaya como un solo item de pack.
+ *   amount      guaranies de la linea. La suma de los amount es order.total.
+ *   unit_price  amount / quantity. En lentes es el pack repartido por lente,
+ *               no un precio de lista: para mostrar, usar amount.
+ *   sku         el SKU que va a Ordefy. En lentes es el del pack, con
+ *               quantity 1 en Ordefy: no multiplicar sku por quantity.
  *   name        como lo lee el cliente, en espanol.
- *   quantity    unidades. En lentes, los lentes del pack.
- *   unit_price  guaranies por unidad.
- *   subtotal    guaranies de la linea.
- *   color       solo sleepmask: 'negro' | 'rosado'. Un item por color.
+ *   color       solo sleepmask: 'negro' | 'rosado'. Una linea por color.
  *   colors      solo lentes: el tono de cada lente, uno por unidad, ya
  *               resuelto como va a Ordefy ('rojo' | 'naranja' | 'amarillo').
+ *
+ * Van en el mismo orden que los segmentos de order.product.
  */
-function buildN8nItems(lines) {
+function buildN8nLines(lines) {
   return lines.map((line) => {
     const base = {
       product: line.product,
       quantity: line.quantity,
+      amount: line.amount,
       unit_price: Math.round(line.amount / line.quantity),
-      subtotal: line.amount,
     };
     if (line.product === 'lentes') {
       const tier = resolveTier(line.quantity);
+      const colors = resolveColors(tier, line.colors);
       return {
         ...base,
-        sku: buildProductLineItem(tier, line.colors, line.amount).sku,
+        sku: buildProductLineItem(tier, colors, line.amount).sku,
         name: 'NOCTE® Lentes Anti-Luz Azul',
-        colors: resolveColors(tier, line.colors),
+        colors,
       };
     }
     const entry = catalogEntry(line);
@@ -1197,10 +1207,9 @@ app.post('/api/send-order', async (req, res) => {
         total: linesTotal,
         currency: 'PYG',
         colors: normalizedColors,
-        // Contrato con n8n, ver buildN8nItems. `product`, `colors` y
-        // `quantity` de arriba siguen como estaban para no romper lo que ya
-        // los lee.
-        items: buildN8nItems(orderLines)
+        // Contrato con n8n, ver buildN8nLines. `product`, `colors` y
+        // `quantity` de arriba se mantienen para lo que ya los lee.
+        lines: buildN8nLines(orderLines)
       },
       payment: {
         method: paymentType || 'stripe',
@@ -1460,7 +1469,7 @@ Object.assign(app, {
   buildProductLineItem,
   buildOrdefyItems,
   describeOrderForN8n,
-  buildN8nItems,
+  buildN8nLines,
   readOrderLines,
   TIER,
   UNITS_PER_PACK,

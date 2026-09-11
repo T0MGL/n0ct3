@@ -220,6 +220,11 @@ const MASK_OPTIONS: readonly SwatchOption<MaskColorId>[] = MASK_COLOR_IDS.map((i
   soldOut: MASK_COLORS[id].soldOut,
 }));
 
+// En el tope el boton sigue enfocable (aria-disabled) y el press global lo
+// hundiria igual: no-press lo apaga solo mientras no hay nada que hacer.
+const STEP_BUTTON =
+  "relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white transition-[background-color,opacity] duration-200 after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent";
+
 interface MaskUnitsProps {
   picks: readonly MaskColorId[];
   onChange: (next: MaskColorId[]) => void;
@@ -232,24 +237,32 @@ interface MaskUnitsProps {
  */
 const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
   const quantity = picks.length;
-  const setQuantity = (next: number) =>
-    onChange(resizeMaskPicks(picks, Math.max(1, Math.min(MAX_MASK_QUANTITY, next))));
+  const atMin = quantity <= 1;
+  const atMax = quantity >= MAX_MASK_QUANTITY;
+  const setQuantity = (next: number) => {
+    const clamped = Math.max(1, Math.min(MAX_MASK_QUANTITY, next));
+    if (clamped !== quantity) onChange(resizeMaskPicks(picks, clamped));
+  };
   const setPick = (index: number, color: MaskColorId) =>
     onChange(picks.map((pick, i) => (i === index ? color : pick)));
 
   return (
     <div className="space-y-3">
-      <div className="h-px bg-white/8" />
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[12px] font-medium text-white">Cantidad</p>
-        {/* Los botones miden 32px pero tocan en 44: el after los agranda sin pisar el numero. */}
+        <div>
+          <p className="text-[12px] font-medium text-white">Cantidad</p>
+          <p className="text-[11px] text-white/60">{formatPrice(SLEEP_MASK.price, 'pyg')} cada uno</p>
+        </div>
+        {/* Los botones miden 32px pero tocan en 44: el after los agranda sin pisar
+            el numero. En el tope van aria-disabled y no disabled: un boton
+            disabled suelta el foco y el teclado cae detras del modal. */}
         <div role="group" aria-label="Cantidad de antifaces" className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setQuantity(quantity - 1)}
-            disabled={quantity <= 1}
+            aria-disabled={atMin || undefined}
             aria-label="Quitar un antifaz"
-            className="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-30"
+            className={cn(STEP_BUTTON, atMin && 'no-press')}
           >
             <MinusIcon className="h-4 w-4" strokeWidth={2} />
           </button>
@@ -259,9 +272,9 @@ const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
           <button
             type="button"
             onClick={() => setQuantity(quantity + 1)}
-            disabled={quantity >= MAX_MASK_QUANTITY}
+            aria-disabled={atMax || undefined}
             aria-label="Agregar otro antifaz"
-            className="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-30"
+            className={cn(STEP_BUTTON, atMax && 'no-press')}
           >
             <PlusIcon className="h-4 w-4" strokeWidth={2} />
           </button>
