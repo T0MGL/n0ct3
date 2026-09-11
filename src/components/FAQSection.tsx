@@ -40,7 +40,7 @@ const FAQS: ReadonlyArray<FaqEntry> = [
   },
   {
     q: "¿Sirven sobre lentes recetados?",
-    a: "Los NOCTE de marco completo no, son un único marco. Para eso está el Clip-On: se engancha sobre tus lentes con aumento, bloquea el 99% de la luz azul y se saca en un segundo. Lo tenés más arriba en esta misma página.",
+    a: "Los NOCTE de marco completo no, son un único marco. Para eso está el Clip-On: se engancha sobre tus lentes con aumento, filtra la luz azul y se saca en un segundo. Lo tenés más arriba en esta misma página.",
   },
   {
     q: "¿Emiten factura con RUC?",

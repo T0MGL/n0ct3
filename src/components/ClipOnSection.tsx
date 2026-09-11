@@ -242,8 +242,8 @@ export const ClipOnSection = ({ onBuyClick }: ClipOnSectionProps) => {
                 Usás lentes con aumento?
               </h2>
               <p className="mt-4 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-                El Clip-On se engancha sobre los tuyos y se saca en un segundo. Bloquea el 99% de
-                la luz azul sin que tengas que elegir entre ver bien y dormir bien.
+                El Clip-On se engancha sobre los tuyos y se saca en un segundo. Filtra la luz azul
+                sin que tengas que elegir entre ver bien y dormir bien.
               </p>
             </Reveal>
 
