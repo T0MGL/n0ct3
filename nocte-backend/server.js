@@ -786,15 +786,31 @@ const PRICE_BY_PRODUCT = {
 
 const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
 
-// Mismo tope que el checkout: desde 6 unidades es precio mayorista y va por
-// WhatsApp. Los lentes ya topean solos, solo hay precio para packs de 1 a 3.
-const MAX_UNITS = { sleepmask: 5, clipon: 5, 'envio-prioritario': 1 };
-
 function expectedLineAmount(product, quantity) {
   if (product === 'lentes') return LENS_PACK_PRICE[quantity];
   const prices = PRICE_BY_PRODUCT[product];
-  if (!prices || quantity > MAX_UNITS[product]) return undefined;
+  if (!prices) return undefined;
   return prices[0] * quantity;
+}
+
+// Topes por pedido, no por linea: el antifaz llega partido por color y un POST
+// armado a mano puede repetir lineas. Son los del checkout, que desde 6
+// unidades manda a precio mayorista por WhatsApp. Un producto sin tope aca no
+// se vende: la comparacion esta escrita para que undefined rechace.
+const MAX_UNITS_PER_ORDER = { lentes: 3, sleepmask: 5, clipon: 5, 'envio-prioritario': 1 };
+// El checkout manda estos en una sola linea. El antifaz va una por color.
+const SINGLE_LINE_PRODUCTS = new Set(['lentes', 'clipon', 'envio-prioritario']);
+
+function quantityMismatches(lines) {
+  const totals = new Map();
+  for (const line of lines) {
+    const seen = totals.get(line.product) ?? { units: 0, lines: 0 };
+    totals.set(line.product, { units: seen.units + line.quantity, lines: seen.lines + 1 });
+  }
+  return [...totals].flatMap(([product, { units, lines: count }]) => [
+    ...(SINGLE_LINE_PRODUCTS.has(product) && count > 1 ? [`${product} repetido en ${count} lineas`] : []),
+    ...(units <= MAX_UNITS_PER_ORDER[product] ? [] : [`cantidad no vendible: ${product} x${units} en el pedido`]),
+  ]);
 }
 
 /**
@@ -861,7 +877,7 @@ function readOrderLines(rawLines) {
  * discrepancias, vacia cuando el pedido cierra.
  */
 function priceMismatches(lines) {
-  return lines.flatMap((line) => {
+  const perLine = lines.flatMap((line) => {
     const expected = expectedLineAmount(line.product, line.quantity);
     if (expected === undefined) {
       return [`cantidad no vendible: ${line.product} x${line.quantity}`];
@@ -871,6 +887,7 @@ function priceMismatches(lines) {
     }
     return [];
   });
+  return [...perLine, ...quantityMismatches(lines)];
 }
 
 /**

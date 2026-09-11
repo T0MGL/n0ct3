@@ -188,13 +188,20 @@ test('contrato de order.lines para n8n: lentes + 2 antifaces negros + 1 rosado',
   assert.match(segments[0], /^2x .*Glasses$/);
 });
 
-// Desde 6 es mayorista por WhatsApp. Un POST armado a mano con 50 antifaces al
-// precio justo no tiene que entrar como pedido contra entrega.
-test('el antifaz y el clip-on topean en 5 unidades, el envio prioritario en 1', () => {
-  const at = (product, quantity, unit) =>
-    priceMismatches(readOrderLines([{ product, color: 'negro', quantity, amount: unit * quantity }]).lines);
-  assert.deepEqual(at('sleepmask', 5, 119000), []);
-  assert.match(at('sleepmask', 6, 119000)[0], /cantidad no vendible/);
-  assert.match(at('clipon', 6, 189000)[0], /cantidad no vendible/);
-  assert.match(at('envio-prioritario', 2, 10000)[0], /cantidad no vendible/);
+// Desde 6 es mayorista por WhatsApp. Un POST armado a mano al precio justo no
+// tiene que poder armar lo que el checkout no arma: ni pidiendo de mas en una
+// linea, ni partiendo por color, ni repitiendo lineas.
+test('los topes son por pedido: antifaz 5 entre colores, una linea de lentes, clip-on y envio', () => {
+  const check = (raw) => priceMismatches(readOrderLines(raw).lines);
+  const mask = (color, quantity) => ({ product: 'sleepmask', color, quantity, amount: 119000 * quantity });
+  const once = (product, amount) => ({ product, quantity: 1, amount });
+
+  assert.deepEqual(check([mask('negro', 3), mask('rosado', 2)]), []);
+  assert.match(check([mask('negro', 6)]).join(), /cantidad no vendible: sleepmask x6/);
+  assert.match(check([mask('negro', 5), mask('rosado', 5)]).join(), /cantidad no vendible: sleepmask x10/);
+  assert.match(check([{ product: 'clipon', quantity: 6, amount: 189000 * 6 }]).join(), /cantidad no vendible/);
+  assert.match(check([once('clipon', 189000), once('clipon', 189000)]).join(), /clipon repetido en 2 lineas/);
+  assert.match(check([once('envio-prioritario', 10000), once('envio-prioritario', 10000)]).join(), /envio-prioritario repetido/);
+  const lens = { product: 'lentes', quantity: 3, amount: 549000, colors: ['rojo', 'rojo', 'rojo'] };
+  assert.match(check([lens, lens]).join(), /lentes repetido en 2 lineas/);
 });
