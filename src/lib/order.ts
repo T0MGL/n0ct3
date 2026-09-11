@@ -43,7 +43,7 @@ interface AddOn {
   price: number;
   /** Precio de catalogo, tachado. Ausente cuando no hay descuento. */
   listPrice?: number;
-  /** Miniatura del bump. El antifaz no la usa: su foto cambia con el color (mask-photos.ts). */
+  /** Imagen arriba de la tarjeta del bump. El antifaz no la usa: su foto cambia con el color (mask-photos.ts). */
   image?: { src: string; alt: string };
 }
 

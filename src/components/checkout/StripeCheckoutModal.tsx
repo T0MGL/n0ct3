@@ -76,8 +76,6 @@ interface UpsellRowProps {
   price: number;
   /** Precio de catalogo, tachado arriba del real. Ausente cuando no hay descuento. */
   listPrice?: number;
-  /** Miniatura al lado del titulo, para servicios. Un producto lleva `media`. */
-  image?: { src: string; alt: string };
   /** Foto a todo el ancho arriba de la tarjeta. Tocarla marca el bump. */
   media?: ReactNode;
   /** Lo que se despliega al marcarla, como la eleccion de color del antifaz. */
@@ -105,7 +103,6 @@ const UpsellRow = ({
   description,
   price,
   listPrice,
-  image,
   media,
   children,
 }: UpsellRowProps) => {
@@ -170,17 +167,6 @@ const UpsellRow = ({
             />
           </span>
 
-          {image && (
-            <img
-              src={image.src}
-              alt={image.alt}
-              width={44}
-              height={44}
-              decoding="async"
-              className="h-11 w-11 flex-shrink-0 rounded-lg object-cover"
-            />
-          )}
-
           <div className="min-w-0 flex-1">
             {/* span y no p: dentro de un button solo va contenido en linea. */}
             <span
@@ -231,6 +217,20 @@ const UpsellRow = ({
     </div>
   );
 };
+
+/**
+ * Icono del envio prioritario arriba de su tarjeta, en el mismo lugar que la
+ * foto del antifaz en la suya. Al costado del texto le quitaba el ancho: en
+ * 390px el titulo se partia y el texto de las dos tarjetas arrancaba en
+ * columnas distintas. El archivo no es transparente, trae fondo blanco, y la
+ * franja es blanca para que no se vea el borde. Proporcion original, sin
+ * estirar ni recortar.
+ */
+const ShippingIcon = ({ src, alt }: { src: string; alt: string }) => (
+  <div className="flex h-16 items-center justify-center bg-white">
+    <img src={src} alt={alt} width={421} height={431} decoding="async" className="h-[52px] w-auto" />
+  </div>
+);
 
 // Los colores agotados no se bajan: nadie los puede elegir.
 const MASK_PHOTO_COLORS = MASK_COLOR_IDS.filter((id) => !isMaskColorSoldOut(id));
@@ -1009,9 +1009,10 @@ const CheckoutForm = ({
             checked={isPriorityShipping}
             onToggle={() => setIsPriorityShipping((prev) => !prev)}
             title={PRIORITY_SHIPPING.name}
-            description="Despacho inmediato en 24hs"
+            // Espacio duro en "en 24hs": a 360px la frase no entra y "24hs" quedaba sola.
+            description={'Despacho inmediato en\u00a024hs'}
             price={PRIORITY_SHIPPING.price}
-            image={PRIORITY_SHIPPING.image}
+            media={PRIORITY_SHIPPING.image && <ShippingIcon {...PRIORITY_SHIPPING.image} />}
           />
 
           {/* Con todos los colores agotados el antifaz no se ofrece. Precio
