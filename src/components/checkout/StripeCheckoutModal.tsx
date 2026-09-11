@@ -251,7 +251,7 @@ const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[12px] font-medium text-white">Cantidad</p>
-          <p className="text-[11px] text-white/60">{formatPrice(SLEEP_MASK.price, 'pyg')} cada uno</p>
+          <p className="whitespace-nowrap text-[11px] text-white/60">{formatPrice(SLEEP_MASK.price, 'pyg')} c/u</p>
         </div>
         {/* Los botones miden 32px pero tocan en 44: el after los agranda sin pisar
             el numero. En el tope van aria-disabled y no disabled: un boton
