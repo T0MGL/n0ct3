@@ -87,7 +87,7 @@ const ORDER_BODY = {
   location: 'Asunción',
   address: 'Calle 1',
   quantity: 2,
-  total: 349000,
+  total: 389000,
   orderNumber: '#NOC-0823-4321',
   paymentType: 'COD',
   deliveryType: 'común',
@@ -216,7 +216,7 @@ test('flag on: emits Purchase after Ordefy and returns the n8n-compatible event 
   assert.equal(event.user_data.fbc, ORDER_BODY.fbc);
   assert.equal(event.user_data.external_id, event.user_data.ph);
   assert.deepEqual(event.custom_data, {
-    value: 349000,
+    value: 389000,
     currency: 'PYG',
     content_name: 'NOCTE® Red Light Blocking Glasses - Pack x2',
     content_category: 'Sleep & Wellness',

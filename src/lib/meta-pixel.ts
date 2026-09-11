@@ -26,6 +26,7 @@ import {
   type CapiEventPayload,
 } from './meta-capi';
 import { getFbp, getFbc } from './meta-matching';
+import { BUNDLES } from './bundles';
 
 declare global {
   interface Window {
@@ -144,7 +145,12 @@ const NOCTE_CONTENT_NAME = 'NOCTE® Red Light Blocking Glasses';
 const NOCTE_CONTENT_CATEGORY = 'Sleep & Wellness';
 const NOCTE_CONTENT_ID = 'nocte-red-glasses';
 const NOCTE_CONTENT_TYPE = 'product';
-const NOCTE_UNIT_PRICE = 249000;
+// Precio de un lente suelto. Es el default de ViewContent, el unico evento que
+// se dispara antes de que el visitante elija algo; todo evento posterior manda
+// su value real, upsells incluidos, y no cae nunca en este numero. Sale del
+// pack Personal y no de un literal, para que no se desincronice del precio que
+// el visitante esta mirando cuando el evento se dispara.
+const NOCTE_UNIT_PRICE = BUNDLES[0].price;
 const NOCTE_CURRENCY = 'PYG';
 
 /**

@@ -5,6 +5,7 @@
  */
 
 import { API_CONFIG } from '@/lib/stripe';
+import type { OrderLine } from '@/lib/order';
 
 export interface OrderData {
   name: string;
@@ -14,7 +15,15 @@ export interface OrderData {
   lat?: number;
   long?: number;
   ruc?: string;
+  /**
+   * El pedido desglosado, una linea por producto con su precio explicito. Es
+   * la fuente de verdad: el backend arma los items de Ordefy desde aca y no
+   * deduce ningun precio restando upsells del total.
+   */
+  lines: OrderLine[];
+  /** Lentes del pack. Redundante con lines, lo leen n8n y el CAPI del server. */
   quantity: number;
+  /** Suma de las lineas. El backend la recalcula y avisa si no coincide. */
   total: number;
   orderNumber: string;
   paymentIntentId?: string;

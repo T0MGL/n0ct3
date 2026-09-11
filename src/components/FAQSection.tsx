@@ -40,7 +40,7 @@ const FAQS: ReadonlyArray<FaqEntry> = [
   },
   {
     q: "¿Sirven sobre lentes recetados?",
-    a: "No. NOCTE no se usa sobre lentes graduados, son un único marco. Si tenés receta y querés una versión adaptada, escribinos por WhatsApp y te ayudamos a evaluar opciones.",
+    a: "Los NOCTE de marco completo no, son un único marco. Para eso está el Clip-On: se engancha sobre tus lentes con aumento, filtra la luz azul y se saca en un segundo. Lo tenés más arriba en esta misma página.",
   },
   {
     q: "¿Emiten factura con RUC?",

@@ -5,7 +5,8 @@ import {
   MoonIcon,
   ShieldCheckIcon,
   ComputerDesktopIcon,
-  FaceSmileIcon
+  FaceSmileIcon,
+  ArrowDownIcon
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence, useInView } from "framer-motion";
@@ -19,6 +20,8 @@ import { getDeliveryDates } from "@/lib/delivery-utils";
 import { ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 import { ALL_VARIANTS_SOLD_OUT, VARIANTS, type VariantId } from "@/lib/variants";
 import { useActiveVariant } from "@/lib/variant-context";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { scrollToClipOnGallery, CLIP_ON_GALLERY_ID } from "@/lib/clip-on-anchor";
 
 interface HeroSectionProps {
   onBuyClick: () => void;
@@ -67,6 +70,14 @@ export const HeroSection = ({
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { amount: 0.5 });
   const variant = VARIANTS[activeVariant];
+  const reduceMotion = useReducedMotion();
+
+  const handleClipOnHook = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    // Cmd, ctrl, shift o alt son del navegador (pestaña nueva, ventana).
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    scrollToClipOnGallery(reduceMotion);
+  };
 
   // Live purchase notification
   const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
@@ -213,6 +224,27 @@ export const HeroSection = ({
               onVariantChange={(next) => handlePickChange(0, next)}
               onGalleryInteract={onGalleryInteract}
             />
+
+            {/* Gancho para el que usa receta. Va pegado al producto y no al
+                precio: la duda aparece mirando el armazon, en el primer
+                viewport, y en mobile el precio esta dos pantallas mas abajo.
+                Texto y no boton para no competirle al CTA de los lentes. En
+                desktop no mueve nada: la columna del producto es la corta. El
+                max-w es el de ProductHero, asi arranca alineado con las
+                miniaturas y no con el borde de la columna. */}
+            <div className="mx-auto mt-3 w-full max-w-[560px] px-1">
+              <a
+                href={`#${CLIP_ON_GALLERY_ID}`}
+                onClick={handleClipOnHook}
+                className="relative inline-flex flex-wrap items-center gap-x-1.5 text-[13px] leading-5 text-white/60 transition-colors duration-150 ease-out before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] hover:text-white/80 active:opacity-70 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                Usás lentes con aumento?
+                <span className="inline-flex items-center gap-1 whitespace-nowrap text-white/90">
+                  <span className="underline decoration-white/30 underline-offset-4">Tenemos una solución</span>
+                  <ArrowDownIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                </span>
+              </a>
+            </div>
           </motion.div>
 
           {/* Content - Order 2 on mobile */}

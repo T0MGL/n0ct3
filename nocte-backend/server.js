@@ -51,6 +51,7 @@ const capiLimiter = rateLimit({
 app.use('/api/meta-capi', capiLimiter);
 app.use('/api/', apiLimiter);
 app.use('/api/create-payment-intent', paymentLimiter);
+app.use('/api/update-payment-intent', paymentLimiter);
 app.use('/api/send-order', paymentLimiter);
 
 // Parse JSON bodies
@@ -120,6 +121,19 @@ app.get('/api/health', (req, res) => {
 // ==================== PAYMENT ENDPOINTS ====================
 
 /**
+ * Rango de monto aceptado por moneda. Lo comparten create y update: si cada
+ * uno tuviera el suyo, un reajuste podria pasar un monto que la creacion
+ * habria rechazado.
+ */
+function amountRangeFor(currency) {
+  if (typeof currency !== 'string' || currency.length === 0) return null;
+  const key = currency.toLowerCase();
+  if (key === 'pyg') return { min: 1000, max: 10000000 };
+  if (key === 'usd') return { min: 50, max: 100000 };
+  return { min: 100, max: 100000 };
+}
+
+/**
  * POST /api/create-payment-intent
  * Creates a Stripe Payment Intent
  */
@@ -149,19 +163,12 @@ app.post('/api/create-payment-intent', async (req, res) => {
     // It will be "pending" during initial setup
 
     // Validate amount ranges based on currency
-    const currencyLower = currency.toLowerCase();
-    let minAmount, maxAmount;
-
-    if (currencyLower === 'pyg') {
-      minAmount = 1000;      // 1,000 Gs
-      maxAmount = 10000000;  // 10,000,000 Gs
-    } else if (currencyLower === 'usd') {
-      minAmount = 50;        // $0.50
-      maxAmount = 100000;    // $1,000
-    } else {
-      minAmount = 100;
-      maxAmount = 100000;
+    const currencyLower = String(currency).toLowerCase();
+    const range = amountRangeFor(currency);
+    if (!range) {
+      return res.status(400).json({ error: 'Currency invalida' });
     }
+    const { min: minAmount, max: maxAmount } = range;
 
     if (amount < minAmount || amount > maxAmount) {
       console.error(`❌ Invalid amount: ${amount} (must be between ${minAmount} and ${maxAmount})`);
@@ -261,6 +268,67 @@ app.post('/api/create-payment-intent', async (req, res) => {
       error: error.message || 'Failed to create payment intent',
       type: error.type || 'unknown_error'
     });
+  }
+});
+
+/**
+ * POST /api/update-payment-intent
+ *
+ * Reajusta el monto de un PaymentIntent que todavia no se cobro. El intent se
+ * crea al abrir el checkout, con el precio del producto solo, y los upsells se
+ * eligen despues: sin esto la tarjeta cobra de menos exactamente lo que suman
+ * los upsells. Solo toca intents que siguen esperando metodo de pago, asi que
+ * no puede alterar un cobro ya hecho.
+ */
+app.post('/api/update-payment-intent', async (req, res) => {
+  try {
+    const { paymentIntentId, amount, clientSecret } = req.body;
+
+    if (typeof paymentIntentId !== 'string' || !paymentIntentId.startsWith('pi_')) {
+      return res.status(400).json({ error: 'paymentIntentId invalido' });
+    }
+    if (typeof clientSecret !== 'string' || clientSecret.length === 0) {
+      return res.status(400).json({ error: 'clientSecret requerido' });
+    }
+
+    let existing;
+    try {
+      existing = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (error) {
+      console.error('❌ PaymentIntent no encontrado:', paymentIntentId, error.message);
+      return res.status(404).json({ error: 'Pago no encontrado' });
+    }
+
+    // Prueba de propiedad: los pi_ circulan por Ordefy, n8n y los logs, el
+    // secret no. Sin esto cualquiera que vea un id ajeno le mueve el monto.
+    if (existing.client_secret !== clientSecret) {
+      console.warn(`⚠️ clientSecret que no corresponde a ${paymentIntentId}`);
+      return res.status(403).json({ error: 'Pago no autorizado' });
+    }
+
+    if (existing.status !== 'requires_payment_method' && existing.status !== 'requires_confirmation') {
+      console.warn(`⚠️ Intento de reajustar un PaymentIntent en estado ${existing.status}`);
+      return res.status(409).json({ error: 'El pago ya no admite cambios de monto' });
+    }
+
+    // El rango sale de la moneda DEL INTENT, nunca de la que manda el cliente:
+    // un intent en PYG con "usd" en el body tomaria el rango de dolares y
+    // dejaria bajar el monto por debajo del piso de guaranies.
+    const range = amountRangeFor(existing.currency);
+    const parsedAmount = Math.floor(Number(amount));
+    if (!Number.isFinite(parsedAmount) || parsedAmount < range.min || parsedAmount > range.max) {
+      return res.status(400).json({
+        error: `Amount must be between ${range.min} and ${range.max} ${existing.currency.toUpperCase()}`
+      });
+    }
+
+    const updated = await stripe.paymentIntents.update(paymentIntentId, { amount: parsedAmount });
+    console.log(`💰 PaymentIntent ${paymentIntentId} reajustado a ${updated.amount}`);
+
+    res.json({ paymentIntentId: updated.id, amount: updated.amount, status: updated.status });
+  } catch (error) {
+    console.error('❌ Error updating payment intent:', error.message);
+    res.status(500).json({ error: 'No se pudo actualizar el monto del pago' });
   }
 });
 
@@ -565,6 +633,50 @@ const MIXED_CONTAINER_SKU = {
   oficina: 'NOCTE-GLASSES-OFICINA',
 };
 
+// Productos de un solo SKU: una clave del payload, un SKU y sus nombres. El
+// precio NO vive aca, viaja en la linea. Ordefy respeta el precio por linea del
+// payload (no hace lookup contra el catalogo), asi que el bump del antifaz
+// cobra 119.000 con el catalogo en 169.000 y eso es lo correcto.
+//
+// `name` es el que va a Ordefy y coincide con su catalogo. `label` es el que lee
+// el cliente: n8n lo usa tal cual en la plantilla de WhatsApp en espanol cuando
+// el pedido no trae colores (siempre, en los de clip-on). Sin label vale name.
+//
+// El SKU tiene que ser una variante o un producto SIN variantes activas.
+// Mandar un padre que tiene variantes lo rechaza Ordefy con
+// AMBIGUOUS_PARENT_SKU, y ese rechazo tumba la orden entera, lentes incluidos.
+const SIMPLE_PRODUCT = {
+  clipon: { sku: 'NOCTE-CLIPON-ROJO', name: 'NOCTE Clip-On Rojo' },
+  'envio-prioritario': { sku: 'NOCTE-ENVIO-PRIORITARIO', name: 'Envío Prioritario VIP' },
+};
+
+// El antifaz tiene un SKU por color: NOCTE-SLEEPMASK-3D es el padre y Ordefy lo
+// rechaza. Cada linea de antifaz trae su `color` y sale con el SKU de esa
+// variante; dos negros y un rosado son dos items. Los `name` coinciden con el
+// variant_title del catalogo de Ordefy.
+const SLEEP_MASK_VARIANT = {
+  negro: {
+    sku: 'NOCTE-SLEEPMASK-3D-NEGRO',
+    name: 'NOCTE Sleep Mask 3D Negro',
+    label: 'NOCTE® Antifaz 3D negro para dormir',
+  },
+  rosado: {
+    sku: 'NOCTE-SLEEPMASK-3D-ROSADO',
+    name: 'NOCTE Sleep Mask 3D Rosado',
+    label: 'NOCTE® Antifaz 3D rosado para dormir',
+  },
+};
+
+// Object.hasOwn y no un indice pelado: "constructor" o "__proto__" existen en
+// cualquier objeto y pasarian como color o producto validos, sin SKU.
+const isSimpleProduct = (product) => Object.hasOwn(SIMPLE_PRODUCT, product);
+const isSleepMaskColor = (color) => Object.hasOwn(SLEEP_MASK_VARIANT, color);
+
+/** SKU y nombres de una linea que no es de lentes. */
+function catalogEntry(line) {
+  return line.product === 'sleepmask' ? SLEEP_MASK_VARIANT[line.color] : SIMPLE_PRODUCT[line.product];
+}
+
 /**
  * Normalize a raw cart color to a contract color key. Accepts es/en spellings.
  * Unknown colors fall back to rojo with a warning so a rebrand or typo never
@@ -661,6 +773,237 @@ function buildProductLineItem(tier, colors, productPrice) {
   };
 }
 
+// Precio que el servidor acepta por producto. El navegador propone, esto
+// dispone: sin esta tabla un POST directo a /api/send-order con
+// {product:"lentes", amount:1000} genera un pedido COD real de 1.000 Gs que el
+// courier despacha y cobra. Los lentes valen por pack y sus tres importes son
+// los tres bundles de src/lib/bundles.ts; si ahi cambia un precio, cambia aca.
+const PRICE_BY_PRODUCT = {
+  sleepmask: [119000],
+  clipon: [189000],
+  'envio-prioritario': [10000],
+};
+
+const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
+
+function expectedLineAmount(product, quantity) {
+  if (product === 'lentes') return LENS_PACK_PRICE[quantity];
+  const prices = PRICE_BY_PRODUCT[product];
+  if (!prices) return undefined;
+  return prices[0] * quantity;
+}
+
+// Topes por pedido, no por linea: el antifaz llega partido por color y un POST
+// armado a mano puede repetir lineas. Son los del checkout, que desde 6
+// unidades manda a precio mayorista por WhatsApp. Un producto sin tope aca no
+// se vende: la comparacion esta escrita para que undefined rechace.
+const MAX_UNITS_PER_ORDER = { lentes: 3, sleepmask: 5, clipon: 5, 'envio-prioritario': 1 };
+// El checkout manda estos en una sola linea. El antifaz va una por color.
+const SINGLE_LINE_PRODUCTS = new Set(['lentes', 'clipon', 'envio-prioritario']);
+
+function quantityMismatches(lines) {
+  const totals = new Map();
+  for (const line of lines) {
+    const seen = totals.get(line.product) ?? { units: 0, lines: 0 };
+    totals.set(line.product, { units: seen.units + line.quantity, lines: seen.lines + 1 });
+  }
+  return [...totals].flatMap(([product, { units, lines: count }]) => [
+    ...(SINGLE_LINE_PRODUCTS.has(product) && count > 1 ? [`${product} repetido en ${count} lineas`] : []),
+    ...(units <= MAX_UNITS_PER_ORDER[product] ? [] : [`cantidad no vendible: ${product} x${units} en el pedido`]),
+  ]);
+}
+
+/**
+ * Lectura estructural de las lineas: producto que sabemos mapear a un SKU,
+ * cantidad entera positiva, importe entero no negativo. Una linea que no pasa
+ * esto no tiene SKU al que ir, asi que se separa y el que llama decide.
+ */
+function readOrderLines(rawLines) {
+  const lines = [];
+  const dropped = [];
+
+  if (!Array.isArray(rawLines) || rawLines.length === 0) {
+    return { lines, dropped: ['lines vacio'] };
+  }
+
+  for (const line of rawLines) {
+    const product = line && typeof line.product === 'string' ? line.product : null;
+    const known = product === 'lentes' || product === 'sleepmask' || isSimpleProduct(product);
+    if (!product || !known) {
+      dropped.push(`producto desconocido: ${product}`);
+      continue;
+    }
+    const quantity = Math.floor(Number(line && line.quantity));
+    const amount = Math.floor(Number(line && line.amount));
+    if (!Number.isFinite(quantity) || quantity < 1 || !Number.isFinite(amount) || amount < 0) {
+      dropped.push(`cantidad o importe invalidos en ${product}`);
+      continue;
+    }
+
+    if (product === 'sleepmask') {
+      // Sin color es un checkout abierto antes de que el antifaz tuviera
+      // colores, cuando solo se vendia el negro. Un color desconocido no tiene
+      // SKU al que ir y se separa.
+      const color = line.color == null
+        ? 'negro'
+        : typeof line.color === 'string' ? line.color.trim().toLowerCase() : '';
+      if (!isSleepMaskColor(color)) {
+        dropped.push(`color de antifaz desconocido: ${line.color}`);
+        continue;
+      }
+      // Dos lineas del mismo color se juntan: una por SKU, como espera Ordefy.
+      const same = lines.find((l) => l.product === 'sleepmask' && l.color === color);
+      if (same) {
+        same.quantity += quantity;
+        same.amount += amount;
+      } else {
+        lines.push({ product, color, quantity, amount });
+      }
+      continue;
+    }
+
+    lines.push(
+      product === 'lentes'
+        ? { product, quantity, amount, colors: Array.isArray(line.colors) ? line.colors : undefined }
+        : { product, quantity, amount },
+    );
+  }
+
+  return { lines, dropped };
+}
+
+/**
+ * Compara cada importe contra el catalogo del servidor y las cantidades contra
+ * los topes por pedido. Devuelve la lista de discrepancias, vacia cuando el
+ * pedido cierra.
+ */
+function priceMismatches(lines) {
+  const perLine = lines.flatMap((line) => {
+    const expected = expectedLineAmount(line.product, line.quantity);
+    if (expected === undefined) {
+      return [`cantidad no vendible: ${line.product} x${line.quantity}`];
+    }
+    if (line.amount !== expected) {
+      return [`precio invalido en ${line.product} x${line.quantity}: ${line.amount}, se esperaba ${expected}`];
+    }
+    return [];
+  });
+  return [...perLine, ...quantityMismatches(lines)];
+}
+
+/**
+ * Camino legado: bundles viejos que quedaron cacheados en el navegador todavia
+ * mandan solo total + quantity + deliveryType, sin lineas. Reconstruye lo que
+ * el backend deducia antes, en un solo lugar y a la vista. Cualquier upsell
+ * nuevo viaja siempre en `lines`, asi que esta rama no se agranda: se muere
+ * cuando se vencen los bundles viejos.
+ */
+function legacyOrderLines({ quantity, total, deliveryType, colors }) {
+  const priorityCost = deliveryType === 'premium' ? 10000 : 0;
+  const lines = [{
+    product: 'lentes',
+    quantity: Math.max(1, Math.floor(Number(quantity) || 1)),
+    amount: Math.max(0, Math.floor(Number(total) || 0) - priorityCost),
+    colors,
+  }];
+  if (priorityCost > 0) {
+    lines.push({ product: 'envio-prioritario', quantity: 1, amount: priorityCost });
+  }
+  return lines;
+}
+
+/**
+ * Traduce las lineas del pedido a items de Ordefy. Los lentes pasan por la
+ * resolucion de tier y color (SKU por variante, bundle_selections en packs
+ * mixtos); el resto es un SKU fijo por producto.
+ */
+function buildOrdefyItems(lines) {
+  return lines.map((line) => {
+    if (line.product === 'lentes') {
+      return buildProductLineItem(resolveTier(line.quantity), line.colors, line.amount);
+    }
+    // Ordefy lee `price` como precio unitario (unitPrice: item.price en su
+    // webhook), no como total de linea, asi que hay que dividir.
+    //
+    // Se redondea en vez de cortar. Un importe que no divide exacto ya fallo
+    // priceMismatches (el esperado es siempre precio unitario por cantidad),
+    // asi que a esta altura la politica ya se decidio arriba: en COD el
+    // pedido se rechazo, y si llego hasta aca es porque ya se cobro y va con
+    // su 🚨. Tirar justo aca daria 500 y devolveria a ese pedido cobrado al
+    // estado que este camino existe para evitar: plata movida, nada
+    // registrado.
+    const entry = catalogEntry(line);
+    const unitPrice = Math.round(line.amount / line.quantity);
+    return {
+      sku: entry.sku,
+      name: entry.name,
+      quantity: line.quantity,
+      price: unitPrice,
+    };
+  });
+}
+
+/**
+ * El pedido en una linea de texto para n8n. Helena y las plantillas de
+ * WhatsApp leen este campo, asi que tiene que nombrar lo que se compro de
+ * verdad y no un producto fijo, y con el nombre que entiende el cliente (el
+ * label), no el de catalogo de Ordefy.
+ */
+function describeOrderForN8n(lines) {
+  return lines
+    .map((line) => {
+      if (line.product === 'lentes') return `${line.quantity}x NOCTE® Red Light Blocking Glasses`;
+      const entry = catalogEntry(line);
+      return `${line.quantity}x ${entry.label ?? entry.name}`;
+    })
+    .join(' + ');
+}
+
+/**
+ * Las lineas del pedido para n8n (order.lines), con forma fija. Es un
+ * contrato: el flujo de confirmacion por WhatsApp se construye contra esta
+ * forma, asi que no se cambia sin avisar. Documentado en el PR #8.
+ *
+ *   product     'lentes' | 'sleepmask' | 'clipon' | 'envio-prioritario'.
+ *               Es lo que distingue un antifaz de un lente.
+ *   quantity    unidades. En lentes, los lentes del pack: un Pareja es 2,
+ *               aunque a Ordefy vaya como un solo item de pack.
+ *   amount      guaranies de la linea. La suma de los amount es order.total.
+ *   unit_price  amount / quantity. En lentes es el pack repartido por lente,
+ *               no un precio de lista: para mostrar, usar amount.
+ *   sku         el SKU que va a Ordefy. En lentes es el del pack, con
+ *               quantity 1 en Ordefy: no multiplicar sku por quantity.
+ *   name        como lo lee el cliente, en espanol.
+ *   color       solo sleepmask: 'negro' | 'rosado'. Una linea por color.
+ *   colors      solo lentes: el tono de cada lente, uno por unidad, ya
+ *               resuelto como va a Ordefy ('rojo' | 'naranja' | 'amarillo').
+ *
+ * Van en el mismo orden que los segmentos de order.product.
+ */
+function buildN8nLines(lines) {
+  return lines.map((line) => {
+    const base = {
+      product: line.product,
+      quantity: line.quantity,
+      amount: line.amount,
+      unit_price: Math.round(line.amount / line.quantity),
+    };
+    if (line.product === 'lentes') {
+      const tier = resolveTier(line.quantity);
+      const colors = resolveColors(tier, line.colors);
+      return {
+        ...base,
+        sku: buildProductLineItem(tier, colors, line.amount).sku,
+        name: 'NOCTE® Lentes Anti-Luz Azul',
+        colors,
+      };
+    }
+    const entry = catalogEntry(line);
+    const item = { ...base, sku: entry.sku, name: entry.label ?? entry.name };
+    return line.product === 'sleepmask' ? { ...item, color: line.color } : item;
+  });
+}
+
 /**
  * Send order to Ordefy webhook
  */
@@ -674,14 +1017,12 @@ async function sendToOrdefy(orderData) {
     lat,
     long,
     googleMapsLink,
-    quantity,
+    lines,
     total,
     orderNumber,
     paymentType,
     isPaid,
-    deliveryType,
     ruc,
-    colors,
   } = orderData;
 
   // Check if Ordefy is configured
@@ -690,25 +1031,7 @@ async function sendToOrdefy(orderData) {
     return { success: false, error: 'Ordefy not configured' };
   }
 
-  const isPriority = deliveryType === 'premium';
-  const priorityCost = isPriority ? 10000 : 0;
-  const productPrice = total - priorityCost;
-
-  // One product line per order: a single lens, a mono-color pack, or a mixed
-  // pack with bundle_selections. The SKU resolves to the right color variant
-  // so Ordefy decrements stock from the matching pool.
-  const tier = resolveTier(quantity || 1);
-  const items = [buildProductLineItem(tier, colors, productPrice)];
-
-  // Add priority shipping as a line item if selected
-  if (isPriority) {
-    items.push({
-      sku: 'NOCTE-ENVIO-PRIORITARIO',
-      name: 'Envío Prioritario VIP',
-      quantity: 1,
-      price: priorityCost
-    });
-  }
+  const items = buildOrdefyItems(lines);
 
   // Determine payment status
   // Card payments are always paid, COD is pending payment
@@ -748,8 +1071,8 @@ async function sendToOrdefy(orderData) {
     }),
     items: items,
     totals: {
-      subtotal: total, // Subtotal includes all items (product + shipping service)
-      shipping: 0,     // Shipping is now a line item
+      subtotal: total, // Suma de las lineas. El envio prioritario es una linea mas.
+      shipping: 0,
       total: total,
     },
     payment_method: paymentType === 'Card' ? 'online' : 'cash_on_delivery',
@@ -809,7 +1132,8 @@ app.post('/api/send-order', async (req, res) => {
       isPaid,
       deliveryType,
       ruc,
-      colors
+      colors,
+      lines
     } = req.body;
 
     // Validation
@@ -824,6 +1148,63 @@ app.post('/api/send-order', async (req, res) => {
     const normalizedColors = Array.isArray(colors)
       ? colors.filter((c) => typeof c === 'string' && c.length > 0).slice(0, quantity || 1)
       : [];
+
+    // El pedido desglosado. El checkout lo manda explicito; solo un bundle
+    // viejo cacheado llega sin lineas y cae al camino legado.
+    //
+    // Las dos ramas pasan por la MISMA validacion de precio. Si el camino
+    // legado no validara seria la puerta de atras del otro: bastaria omitir
+    // `lines` y mandar total 1000 para comprar un pack por mil guaranies. Un
+    // pedido legitimo del bundle viejo siempre reconstruye a un precio de la
+    // tabla (249/389/549k mas los 10k del prioritario), asi que solo cae el
+    // manipulado.
+    const isLegacyPayload = lines === undefined || lines === null;
+    if (isLegacyPayload) {
+      console.warn('⚠️ Pedido sin lineas, reconstruyendo desde total/quantity/deliveryType (bundle viejo)');
+    }
+    const rawLines = isLegacyPayload
+      ? legacyOrderLines({ quantity, total, deliveryType, colors: normalizedColors })
+      : lines;
+
+    const { lines: orderLines, dropped } = readOrderLines(rawLines);
+    const problems = [...dropped, ...priceMismatches(orderLines)];
+
+    // Que hacer con un pedido que no cierra depende de quien tiene la plata.
+    //
+    // COD: no se cobro nada todavia y el importe manipulado es exactamente lo
+    // que el courier va a cobrar, asi que se rechaza entero.
+    //
+    // Tarjeta: el cobro ya paso, este endpoint corre despues de confirmPayment
+    // y sendOrderInBackground no reintenta ni avisa. Descartar deja plata
+    // cobrada, cero registro en Ordefy y una pantalla de exito: peor que un
+    // pedido con el precio raro, que al menos existe y se concilia. Y no hace
+    // falta un atacante para llegar aca: un bundle viejo cacheado con el
+    // precio anterior, o un deploy donde el frontend sale antes que el backend
+    // y LENS_PACK_PRICE queda atras, tiran todas las ordenes con tarjeta.
+    const alreadyPaid = isPaid === true || paymentType === 'Card';
+
+    if (problems.length > 0) {
+      if (!alreadyPaid) {
+        console.error(`❌ Pedido COD rechazado. Orden: ${orderNumber}. Motivos: ${problems.join('; ')}`);
+        return res.status(400).json({ error: 'Pedido invalido', success: false });
+      }
+      console.error(
+        `🚨 REVISAR A MANO: orden ${orderNumber} ya cobrada con lineas que no cierran, se registra igual. Motivos: ${problems.join('; ')}`,
+      );
+    }
+
+    if (orderLines.length === 0) {
+      console.error(`❌ Pedido sin ninguna linea utilizable. Orden: ${orderNumber}. Cobrada: ${alreadyPaid}`);
+      return res.status(400).json({ error: 'Pedido invalido', success: false });
+    }
+
+    // El total sale de las lineas y de ningun otro lado. Si el que mando el
+    // cliente no coincide, gana la suma: es la unica que corresponde con lo
+    // que se le va a facturar item por item.
+    const linesTotal = orderLines.reduce((sum, line) => sum + line.amount, 0);
+    if (typeof total === 'number' && total !== linesTotal) {
+      console.warn(`⚠️ Total del cliente (${total}) distinto de la suma de lineas (${linesTotal}). Gana la suma.`);
+    }
 
     // Prepare payload for n8n
     const webhookPayload = {
@@ -842,10 +1223,15 @@ app.post('/api/send-order', async (req, res) => {
       },
       order: {
         quantity: quantity || 1,
-        product: 'NOCTE® Red Light Blocking Glasses',
-        total: total || (quantity === 2 ? 389000 : 249000),
+        // Sale de las lineas. Estaba fijo en los lentes, asi que un pedido de
+        // clip-on llegaba a n8n y a Helena etiquetado como lentes.
+        product: describeOrderForN8n(orderLines),
+        total: linesTotal,
         currency: 'PYG',
-        colors: normalizedColors
+        colors: normalizedColors,
+        // Contrato con n8n, ver buildN8nLines. `product`, `colors` y
+        // `quantity` de arriba se mantienen para lo que ya los lee.
+        lines: buildN8nLines(orderLines)
       },
       payment: {
         method: paymentType || 'stripe',
@@ -882,14 +1268,12 @@ app.post('/api/send-order', async (req, res) => {
         lat,
         long,
         googleMapsLink,
-        quantity,
-        total,
+        lines: orderLines,
+        total: linesTotal,
         orderNumber: webhookPayload.orderNumber,
         paymentType,
         isPaid,
-        deliveryType,
         ruc,
-        colors: normalizedColors,
       }),
     ]);
 
@@ -1105,6 +1489,11 @@ Object.assign(app, {
   resolveColors,
   normalizeColor,
   buildProductLineItem,
+  buildOrdefyItems,
+  describeOrderForN8n,
+  buildN8nLines,
+  readOrderLines,
+  priceMismatches,
   TIER,
   UNITS_PER_PACK,
   LENS_SKU,

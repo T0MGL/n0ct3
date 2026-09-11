@@ -1,35 +1,59 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CreditCardIcon, DevicePhoneMobileIcon, BanknotesIcon, CheckIcon, RocketLaunchIcon, EnvelopeIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
-import { useStripePayment } from '@/hooks/useStripePayment';
+import { useStripePayment, PaymentAmountError } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
 import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry } from '@/lib/meta-matching';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { buildWhatsAppUrl } from '@/lib/contact';
-import { isVariantId, summarizeVariantCounts } from '@/lib/variants';
+import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { ColorSwatchPicker, type SwatchOption } from '@/components/ColorSwatchPicker';
+import {
+  ALL_MASK_COLORS_SOLD_OUT,
+  DEFAULT_MASK_COLOR,
+  MASK_COLORS,
+  MASK_COLOR_IDS,
+  MASK_SOLD_OUT_NOTICE,
+  MAX_MASK_QUANTITY,
+  resizeMaskPicks,
+  resolveSelectableMaskColor,
+  type MaskColorId,
+} from '@/lib/mask-colors';
+import { summarizeVariantCounts } from '@/lib/variants';
+import {
+  CLIP_ON,
+  PRIORITY_SHIPPING,
+  SLEEP_MASK,
+  buildOrderLines,
+  sumLines,
+  type CheckoutItem,
+  type OrderLine,
+} from '@/lib/order';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
-const PRIORITY_SHIPPING_COST = 10000;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FALLBACK_EMAIL = 'noreply@nocte.studio';
 
 // The order summary must name the real lens colors. It used to hardcode
 // "Lentes Rojos", so an order carrying the wrong color looked correct on
 // screen and the customer had no way to catch it before paying.
-function describeProduct(colors: string[] | undefined, quantity: number): { title: string; breakdown: string | null } {
-  const picks = (colors ?? []).filter(isVariantId);
-  const packSuffix = quantity > 1 ? ` - Pack x${quantity}` : '';
-
-  if (picks.length === 0) {
-    return { title: `Lentes Premium Anti-Luz Azul${packSuffix}`, breakdown: null };
+function describeProduct(item: CheckoutItem): { title: string; breakdown: string | null } {
+  if (item.product === 'clipon') {
+    return { title: `NOCTE® ${CLIP_ON.name}`, breakdown: null };
   }
 
-  const counts = summarizeVariantCounts(picks);
+  const packSuffix = item.quantity > 1 ? ` - Pack x${item.quantity}` : '';
+  const counts = summarizeVariantCounts(item.colors);
+
+  if (counts.length === 0) {
+    return { title: `Lentes Premium Anti-Luz Azul${packSuffix}`, breakdown: null };
+  }
   if (counts.length === 1) {
     return { title: `${counts[0].variant.displayTitle}${packSuffix}`, breakdown: null };
   }
@@ -42,11 +66,268 @@ function describeProduct(colors: string[] | undefined, quantity: number): { titl
   };
 }
 
+interface UpsellRowProps {
+  checked: boolean;
+  onToggle: () => void;
+  title: string;
+  description: string;
+  price: number;
+  /** Precio de catalogo, tachado arriba del real. Ausente cuando no hay descuento. */
+  listPrice?: number;
+  /** Glifo al lado del titulo. Para servicios, que no tienen foto. */
+  icon?: typeof RocketLaunchIcon;
+  /** Miniatura del producto. Cuando falta, la fila queda igual pero sin foto. */
+  image?: string;
+  /** Lo que se despliega al marcarla, como la eleccion de color del antifaz. */
+  children?: ReactNode;
+}
+
+// Misma curva y duracion que el despliegue de colores de los packs de lentes.
+const EXPAND = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
+
+/**
+ * Una de las filas de upsell del resumen. El switch es un button con
+ * role=switch, no un div con onClick como era antes: la fila anterior no se
+ * podia tocar con teclado y un lector de pantalla no tenia como saber si estaba
+ * marcada. La tarjeta es un div porque adentro puede ir un panel con controles
+ * propios, y un button no puede contener otros.
+ */
+const UpsellRow = ({
+  checked,
+  onToggle,
+  title,
+  description,
+  price,
+  listPrice,
+  icon: Icon,
+  image,
+  children,
+}: UpsellRowProps) => {
+  const panelId = useId();
+  const reduceMotion = useReducedMotion();
+  return (
+    <div
+      className={cn(
+        // El press se ve en toda la tarjeta aunque lo reciba el switch: el
+        // switch lleva no-press para no hundirse solo dentro de la tarjeta.
+        'rounded-xl border transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out has-[>button:active]:scale-[0.99]',
+        checked
+          ? 'border-variant-active/40 bg-variant-active/5 shadow-[0_8px_24px_-16px_hsl(var(--variant-active)/0.5)]'
+          : 'border-border/40 bg-secondary/30 hover:border-border/60 hover:bg-secondary/50',
+      )}
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-controls={children && checked ? panelId : undefined}
+        onClick={onToggle}
+        className="no-press group relative w-full rounded-xl p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-[background-color,border-color,transform] duration-200 ease-out group-active:scale-90',
+              checked
+                ? 'border-variant-active bg-variant-active'
+                : 'border-muted-foreground/40 group-hover:border-variant-active/50',
+            )}
+          >
+            <CheckIcon
+              className={cn(
+                'h-3.5 w-3.5 text-white transition-[opacity,transform] duration-200 ease-out',
+                checked ? 'scale-100 opacity-100' : 'scale-75 opacity-0',
+              )}
+              strokeWidth={3}
+            />
+          </span>
+
+          {image && (
+            <img
+              src={image}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-14 w-14 flex-shrink-0 rounded-lg border border-border/40 object-cover"
+            />
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <span className={cn('text-sm font-bold', checked ? 'text-variant-active' : 'text-foreground')}>
+                  {title}
+                </span>
+                {Icon && (
+                  <Icon
+                    className={cn(
+                      'h-4 w-4 flex-shrink-0',
+                      checked ? 'text-variant-active' : 'text-muted-foreground',
+                    )}
+                  />
+                )}
+              </div>
+              <span className="ml-2 flex flex-shrink-0 flex-col items-end leading-tight">
+                {listPrice !== undefined && (
+                  <span className="text-[11px] text-white/50 line-through">
+                    {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
+                        tachado, que es puramente visual, no significa nada. */}
+                    <span className="sr-only">Precio de lista, </span>
+                    {formatPrice(listPrice, 'pyg')}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    'whitespace-nowrap text-sm font-bold',
+                    checked ? 'text-variant-active' : 'text-muted-foreground',
+                  )}
+                >
+                  + {formatPrice(price, 'pyg')}
+                </span>
+              </span>
+            </div>
+
+            <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </button>
+      <AnimatePresence initial={false}>
+        {checked && children && (
+          <motion.div
+            id={panelId}
+            key="panel"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={reduceMotion ? { duration: 0 } : EXPAND}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const MASK_OPTIONS: readonly SwatchOption<MaskColorId>[] = MASK_COLOR_IDS.map((id) => ({
+  id,
+  name: MASK_COLORS[id].name,
+  soldOutLabel: `${MASK_COLORS[id].name} agotado`,
+  swatch: MASK_COLORS[id].swatch,
+  ring: MASK_COLORS[id].ring,
+  needsOutline: MASK_COLORS[id].needsOutline,
+  soldOut: MASK_COLORS[id].soldOut,
+}));
+
+// En el tope el boton sigue enfocable (aria-disabled) y el press global lo
+// hundiria igual: no-press lo apaga solo mientras no hay nada que hacer.
+const STEP_BUTTON =
+  "relative grid h-8 w-8 place-items-center rounded-full border border-white/15 text-white transition-[background-color,opacity] duration-200 after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent";
+
+interface MaskUnitsProps {
+  picks: readonly MaskColorId[];
+  onChange: (next: MaskColorId[]) => void;
+}
+
+/**
+ * Cantidad y color de cada antifaz. Mismo patron que el pack de lentes: una
+ * fila por unidad, con su numero y el mismo selector de color, y el agotado
+ * visible pero deshabilitado.
+ */
+const MaskUnits = ({ picks, onChange }: MaskUnitsProps) => {
+  const quantity = picks.length;
+  const atMin = quantity <= 1;
+  const atMax = quantity >= MAX_MASK_QUANTITY;
+  const setQuantity = (next: number) => {
+    const clamped = Math.max(1, Math.min(MAX_MASK_QUANTITY, next));
+    if (clamped !== quantity) onChange(resizeMaskPicks(picks, clamped));
+  };
+  const setPick = (index: number, color: MaskColorId) =>
+    onChange(picks.map((pick, i) => (i === index ? color : pick)));
+
+  return (
+    <div className="space-y-3 pt-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-medium text-white">Cantidad</p>
+          <p className="whitespace-nowrap text-[11px] text-white/60">{formatPrice(SLEEP_MASK.price, 'pyg')} c/u</p>
+        </div>
+        {/* Los botones miden 32px pero tocan en 44: el after los agranda sin pisar
+            el numero. En el tope van aria-disabled y no disabled: un boton
+            disabled suelta el foco y el teclado cae detras del modal. */}
+        <div role="group" aria-label="Cantidad de antifaces" className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity - 1)}
+            aria-disabled={atMin || undefined}
+            aria-label="Quitar un antifaz"
+            className={cn(STEP_BUTTON, atMin && 'no-press')}
+          >
+            <MinusIcon className="h-4 w-4" strokeWidth={2} />
+          </button>
+          <span aria-live="polite" className="w-7 text-center text-sm font-semibold tabular-nums text-white">
+            {quantity}
+          </span>
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity + 1)}
+            aria-disabled={atMax || undefined}
+            aria-label="Agregar otro antifaz"
+            className={cn(STEP_BUTTON, atMax && 'no-press')}
+          >
+            <PlusIcon className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-white">
+        {quantity === 1 ? 'Elegí el color' : 'Elegí el color de cada antifaz'}
+      </p>
+      {MASK_SOLD_OUT_NOTICE && (
+        <p className="text-[11px] font-medium text-white">{MASK_SOLD_OUT_NOTICE}</p>
+      )}
+      <ul className="space-y-2">
+        {picks.map((rawPick, index) => {
+          const pick = resolveSelectableMaskColor(rawPick);
+          return (
+            <li
+              key={index}
+              className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.02] px-3 py-2"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                {quantity > 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="grid h-5 w-5 place-items-center rounded-full bg-white/5 text-[10px] font-bold text-white ring-1 ring-white/10"
+                  >
+                    {index + 1}
+                  </span>
+                )}
+                <p className="text-[12px] font-medium leading-none text-white">{MASK_COLORS[pick].name}</p>
+              </div>
+              <ColorSwatchPicker
+                options={MASK_OPTIONS}
+                value={pick}
+                onChange={(next) => setPick(index, next)}
+                size="sm"
+                label={quantity === 1 ? 'Color del antifaz' : `Color del antifaz ${index + 1}`}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
+
 export interface PaymentResult {
   paymentIntentId: string;
   paymentType: 'Card' | 'COD';
   isPaid: boolean;
   deliveryType: 'común' | 'premium';
+  /** El pedido desglosado. Lo que se manda a Ordefy sale de aca, sin restas. */
+  lines: OrderLine[];
+  /** sumLines(lines). Lo usan la pantalla de exito y el pixel. */
   finalTotal: number;
   email?: string;
 }
@@ -56,7 +337,8 @@ interface StripeCheckoutModalProps {
   onClose: () => void;
   onBack: () => void;
   onSuccess: (result: PaymentResult) => void;
-  amount: number;
+  /** Que se esta comprando: pack de lentes o clip-on. Los upsells se eligen aca. */
+  item: CheckoutItem;
   currency: string;
   isProcessingOrder?: boolean;
   customerData: {
@@ -66,22 +348,22 @@ interface StripeCheckoutModalProps {
     address: string;
     isGeolocated?: boolean;
     orderNumber: string;
-    quantity: number;
     email?: string;
-    /** Lens color per unit, same array the order payload carries. */
-    colors?: string[];
   };
 }
 
 const CheckoutForm = ({
   onSuccess,
   onClose,
-  amount,
+  item,
   currency,
   customerData,
   onCloseAttempt,
+  syncPaymentIntentAmount,
 }: Omit<StripeCheckoutModalProps, 'isOpen'> & {
   onCloseAttempt: () => void;
+  /** Deja el PaymentIntent en el monto pedido. No-op si ya esta ahi. */
+  syncPaymentIntentAmount: (amount: number) => Promise<void>;
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -90,6 +372,8 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
+  // Color de cada antifaz, uno por unidad. Vacio es sin antifaz.
+  const [maskPicks, setMaskPicks] = useState<MaskColorId[]>([]);
   const [email, setEmail] = useState(customerData.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
   // Si en el paso de la factura ya dejo el correo, no se le vuelve a pedir:
@@ -106,10 +390,16 @@ const CheckoutForm = ({
   // le prometieran envio gratis. Lo que cambia por zona es el plazo, no el
   // precio, y el plazo ya se comunica antes de llegar aca.
 
-  const productSummary = describeProduct(customerData.colors, customerData.quantity);
+  const productSummary = describeProduct(item);
 
-  // Calculate final total including priority shipping
-  const finalTotal = amount + (isPriorityShipping ? PRIORITY_SHIPPING_COST : 0);
+  // El pedido, linea por linea. El total es la suma de las lineas y nada mas:
+  // agregar un upsell es empujar una linea, no acordarse de sumar un numero
+  // aca y de restarlo en el backend.
+  const orderLines = buildOrderLines(item, {
+    sleepMaskPicks: maskPicks,
+    priorityShipping: isPriorityShipping,
+  });
+  const finalTotal = sumLines(orderLines);
 
   const submitButtonRef = useRef<HTMLDivElement>(null);
   const paymentElementRef = useRef<HTMLDivElement>(null);
@@ -188,7 +478,7 @@ const CheckoutForm = ({
             trackAddPaymentInfo({
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: customerData.quantity,
+              num_items: item.quantity,
               payment_type: 'Pago contra entrega',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
@@ -196,7 +486,7 @@ const CheckoutForm = ({
             trackAddPaymentInfo({
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: customerData.quantity,
+              num_items: item.quantity,
               payment_type: 'Pago contra entrega',
             });
           }
@@ -207,6 +497,7 @@ const CheckoutForm = ({
           paymentType: 'COD',
           isPaid: false,
           deliveryType: isPriorityShipping ? 'premium' : 'común',
+          lines: orderLines,
           finalTotal,
           email: emailForPipeline,
         });
@@ -222,6 +513,40 @@ const CheckoutForm = ({
 
       if (!isElementReady) {
         setErrorMessage('El formulario de pago aún se está cargando. Intentá de nuevo en un momento.');
+        setIsProcessing(false);
+        return;
+      }
+
+      // El PaymentIntent se crea al abrir el modal, antes de que el cliente
+      // elija los upsells, asi que su monto es el del producto solo. Sin este
+      // ajuste la tarjeta cobra de menos exactamente lo que suman los upsells,
+      // que es lo que venia pasando con el envio prioritario.
+      //
+      // Se sincroniza SIEMPRE, no solo cuando finalTotal difiere del precio del
+      // producto: el intent sobrevive a un intento de pago fallido, asi que
+      // quien marca el antifaz, se come un rechazo y despues lo destilda queda
+      // con un intent en 368.000 y una pantalla que dice 249.000. Comparar
+      // contra el producto no ve esa vuelta; el monto realmente sincronizado,
+      // que es lo que guarda el padre, si. Si el ajuste falla se corta el pago:
+      // cobrar distinto de lo que dice la pantalla es peor que pedir reintento.
+      try {
+        await syncPaymentIntentAmount(finalTotal);
+      } catch (error) {
+        // Un intent trabado no se destraba reintentando, hay que reiniciar el
+        // pago. Decir "intentá de nuevo" ahi es mandarlo a un callejon.
+        setErrorMessage(
+          error instanceof PaymentAmountError && error.isTerminal
+            ? 'Recargá la página para reiniciar el pago.'
+            : 'No pudimos actualizar el monto del pago. Intentá de nuevo en un momento.',
+        );
+        setIsProcessing(false);
+        return;
+      }
+      // Stripe recalcula los metodos de pago disponibles sobre el monto nuevo.
+      // Sin fetchUpdates el Payment Element sigue mostrando el viejo.
+      const { error: updateError } = await elements.fetchUpdates();
+      if (updateError) {
+        setErrorMessage('No pudimos actualizar el monto del pago. Intentá de nuevo en un momento.');
         setIsProcessing(false);
         return;
       }
@@ -267,7 +592,7 @@ const CheckoutForm = ({
             trackAddPaymentInfo({
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: customerData.quantity,
+              num_items: item.quantity,
               payment_type: 'Tarjeta',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
@@ -275,7 +600,7 @@ const CheckoutForm = ({
             trackAddPaymentInfo({
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: customerData.quantity,
+              num_items: item.quantity,
               payment_type: 'Tarjeta',
             });
           }
@@ -286,6 +611,7 @@ const CheckoutForm = ({
           paymentType: 'Card',
           isPaid: true,
           deliveryType: isPriorityShipping ? 'premium' : 'común',
+          lines: orderLines,
           finalTotal,
           email: emailTrimmed,
         });
@@ -567,12 +893,12 @@ const CheckoutForm = ({
               {productSummary.title}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Cantidad: {customerData.quantity}
+              Cantidad: {item.quantity}
               {productSummary.breakdown ? ` (${productSummary.breakdown})` : ''}
             </p>
           </div>
           <p className="text-sm font-semibold whitespace-nowrap flex-shrink-0 text-foreground">
-            {formatPrice(amount, currency)}
+            {formatPrice(item.amount, currency)}
           </p>
         </div>
 
@@ -589,50 +915,38 @@ const CheckoutForm = ({
           </p>
         </div>
 
-        {/* PRIORITY SHIPPING UPSELL */}
-        <div
-          onClick={() => setIsPriorityShipping(!isPriorityShipping)}
-          className={`
-            relative p-4 rounded-xl border cursor-pointer transition-all duration-300 group
-            ${isPriorityShipping
-              ? 'bg-variant-active/5 border-variant-active/40 shadow-[0_0_20px_-10px_rgba(239,68,68,0.3)]'
-              : 'bg-secondary/30 border-border/40 hover:bg-secondary/50 hover:border-border/60'
-            }
-          `}
-        >
-          <div className="flex items-start gap-3">
-            {/* Checkbox */}
-            <div className={`
-              w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0 mt-0.5
-              ${isPriorityShipping
-                ? 'bg-variant-active border-variant-active scale-110'
-                : 'border-muted-foreground/40 group-hover:border-variant-active/50'
+        {/* Los dos upsells: primero el del envio, que cierra el bloque de
+            entrega, y despues el producto, pegado al total para que el numero
+            se mueva a la vista cuando lo marcan. */}
+        <div className="space-y-3">
+          <UpsellRow
+            checked={isPriorityShipping}
+            onToggle={() => setIsPriorityShipping((prev) => !prev)}
+            title={PRIORITY_SHIPPING.name}
+            description="Despacho inmediato en 24hs"
+            price={PRIORITY_SHIPPING.price}
+            icon={RocketLaunchIcon}
+          />
+
+          {/* Con todos los colores agotados el antifaz no se ofrece. Precio
+              unico por unidad: el total de la fila es precio por cantidad. */}
+          {!ALL_MASK_COLORS_SOLD_OUT && (
+            <UpsellRow
+              checked={maskPicks.length > 0}
+              onToggle={() => setMaskPicks((prev) => (prev.length > 0 ? [] : [DEFAULT_MASK_COLOR]))}
+              title={SLEEP_MASK.name}
+              description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
+              price={SLEEP_MASK.price * Math.max(1, maskPicks.length)}
+              listPrice={
+                SLEEP_MASK.listPrice === undefined
+                  ? undefined
+                  : SLEEP_MASK.listPrice * Math.max(1, maskPicks.length)
               }
-            `}>
-              {isPriorityShipping && <CheckIcon className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              {/* Title Row */}
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <p className={`text-sm font-bold ${isPriorityShipping ? 'text-variant-active' : 'text-foreground'}`}>
-                    Envío Prioritario VIP
-                  </p>
-                  <RocketLaunchIcon className={`w-4 h-4 flex-shrink-0 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`} />
-                </div>
-                <p className={`text-sm font-bold whitespace-nowrap ml-2 ${isPriorityShipping ? 'text-variant-active' : 'text-muted-foreground'}`}>
-                  + Gs. 10.000
-                </p>
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Despacho inmediato en 24hs
-              </p>
-            </div>
-          </div>
+              image={SLEEP_MASK.image}
+            >
+              <MaskUnits picks={maskPicks} onChange={setMaskPicks} />
+            </UpsellRow>
+          )}
         </div>
 
         {/* Total */}
@@ -692,14 +1006,17 @@ export const StripeCheckoutModal = ({
   onClose,
   onBack,
   onSuccess,
-  amount,
+  item,
   currency,
   isProcessingOrder = false,
   customerData,
 }: StripeCheckoutModalProps) => {
   const [stripePromise] = useState(() => getStripe());
-  const { createPaymentIntent } = useStripePayment();
+  const { createPaymentIntent, updatePaymentIntentAmount } = useStripePayment();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  /** Monto que el PaymentIntent tiene realmente. Ver syncPaymentIntentAmount. */
+  const syncedAmountRef = useRef<number | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -735,6 +1052,24 @@ export const StripeCheckoutModal = ({
     onClose();
   };
 
+  /**
+   * Deja el PaymentIntent en `amount`. syncedAmountRef guarda el monto que el
+   * intent tiene de verdad, no el del producto: es lo unico que sobrevive a un
+   * intento de pago fallido, donde el cliente puede destildar un upsell y
+   * dejar la pantalla diciendo un numero mientras Stripe conserva otro.
+   */
+  const syncPaymentIntentAmount = useCallback(
+    async (amount: number) => {
+      if (syncedAmountRef.current === amount) return;
+      if (!paymentIntentId || !clientSecret) {
+        throw new Error('El pago no está inicializado');
+      }
+      await updatePaymentIntentAmount(paymentIntentId, amount, clientSecret);
+      syncedAmountRef.current = amount;
+    },
+    [updatePaymentIntentAmount, paymentIntentId, clientSecret],
+  );
+
   // Create PaymentIntent when modal opens
   useEffect(() => {
     // Track if effect is still mounted to prevent state updates after unmount
@@ -744,10 +1079,12 @@ export const StripeCheckoutModal = ({
       setIsInitializing(true);
       setInitError(null);
 
-      const { title, breakdown } = describeProduct(customerData.colors, customerData.quantity);
+      const { title, breakdown } = describeProduct(item);
 
       createPaymentIntent({
-        amount,
+        // Solo el producto: los upsells todavia no existen cuando el modal
+        // abre. El monto se sincroniza antes de confirmar (ver handleSubmit).
+        amount: item.amount,
         currency,
         paymentMethodId: 'pending',
         // Initial email: use the factura email if already captured upstream,
@@ -761,13 +1098,17 @@ export const StripeCheckoutModal = ({
           customerPhone: customerData.phone,
           deliveryLocation: customerData.location,
           deliveryAddress: customerData.address,
-          quantity: customerData.quantity.toString(),
+          quantity: item.quantity.toString(),
           product: breakdown ? `${title} (${breakdown})` : title,
         },
       })
         .then((response) => {
           if (!isMounted) return;
           setClientSecret(response.clientSecret);
+          setPaymentIntentId(response.paymentIntentId ?? null);
+          // El intent nace con el precio del producto. A partir de aca todo
+          // cambio de monto pasa por syncPaymentIntentAmount.
+          syncedAmountRef.current = item.amount;
           setIsInitializing(false);
         })
         .catch((error) => {
@@ -781,12 +1122,14 @@ export const StripeCheckoutModal = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, clientSecret, amount, currency, customerData, createPaymentIntent]);
+  }, [isOpen, clientSecret, item, currency, customerData, createPaymentIntent]);
 
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setClientSecret(null);
+      setPaymentIntentId(null);
+      syncedAmountRef.current = null;
       setInitError(null);
     }
   }, [isOpen]);
@@ -907,10 +1250,11 @@ export const StripeCheckoutModal = ({
                     onSuccess={onSuccess}
                     onClose={onClose}
                     onBack={onBack}
-                    amount={amount}
+                    item={item}
                     currency={currency}
                     customerData={customerData}
                     onCloseAttempt={handleCloseAttempt}
+                    syncPaymentIntentAmount={syncPaymentIntentAmount}
                   />
                 </Elements>
               </>
