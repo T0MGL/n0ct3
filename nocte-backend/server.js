@@ -873,8 +873,9 @@ function readOrderLines(rawLines) {
 }
 
 /**
- * Compara cada importe contra el catalogo del servidor. Devuelve la lista de
- * discrepancias, vacia cuando el pedido cierra.
+ * Compara cada importe contra el catalogo del servidor y las cantidades contra
+ * los topes por pedido. Devuelve la lista de discrepancias, vacia cuando el
+ * pedido cierra.
  */
 function priceMismatches(lines) {
   const perLine = lines.flatMap((line) => {
