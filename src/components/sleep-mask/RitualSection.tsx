@@ -1,37 +1,27 @@
 import { Reveal } from "@/components/Reveal";
+import { ColorPhotoStack } from "@/components/sleep-mask/ColorPhotoStack";
+import { RITUAL_FRAME_SIZES, RITUAL_MASK_PHOTOS } from "@/components/sleep-mask/photos";
 import { ALL_MASK_COLORS_SOLD_OUT, type MaskColorId } from "@/lib/mask-colors";
 import { RED_GLASSES, buildOrderLines, sleepMaskItem, sumLines } from "@/lib/order";
 import { cn } from "@/lib/utils";
 import lentes480 from "@/assets/sleep-mask/ritual-lentes-480.webp";
 import lentes720 from "@/assets/sleep-mask/ritual-lentes-720.webp";
 import lentes896 from "@/assets/sleep-mask/ritual-lentes-896.webp";
-import antifaz480 from "@/assets/sleep-mask/ritual-antifaz-480.webp";
-import antifaz720 from "@/assets/sleep-mask/ritual-antifaz-720.webp";
-import antifaz1080 from "@/assets/sleep-mask/ritual-antifaz-1080.webp";
 
-const FRAME_SIZES = "(min-width: 1240px) 340px, (min-width: 1024px) 28vw, 50vw";
+const GLASSES_FRAME = {
+  src: lentes720,
+  srcSet: `${lentes480} 480w, ${lentes720} 720w, ${lentes896} 896w`,
+  alt: "Hombre en su cuarto de noche, con la lámpara prendida y los lentes rojos NOCTE puestos",
+} as const;
 
-const FRAMES = [
-  {
-    when: "Dos horas antes",
-    what: "Lentes rojos",
-    src: lentes720,
-    srcSet: `${lentes480} 480w, ${lentes720} 720w, ${lentes896} 896w`,
-    alt: "Hombre en su cuarto de noche, con la lámpara prendida y los lentes rojos NOCTE puestos",
-  },
-  {
-    when: "Al apagar la luz",
-    what: "Antifaz 3D",
-    src: antifaz720,
-    srcSet: `${antifaz480} 480w, ${antifaz720} 720w, ${antifaz1080} 1080w`,
-    alt: "Mujer dormida con la mano bajo la mejilla y el antifaz 3D NOCTE rosado puesto",
-  },
-] as const;
+const FRAME_CLASS = "aspect-[3/4] w-full rounded-xl bg-white/[0.04]";
 
 const gs = (amount: number) => `${amount.toLocaleString("es-PY")} Gs`;
 
 interface RitualSectionProps {
   picks: readonly MaskColorId[];
+  /** El color activo de la pagina: el cuadro del antifaz lo sigue. */
+  activeColor: MaskColorId;
   onBuyClick: () => void;
 }
 
@@ -42,7 +32,7 @@ interface RitualSectionProps {
  * cobra el pedido, asi que esta tabla y el total del checkout no se pueden
  * contradecir.
  */
-export const RitualSection = ({ picks, onBuyClick }: RitualSectionProps) => {
+export const RitualSection = ({ picks, activeColor, onBuyClick }: RitualSectionProps) => {
   const item = sleepMaskItem(picks);
   const masksLabel = item.quantity === 1 ? "Antifaz 3D" : `${item.quantity} antifaces 3D`;
   const alone = sumLines(buildOrderLines(item, { sleepMaskPicks: [], priorityShipping: false }));
@@ -101,23 +91,33 @@ export const RitualSection = ({ picks, onBuyClick }: RitualSectionProps) => {
         {/* Diptico y no dos tarjetas: es una misma noche en dos momentos. El
             segundo cuadro baja un escalon porque viene despues. */}
         <div className="order-2 grid grid-cols-2 gap-3 sm:gap-5 lg:order-none lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-center">
-          {FRAMES.map((frame, index) => (
-            <Reveal as="figure" key={frame.what} delay={index * 90} className={cn(index === 1 && "mt-10 md:mt-16")}>
-              <img
-                src={frame.src}
-                srcSet={frame.srcSet}
-                sizes={FRAME_SIZES}
-                alt={frame.alt}
-                loading="lazy"
-                decoding="async"
-                className="aspect-[3/4] w-full rounded-xl bg-white/[0.04] object-cover"
-              />
-              <figcaption className="mt-3">
-                <span className="block text-[13px] text-white/60">{frame.when}</span>
-                <span className="block text-base font-semibold text-white md:text-lg">{frame.what}</span>
-              </figcaption>
-            </Reveal>
-          ))}
+          <Reveal as="figure">
+            <img
+              src={GLASSES_FRAME.src}
+              srcSet={GLASSES_FRAME.srcSet}
+              sizes={RITUAL_FRAME_SIZES}
+              alt={GLASSES_FRAME.alt}
+              loading="lazy"
+              decoding="async"
+              className={cn(FRAME_CLASS, "object-cover")}
+            />
+            <figcaption className="mt-3">
+              <span className="block text-[13px] text-white/60">Dos horas antes</span>
+              <span className="block text-base font-semibold text-white md:text-lg">Lentes rojos</span>
+            </figcaption>
+          </Reveal>
+          <Reveal as="figure" delay={90} className="mt-10 md:mt-16">
+            <ColorPhotoStack
+              color={activeColor}
+              photos={RITUAL_MASK_PHOTOS}
+              sizes={RITUAL_FRAME_SIZES}
+              className={FRAME_CLASS}
+            />
+            <figcaption className="mt-3">
+              <span className="block text-[13px] text-white/60">Al apagar la luz</span>
+              <span className="block text-base font-semibold text-white md:text-lg">Antifaz 3D</span>
+            </figcaption>
+          </Reveal>
         </div>
       </div>
     </section>

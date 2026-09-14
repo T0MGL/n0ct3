@@ -32,6 +32,8 @@ interface MaskPackPickerProps {
    * regiones vivas leerian lo mismo dos veces.
    */
   announce?: boolean;
+  /** El cliente se acerca a las muestras de color: momento de precargar el otro color. */
+  onColorIntent?: () => void;
   className?: string;
 }
 
@@ -43,7 +45,7 @@ interface MaskPackPickerProps {
  * Las tarjetas son un radiogroup con foco itinerante: Tab entra al elegido y
  * las flechas cambian de pack, como en el selector de color.
  */
-export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce = false, className }: MaskPackPickerProps) => {
+export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce = false, onColorIntent, className }: MaskPackPickerProps) => {
   const quantity = picks.length;
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -105,7 +107,9 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce
         {packDetail(quantity)}
       </p>
 
-      <div className="mt-3">
+      {/* Hover, foco o toque sobre las muestras: la foto del otro color empieza a
+          bajar antes del click, y el cruce no espera la red. */}
+      <div className="mt-3" onPointerEnter={onColorIntent} onFocusCapture={onColorIntent} onTouchStart={onColorIntent}>
         {quantity === 1 ? (
           <MaskColorPicker value={resolveSelectableMaskColor(picks[0])} onChange={(next) => onPickChange(0, next)} />
         ) : (

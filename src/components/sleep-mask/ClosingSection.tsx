@@ -7,6 +7,7 @@ interface ClosingSectionProps {
   picks: readonly MaskColorId[];
   onQuantityChange: (quantity: number) => void;
   onPickChange: (index: number, color: MaskColorId) => void;
+  onColorIntent: () => void;
   onBuyClick: () => void;
   sectionRef: Ref<HTMLElement>;
 }
@@ -17,7 +18,7 @@ interface ClosingSectionProps {
  * mientras esta seccion esta en pantalla: dos botones iguales a la vez
  * compiten por el mismo dedo.
  */
-export const ClosingSection = ({ picks, onQuantityChange, onPickChange, onBuyClick, sectionRef }: ClosingSectionProps) => (
+export const ClosingSection = ({ picks, onQuantityChange, onPickChange, onColorIntent, onBuyClick, sectionRef }: ClosingSectionProps) => (
   <section
     ref={sectionRef}
     aria-labelledby="mask-closing-title"
@@ -41,6 +42,7 @@ export const ClosingSection = ({ picks, onQuantityChange, onPickChange, onBuyCli
         picks={picks}
         onQuantityChange={onQuantityChange}
         onPickChange={onPickChange}
+        onColorIntent={onColorIntent}
         className="mt-10 w-full max-w-[440px] text-left"
       />
 

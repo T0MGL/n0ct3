@@ -32,10 +32,13 @@ import { MaskHero } from "@/components/sleep-mask/MaskHero";
 import { MaskStickyBar } from "@/components/sleep-mask/MaskStickyBar";
 import { RitualSection } from "@/components/sleep-mask/RitualSection";
 import { useScrolledPast } from "@/components/sleep-mask/useScrolledPast";
+import { preloadColorPhotos } from "@/components/sleep-mask/photos";
 import "@/components/sleep-mask/sleep-mask.css";
 import {
   ALL_MASK_COLORS_SOLD_OUT,
   DEFAULT_MASK_COLOR,
+  MASK_COLOR_IDS,
+  isMaskColorSoldOut,
   resizeMaskPicks,
   resolveSelectableMaskColor,
   type MaskColorId,
@@ -98,11 +101,13 @@ const preloadCheckout = () => {
 const SleepMask = () => {
   // Color de cada antifaz, uno por unidad: el largo es la cantidad del pack.
   const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
-  // La foto del hero muestra el ultimo color que se toco en cualquier unidad,
-  // mientras siga en el pedido: al bajar la cantidad puede quedar afuera, y la
-  // foto no puede mostrar un antifaz que no se va a comprar.
-  const [touchedColor, setTouchedColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
-  const photoColor = picks.includes(touchedColor) ? touchedColor : picks[0];
+  // REGLA DE COLOR, una sola para toda la pagina: el color activo es el de la
+  // unidad seleccionada (la ultima cuyo color se toco) y, si esa unidad ya no
+  // esta en el pedido o no se toco ninguna, el de la primera. Siempre es un
+  // color que se va a comprar. Lo siguen todas las fotos que existen en los dos
+  // colores (hero y ritual); copa, frente y correa solo existen en negro.
+  const [selectedUnit, setSelectedUnit] = useState(0);
+  const activeColor = picks[selectedUnit] ?? picks[0];
   const heroCtaRef = useRef<HTMLButtonElement>(null);
   const closingRef = useRef<HTMLElement>(null);
   // AddToCart una vez por visita, como en la landing de lentes: el embudo de
@@ -143,13 +148,21 @@ const SleepMask = () => {
   const handleQuantityChange = useCallback((quantity: number) => {
     const next = Math.max(1, Math.min(MAX_SLEEP_MASK_PACK, quantity));
     setPicks((prev) => (prev.length === next ? prev : resizeMaskPicks(prev, next)));
+    // La unidad seleccionada que queda afuera del pedido deja de mandar.
+    setSelectedUnit((prev) => (prev < next ? prev : 0));
   }, []);
 
   const handlePickChange = useCallback((index: number, next: MaskColorId) => {
     const color = resolveSelectableMaskColor(next);
     setPicks((prev) => (prev[index] === color ? prev : prev.map((pick, i) => (i === index ? color : pick))));
-    setTouchedColor(color);
+    setSelectedUnit(index);
   }, []);
+
+  const handleColorIntent = useCallback(() => {
+    for (const color of MASK_COLOR_IDS) {
+      if (color !== activeColor && !isMaskColorSoldOut(color)) preloadColorPhotos(color);
+    }
+  }, [activeColor]);
 
   const handleBuyClick = useCallback(() => {
     startBuyFlow(sleepMaskItem(picks), !atcFiredRef.current);
@@ -197,21 +210,23 @@ const SleepMask = () => {
       <main>
         <MaskHero
           picks={picks}
-          photoColor={photoColor}
+          photoColor={activeColor}
           onQuantityChange={handleQuantityChange}
           onPickChange={handlePickChange}
+          onColorIntent={handleColorIntent}
           onBuyClick={handleBuyClick}
           ctaRef={heroCtaRef}
         />
         <LightSection />
         <BuildSection />
-        <RitualSection picks={picks} onBuyClick={handleBuyClick} />
+        <RitualSection picks={picks} activeColor={activeColor} onBuyClick={handleBuyClick} />
         <AssuranceSection />
         <MaskFaq />
         <ClosingSection
           picks={picks}
           onQuantityChange={handleQuantityChange}
           onPickChange={handlePickChange}
+          onColorIntent={handleColorIntent}
           onBuyClick={handleBuyClick}
           sectionRef={closingRef}
         />

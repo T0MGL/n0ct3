@@ -1,24 +1,18 @@
 import { useEffect, useState, type Ref } from "react";
 import { MaskCountdown } from "@/components/sleep-mask/MaskCountdown";
 import { MaskPackPicker } from "@/components/sleep-mask/MaskPackPicker";
-import { IN_USE_PHOTOS } from "@/components/sleep-mask/photos";
-import { ALL_MASK_COLORS_SOLD_OUT, MASK_COLOR_IDS, isMaskColorSoldOut, type MaskColorId } from "@/lib/mask-colors";
+import { ColorPhotoStack } from "@/components/sleep-mask/ColorPhotoStack";
+import { IN_USE_PHOTOS, IN_USE_SIZES } from "@/components/sleep-mask/photos";
+import { ALL_MASK_COLORS_SOLD_OUT, type MaskColorId } from "@/lib/mask-colors";
 import { cn } from "@/lib/utils";
-
-// Un color agotado no se puede elegir, asi que su foto no se baja.
-const PHOTO_COLORS = MASK_COLOR_IDS.filter((id) => !isMaskColorSoldOut(id));
-
-// El cuadro de la foto mide el ancho entero en mobile y 7/12 en desktop, pero
-// la foto es cuadrada y cubre un cuadro mas alto que ancho: en 1440x900 se
-// dibuja a unos 900px. 64vw cubre ese caso sin pedir la de 1600 en mobile.
-const PHOTO_SIZES = "(min-width: 1024px) 64vw, 100vw";
 
 interface MaskHeroProps {
   picks: readonly MaskColorId[];
-  /** El color que muestra la foto: el ultimo que se toco. */
+  /** El color activo de la pagina (la regla de color de SleepMask.tsx). */
   photoColor: MaskColorId;
   onQuantityChange: (quantity: number) => void;
   onPickChange: (index: number, color: MaskColorId) => void;
+  onColorIntent: () => void;
   onBuyClick: () => void;
   ctaRef: Ref<HTMLButtonElement>;
 }
@@ -49,7 +43,7 @@ const useRoomLit = (): boolean => {
   return lit;
 };
 
-export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickChange, onBuyClick, ctaRef }: MaskHeroProps) => {
+export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickChange, onColorIntent, onBuyClick, ctaRef }: MaskHeroProps) => {
   const lit = useRoomLit();
 
   return (
@@ -58,26 +52,14 @@ export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickCha
       className="relative lg:grid lg:min-h-[100dvh] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
     >
       <div className="relative h-[38svh] min-h-[260px] overflow-hidden lg:order-2 lg:h-auto">
-        {PHOTO_COLORS.map((id) => (
-          <img
-            key={id}
-            src={IN_USE_PHOTOS[id].src}
-            srcSet={IN_USE_PHOTOS[id].srcSet}
-            sizes={PHOTO_SIZES}
-            alt={IN_USE_PHOTOS[id].alt}
-            aria-hidden={id === color ? undefined : true}
-            width={1024}
-            height={1024}
-            decoding="async"
-            // La del color por defecto es el LCP. React 18 no reconoce
-            // fetchPriority en camelCase, por eso va como atributo crudo.
-            {...(id === color ? { fetchpriority: "high" } : { loading: "lazy" as const })}
-            className={cn(
-              "absolute inset-0 h-full w-full object-cover object-[46%_50%] transition-opacity duration-500 ease-out motion-reduce:transition-none lg:object-[40%_50%]",
-              id === color ? "opacity-100" : "opacity-0",
-            )}
-          />
-        ))}
+        <ColorPhotoStack
+          color={color}
+          photos={IN_USE_PHOTOS}
+          sizes={IN_USE_SIZES}
+          priority
+          className="absolute inset-0"
+          imgClassName="object-[46%_50%] lg:object-[40%_50%]"
+        />
 
         {/* La habitacion arranca en penumbra y se prende. Es la luz del dia
             que el resto de la pagina le va a apagar. Solo opacidad. */}
@@ -118,6 +100,7 @@ export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickCha
           picks={picks}
           onQuantityChange={onQuantityChange}
           onPickChange={onPickChange}
+          onColorIntent={onColorIntent}
           className="mt-2.5 lg:max-w-[440px]"
         />
 
