@@ -17,8 +17,12 @@ interface ColorPhotoStackProps {
 /**
  * La foto del antifaz en el color activo, con cruce entre colores.
  *
- * Una foto se monta recien cuando su color se pide, y la que nunca cargo se
- * desmonta si el color cambia: la carga inicial baja un solo color.
+ * Una foto se monta recien cuando su color se pide: la carga inicial baja un
+ * solo color. Una vez cargada queda montada (con 2 colores son 2 <img> como
+ * mucho), asi "cargada" siempre habla del elemento que esta en pantalla y
+ * volver a un color no depende de que la cache lo vuelva a leer. La que nunca
+ * cargo se desmonta al cambiar de color y, si falla, se reintenta al pedirla
+ * de nuevo.
  *
  * El cruce apila: la foto que sale queda abajo a opacidad 1 y la nueva entra
  * arriba con una animacion de 0 a 1. Con transiciones cruzadas el negro de la
@@ -34,35 +38,56 @@ export const ColorPhotoStack = ({ color, photos, sizes, priority = false, classN
   const [failed, setFailed] = useState<ReadonlySet<MaskColorId>>(() => new Set());
   const [front, setFront] = useState<MaskColorId>(color);
   const [back, setBack] = useState<MaskColorId | null>(null);
+  const [requested, setRequested] = useState<MaskColorId>(color);
+  // Intentos por color: forma parte de la key del <img>, asi un reintento es
+  // siempre un elemento nuevo que vuelve a pedir el archivo.
+  const [attempts, setAttempts] = useState<Readonly<Partial<Record<MaskColorId, number>>>>({});
 
   // Ajustes de estado durante el render por cambio de prop (sin efecto, sin
   // un frame intermedio con el color nuevo sin montar).
-  if (!mounted.includes(color)) setMounted([...mounted, color]);
+  if (requested !== color) {
+    setRequested(color);
+    if (!mounted.includes(color)) setMounted([...mounted, color]);
+    // Pedir de nuevo un color que fallo es reintentarlo con un <img> nuevo.
+    if (failed.has(color)) {
+      setFailed((prev) => new Set([...prev].filter((id) => id !== color)));
+      setAttempts((prev) => ({ ...prev, [color]: (prev[color] ?? 0) + 1 }));
+    }
+  }
 
-  const colorReady = loaded.has(color) || failed.has(color);
+  const colorReady = requested === color && (loaded.has(color) || failed.has(color));
   if (colorReady && front !== color) {
-    const canCrossfade = !reduceMotion && loaded.has(front) && !failed.has(color);
-    setBack(canCrossfade ? front : null);
+    if (color === back) {
+      // Volver al color de abajo en medio de un cruce: ya esta entero ahi, se
+      // descubre sin arrancar otro cruce desde una capa a media opacidad.
+      setBack(null);
+    } else {
+      const canCrossfade = !reduceMotion && loaded.has(front) && !failed.has(color);
+      setBack(canCrossfade ? front : null);
+    }
     setFront(color);
   }
 
   const markLoaded = useCallback((id: MaskColorId) => {
     setLoaded((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+    setFailed((prev) => (prev.has(id) ? new Set([...prev].filter((other) => other !== id)) : prev));
   }, []);
   const markFailed = useCallback((id: MaskColorId) => {
     setFailed((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
   }, []);
 
-  const rendered = mounted.filter((id) => id === color || id === front || id === back);
+  const rendered = mounted.filter((id) => id === color || id === front || id === back || loaded.has(id));
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    // isolate: el z-10 de la foto que entra ordena solo dentro del cuadro. Sin
+    // contexto propio la foto tapaba el titular y el velo del hero.
+    <div className={cn("relative isolate overflow-hidden", className)}>
       {rendered.map((id) => {
         const isFront = id === front;
         const isBack = id === back;
         return (
           <img
-            key={id}
+            key={`${id}-${attempts[id] ?? 0}`}
             ref={(node) => {
               // Una foto en cache puede terminar antes de que React escuche su load.
               if (node?.complete && node.naturalWidth > 0) markLoaded(id);

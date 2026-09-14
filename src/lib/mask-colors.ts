@@ -72,9 +72,9 @@ export function resizeMaskPicks(prev: readonly MaskColorId[], quantity: number):
 
 /**
  * El color activo de /sleep-mask, la unica regla que siguen sus fotos: el de
- * la unidad seleccionada (la ultima cuyo color se toco) y, si
- * esa unidad ya no esta en el pedido o no se toco ninguna, el de la primera.
- * Siempre es un color que se compra.
+ * la unidad seleccionada (la ultima cuyo color se toco) y, si esa unidad ya no
+ * esta en el pedido o no se toco ninguna, el de la primera. Siempre es un
+ * color que se compra.
  */
 export const resolveActiveMaskColor = (picks: readonly MaskColorId[], selectedUnit: number): MaskColorId =>
   resolveSelectableMaskColor(picks[selectedUnit] ?? picks[0] ?? DEFAULT_MASK_COLOR);

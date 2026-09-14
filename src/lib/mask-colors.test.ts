@@ -27,7 +27,7 @@ describe("color activo de /sleep-mask", () => {
   });
 
   it("siempre es un color del pedido", () => {
-    expect(["negro", "rosado"]).toContain(resolveActiveMaskColor(["negro", "rosado"], 7));
+    expect(resolveActiveMaskColor(["negro", "rosado"], 7)).toBe("negro");
     expect(resolveActiveMaskColor(["rosado"], 7)).toBe("rosado");
   });
 });
