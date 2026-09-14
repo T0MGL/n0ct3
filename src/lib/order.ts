@@ -13,7 +13,13 @@
 
 import { isVariantSoldOut, summarizeVariantCounts, type VariantId } from "@/lib/variants";
 import { BUNDLES } from "@/lib/bundles";
-import { MASK_COLORS, MASK_COLOR_IDS, resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
+import {
+  DEFAULT_MASK_COLOR,
+  MASK_COLORS,
+  MASK_COLOR_IDS,
+  resolveSelectableMaskColor,
+  type MaskColorId,
+} from "@/lib/mask-colors";
 import envioPrioritarioIcon from "@/assets/checkout/envio-prioritario.webp";
 
 export type OrderProduct = "lentes" | "sleepmask" | "clipon" | "envio-prioritario";
@@ -61,8 +67,34 @@ export const PRIORITY_SHIPPING: AddOn = {
   image: { src: envioPrioritarioIcon, width: 421, height: 431 },
 };
 
-/** El antifaz comprado solo, en /sleep-mask. Es el precio de catalogo de Ordefy. */
-export const SLEEP_MASK_SOLO_PRICE = 169000;
+/**
+ * Packs del antifaz comprado sin lentes ni clip-on, solo en la web (/sleep-mask).
+ * El pack se cuenta sobre el total de antifaces del pedido, colores sumados: un
+ * negro y un rosado son el pack de dos. Helena cobra lineal y no lee esto.
+ * Espejo en nocte-backend/server.js (SLEEP_MASK_PACK_PRICE): si cambia un
+ * precio, cambia en los dos lados o el backend rebota los pedidos en COD.
+ */
+export const SLEEP_MASK_PACKS = [
+  { quantity: 1, price: 169000 },
+  { quantity: 2, price: 269000 },
+  { quantity: 3, price: 369000 },
+] as const;
+
+export type SleepMaskPack = (typeof SLEEP_MASK_PACKS)[number];
+
+/** El antifaz de a uno. Es el precio de catalogo de Ordefy y la base del ahorro. */
+export const SLEEP_MASK_SOLO_PRICE = SLEEP_MASK_PACKS[0].price;
+
+export const MAX_SLEEP_MASK_PACK = SLEEP_MASK_PACKS[SLEEP_MASK_PACKS.length - 1].quantity;
+
+/** El pack de una cantidad, con la cantidad llevada al rango vendible. */
+export const sleepMaskPack = (quantity: number): SleepMaskPack =>
+  SLEEP_MASK_PACKS.find((pack) => pack.quantity === quantity) ??
+  (quantity < 1 ? SLEEP_MASK_PACKS[0] : SLEEP_MASK_PACKS[SLEEP_MASK_PACKS.length - 1]);
+
+/** Contra comprarlos de a uno. Es el unico ahorro que se muestra. */
+export const sleepMaskPackSavings = (pack: SleepMaskPack): number =>
+  SLEEP_MASK_SOLO_PRICE * pack.quantity - pack.price;
 
 // El color se elige por unidad en el bump (ver mask-colors.ts) y va en el nombre
 // de cada linea con maskName: es lo que el cliente lee en su confirmacion de
@@ -104,7 +136,7 @@ export const CLIP_ON: AddOn = {
 export type CheckoutItem =
   | { product: "lentes"; quantity: number; amount: number; colors: VariantId[] }
   | { product: "clipon"; quantity: 1; amount: number }
-  | { product: "sleepmask"; quantity: number; amount: number; color: MaskColorId };
+  | { product: "sleepmask"; quantity: number; amount: number; colors: MaskColorId[] };
 
 export interface CheckoutUpsells {
   /** Color de cada antifaz, uno por unidad. Vacio es sin antifaz. No aplica si el principal es el antifaz. */
@@ -148,20 +180,45 @@ export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): O
   return lines;
 }
 
+/** Unidades por color en el orden del catalogo, sin colores agotados. */
+const countMaskColors = (picks: readonly MaskColorId[]): Array<{ color: MaskColorId; quantity: number }> => {
+  const perColor = new Map<MaskColorId, number>();
+  for (const pick of picks) {
+    const color = resolveSelectableMaskColor(pick);
+    perColor.set(color, (perColor.get(color) ?? 0) + 1);
+  }
+  return MASK_COLOR_IDS.flatMap((color) => {
+    const quantity = perColor.get(color);
+    return quantity ? [{ color, quantity }] : [];
+  });
+};
+
+/**
+ * Una linea por color. Con lentes cada antifaz va a su precio acompanado. Sin
+ * lentes el pack se reparte por unidad: pack / cantidad por cada antifaz, y si
+ * esa division dejara resto va a la primera linea, asi la suma es siempre el
+ * pack. Con 269.000 y 369.000 divide exacto (134.500 y 123.000). Es la misma
+ * regla que valida el backend linea por linea.
+ */
 function buildSleepMaskLines(
   item: Extract<CheckoutItem, { product: "sleepmask" }>,
   upsells: CheckoutUpsells,
 ): OrderLine[] {
   const withGlasses = upsells.redGlasses === true && RED_GLASSES.available;
-  const unitPrice = withGlasses ? SLEEP_MASK.price : SLEEP_MASK_SOLO_PRICE;
-  const lines: OrderLine[] = [
-    {
-      product: "sleepmask",
-      color: resolveSelectableMaskColor(item.color),
-      quantity: item.quantity,
-      amount: unitPrice * item.quantity,
-    },
-  ];
+  const perColor = countMaskColors(item.colors);
+  const units = perColor.reduce((total, { quantity }) => total + quantity, 0);
+  const pack = sleepMaskPack(units);
+  const packUnitPrice = Math.floor(pack.price / units);
+  const remainder = pack.price - packUnitPrice * units;
+
+  const lines: OrderLine[] = perColor.map(({ color, quantity }, index) => ({
+    product: "sleepmask",
+    color,
+    quantity,
+    amount: withGlasses
+      ? SLEEP_MASK.price * quantity
+      : packUnitPrice * quantity + (index === 0 ? remainder : 0),
+  }));
   if (withGlasses) {
     lines.push({ product: "lentes", quantity: 1, amount: RED_GLASSES.price, colors: ["rojo"] });
   }
@@ -180,12 +237,48 @@ export const clipOnItem = (): CheckoutItem => ({
   amount: CLIP_ON.price,
 });
 
-export const sleepMaskItem = (color: MaskColorId): CheckoutItem => ({
-  product: "sleepmask",
-  quantity: 1,
-  amount: SLEEP_MASK_SOLO_PRICE,
-  color: resolveSelectableMaskColor(color),
-});
+/**
+ * El antifaz como producto principal, un color por unidad. Mas alla del pack
+ * mas grande se corta: la web no vende packs que no existen.
+ */
+export const sleepMaskItem = (picks: readonly MaskColorId[]): CheckoutItem => {
+  const colors = (picks.length > 0 ? picks : [DEFAULT_MASK_COLOR])
+    .slice(0, MAX_SLEEP_MASK_PACK)
+    .map(resolveSelectableMaskColor);
+  return {
+    product: "sleepmask",
+    quantity: colors.length,
+    amount: sleepMaskPack(colors.length).price,
+    colors,
+  };
+};
+
+/**
+ * num_items de AddPaymentInfo y Purchase. Lentes y clip-on mandan la cantidad
+ * del item como siempre. El antifaz manda las unidades reales del pedido:
+ * antifaces mas los lentes del bump, sin el envio, que no es una unidad. El
+ * Purchase del servidor cuenta igual (purchaseContent en server.js).
+ */
+export function metaNumItems(item: CheckoutItem, lines: readonly OrderLine[]): number {
+  if (item.product !== "sleepmask") return item.quantity;
+  return lines
+    .filter((line) => line.product !== "envio-prioritario")
+    .reduce((units, line) => units + line.quantity, 0);
+}
+
+/** "1 negro, 2 rosados": el color de cada antifaz del pedido, en el orden del catalogo. */
+export function maskColorBreakdown(colors: readonly MaskColorId[]): string {
+  // Los dos nombres terminan en vocal, asi que el plural es sumar una s.
+  return countMaskColors(colors)
+    .map(({ color, quantity }) => `${quantity} ${MASK_COLORS[color].name.toLowerCase()}${quantity > 1 ? "s" : ""}`)
+    .join(", ");
+}
+
+/** Como se nombra el pedido de antifaces en textos cortos: "Antifaz 3D Negro", "2 antifaces 3D: 1 negro, 1 rosado". */
+export function describeMaskColors(colors: readonly MaskColorId[]): string {
+  if (colors.length === 1) return `Antifaz 3D ${MASK_COLORS[resolveSelectableMaskColor(colors[0])].name}`;
+  return `${colors.length} antifaces 3D: ${maskColorBreakdown(colors)}`;
+}
 
 /**
  * quantity y colors de primer nivel del pedido. Son anteriores a las lineas y

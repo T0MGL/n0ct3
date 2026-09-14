@@ -31,7 +31,7 @@ const FRAMES = [
 const gs = (amount: number) => `${amount.toLocaleString("es-PY")} Gs`;
 
 interface RitualSectionProps {
-  color: MaskColorId;
+  picks: readonly MaskColorId[];
   onBuyClick: () => void;
 }
 
@@ -42,8 +42,9 @@ interface RitualSectionProps {
  * cobra el pedido, asi que esta tabla y el total del checkout no se pueden
  * contradecir.
  */
-export const RitualSection = ({ color, onBuyClick }: RitualSectionProps) => {
-  const item = sleepMaskItem(color);
+export const RitualSection = ({ picks, onBuyClick }: RitualSectionProps) => {
+  const item = sleepMaskItem(picks);
+  const masksLabel = item.quantity === 1 ? "Antifaz 3D" : `${item.quantity} antifaces 3D`;
   const alone = sumLines(buildOrderLines(item, { sleepMaskPicks: [], priorityShipping: false }));
   const together = sumLines(buildOrderLines(item, { sleepMaskPicks: [], redGlasses: true, priorityShipping: false }));
 
@@ -69,12 +70,12 @@ export const RitualSection = ({ color, onBuyClick }: RitualSectionProps) => {
           <Reveal delay={80} className="order-3 lg:order-none lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:self-start">
             <dl className="divide-y divide-white/10 border-y border-white/10">
               <div className="flex items-baseline justify-between gap-4 py-4">
-                <dt className="text-[15px] text-white/70">Antifaz 3D</dt>
+                <dt className="text-[15px] text-white/70">{masksLabel}</dt>
                 <dd className="whitespace-nowrap text-lg font-semibold tabular-nums text-white">{gs(alone)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4 py-4">
                 <dt>
-                  <span className="block text-[15px] font-semibold text-white">Antifaz 3D + Lentes Rojos</span>
+                  <span className="block text-[15px] font-semibold text-white">{masksLabel} + Lentes Rojos</span>
                   <span className="mt-1 block text-[13px] text-white/60">
                     Separados salen {gs(alone + RED_GLASSES.price)}
                   </span>

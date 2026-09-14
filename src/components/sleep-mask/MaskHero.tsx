@@ -1,8 +1,8 @@
 import { useEffect, useState, type Ref } from "react";
-import { MaskColorPicker } from "@/components/sleep-mask/MaskColorPicker";
+import { MaskCountdown } from "@/components/sleep-mask/MaskCountdown";
+import { MaskPackPicker } from "@/components/sleep-mask/MaskPackPicker";
 import { IN_USE_PHOTOS } from "@/components/sleep-mask/photos";
 import { ALL_MASK_COLORS_SOLD_OUT, MASK_COLOR_IDS, isMaskColorSoldOut, type MaskColorId } from "@/lib/mask-colors";
-import { SLEEP_MASK_SOLO_PRICE } from "@/lib/order";
 import { cn } from "@/lib/utils";
 
 // Un color agotado no se puede elegir, asi que su foto no se baja.
@@ -14,8 +14,11 @@ const PHOTO_COLORS = MASK_COLOR_IDS.filter((id) => !isMaskColorSoldOut(id));
 const PHOTO_SIZES = "(min-width: 1024px) 64vw, 100vw";
 
 interface MaskHeroProps {
-  color: MaskColorId;
-  onColorChange: (next: MaskColorId) => void;
+  picks: readonly MaskColorId[];
+  /** El color que muestra la foto: el ultimo que se toco. */
+  photoColor: MaskColorId;
+  onQuantityChange: (quantity: number) => void;
+  onPickChange: (index: number, color: MaskColorId) => void;
   onBuyClick: () => void;
   ctaRef: Ref<HTMLButtonElement>;
 }
@@ -46,7 +49,7 @@ const useRoomLit = (): boolean => {
   return lit;
 };
 
-export const MaskHero = ({ color, onColorChange, onBuyClick, ctaRef }: MaskHeroProps) => {
+export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickChange, onBuyClick, ctaRef }: MaskHeroProps) => {
   const lit = useRoomLit();
 
   return (
@@ -54,7 +57,7 @@ export const MaskHero = ({ color, onColorChange, onBuyClick, ctaRef }: MaskHeroP
       aria-labelledby="mask-hero-title"
       className="relative lg:grid lg:min-h-[100dvh] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
     >
-      <div className="relative h-[44svh] min-h-[300px] overflow-hidden lg:order-2 lg:h-auto">
+      <div className="relative h-[38svh] min-h-[260px] overflow-hidden lg:order-2 lg:h-auto">
         {PHOTO_COLORS.map((id) => (
           <img
             key={id}
@@ -102,25 +105,26 @@ export const MaskHero = ({ color, onColorChange, onBuyClick, ctaRef }: MaskHeroP
           Apagá la luz que no podés apagar.
         </h1>
 
-        <p className="mt-4 max-w-[40ch] text-[15px] leading-relaxed text-white/70 lg:mt-6 lg:text-lg">
+        <p className="mt-3 max-w-[40ch] text-[15px] leading-snug text-white/70 lg:mt-6 lg:text-lg lg:leading-relaxed">
           Antifaz 3D NOCTE. Oscuridad total y cero presión en los párpados, para dormir profundo y
           levantarte con energía.
         </p>
 
-        <div className="mt-6 flex items-center justify-between gap-4 lg:mt-10 lg:justify-start lg:gap-10">
-          <MaskColorPicker value={color} onChange={onColorChange} />
-          <p className="whitespace-nowrap text-[28px] font-bold leading-none tracking-[-0.02em] text-white tabular-nums lg:text-[32px]">
-            {SLEEP_MASK_SOLO_PRICE.toLocaleString("es-PY")}
-            <span className="ml-1 text-base font-medium tracking-normal text-white/60">Gs</span>
-          </p>
-        </div>
+        {/* El reloj va pegado a los precios, que son la oferta que vence. */}
+        <MaskCountdown className="mt-5 lg:mt-8" />
+        <MaskPackPicker
+          picks={picks}
+          onQuantityChange={onQuantityChange}
+          onPickChange={onPickChange}
+          className="mt-2.5 lg:max-w-[440px]"
+        />
 
         <button
           ref={ctaRef}
           type="button"
           onClick={onBuyClick}
           disabled={ALL_MASK_COLORS_SOLD_OUT}
-          className="sleep-mask-cta mt-5 w-full lg:mt-8 lg:w-auto lg:min-w-[320px] lg:self-start"
+          className="sleep-mask-cta mt-4 w-full lg:mt-6 lg:w-auto lg:min-w-[320px] lg:self-start"
         >
           {ALL_MASK_COLORS_SOLD_OUT ? "Agotado. Reponemos pronto" : "Comprar ahora"}
         </button>

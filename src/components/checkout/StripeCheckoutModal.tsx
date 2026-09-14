@@ -33,7 +33,10 @@ import {
   RED_GLASSES,
   SLEEP_MASK,
   buildOrderLines,
+  describeMaskColors,
+  maskColorBreakdown,
   metaContent,
+  metaNumItems,
   sumLines,
   type CheckoutItem,
   type OrderLine,
@@ -55,7 +58,8 @@ function describeProduct(item: CheckoutItem): { title: string; breakdown: string
     return { title: `NOCTE® ${CLIP_ON.name}`, breakdown: null };
   }
   if (item.product === 'sleepmask') {
-    return { title: `NOCTE® Antifaz 3D ${MASK_COLORS[item.color].name}`, breakdown: null };
+    if (item.quantity === 1) return { title: `NOCTE® ${describeMaskColors(item.colors)}`, breakdown: null };
+    return { title: `NOCTE® Antifaz 3D, pack de ${item.quantity}`, breakdown: maskColorBreakdown(item.colors) };
   }
 
   const packSuffix = item.quantity > 1 ? ` - Pack x${item.quantity}` : '';
@@ -611,7 +615,7 @@ const CheckoutForm = ({
               ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Pago contra entrega',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
@@ -620,7 +624,7 @@ const CheckoutForm = ({
               ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Pago contra entrega',
             });
           }
@@ -727,7 +731,7 @@ const CheckoutForm = ({
               ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Tarjeta',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
@@ -736,7 +740,7 @@ const CheckoutForm = ({
               ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Tarjeta',
             });
           }

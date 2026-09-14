@@ -33,20 +33,34 @@ import { MaskStickyBar } from "@/components/sleep-mask/MaskStickyBar";
 import { RitualSection } from "@/components/sleep-mask/RitualSection";
 import { useScrolledPast } from "@/components/sleep-mask/useScrolledPast";
 import "@/components/sleep-mask/sleep-mask.css";
-import { ALL_MASK_COLORS_SOLD_OUT, DEFAULT_MASK_COLOR, MASK_COLORS, resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
+import {
+  ALL_MASK_COLORS_SOLD_OUT,
+  DEFAULT_MASK_COLOR,
+  resizeMaskPicks,
+  resolveSelectableMaskColor,
+  type MaskColorId,
+} from "@/lib/mask-colors";
 import { trackViewContent } from "@/lib/meta-pixel";
-import { SLEEP_MASK, SLEEP_MASK_SOLO_PRICE, metaContent, sleepMaskItem, type CheckoutItem } from "@/lib/order";
+import {
+  MAX_SLEEP_MASK_PACK,
+  SLEEP_MASK,
+  SLEEP_MASK_SOLO_PRICE,
+  describeMaskColors,
+  metaContent,
+  sleepMaskItem,
+  type CheckoutItem,
+} from "@/lib/order";
 import { getStripe } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Antifaz 3D para dormir | NOCTE®";
 const PAGE_DESCRIPTION =
-  "Antifaz 3D NOCTE: oscuridad total y cero presión en los párpados. Delivery gratis a todo Paraguay y pago contra entrega. 169.000 Gs.";
+  "Antifaz 3D NOCTE: oscuridad total y cero presión en los párpados. Delivery gratis a todo Paraguay y pago contra entrega. Desde 169.000 Gs.";
 
-const initialItem = () => sleepMaskItem(DEFAULT_MASK_COLOR);
+const initialItem = () => sleepMaskItem([DEFAULT_MASK_COLOR]);
 
 const checkoutLabel = (item: CheckoutItem) =>
-  item.product === "sleepmask" ? `NOCTE® Antifaz 3D ${MASK_COLORS[item.color].name}` : `NOCTE® ${SLEEP_MASK.name}`;
+  item.product === "sleepmask" ? `NOCTE® ${describeMaskColors(item.colors)}` : `NOCTE® ${SLEEP_MASK.name}`;
 
 /**
  * Titulo, descripcion y canonical propios mientras la pagina esta montada. El
@@ -82,7 +96,10 @@ const preloadCheckout = () => {
 };
 
 const SleepMask = () => {
-  const [color, setColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
+  // Color de cada antifaz, uno por unidad: el largo es la cantidad del pack.
+  const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
+  // La foto del hero muestra el ultimo color que se toco en cualquier unidad.
+  const [photoColor, setPhotoColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
   const heroCtaRef = useRef<HTMLButtonElement>(null);
   const closingRef = useRef<HTMLElement>(null);
   // AddToCart una vez por visita, como en la landing de lentes: el embudo de
@@ -120,14 +137,21 @@ const SleepMask = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleColorChange = useCallback((next: MaskColorId) => {
-    setColor(resolveSelectableMaskColor(next));
+  const handleQuantityChange = useCallback((quantity: number) => {
+    const next = Math.max(1, Math.min(MAX_SLEEP_MASK_PACK, quantity));
+    setPicks((prev) => (prev.length === next ? prev : resizeMaskPicks(prev, next)));
+  }, []);
+
+  const handlePickChange = useCallback((index: number, next: MaskColorId) => {
+    const color = resolveSelectableMaskColor(next);
+    setPicks((prev) => (prev[index] === color ? prev : prev.map((pick, i) => (i === index ? color : pick))));
+    setPhotoColor(color);
   }, []);
 
   const handleBuyClick = useCallback(() => {
-    startBuyFlow(sleepMaskItem(color), !atcFiredRef.current);
+    startBuyFlow(sleepMaskItem(picks), !atcFiredRef.current);
     atcFiredRef.current = true;
-  }, [startBuyFlow, color]);
+  }, [startBuyFlow, picks]);
 
   return (
     <div data-variant="rojo" className="sleep-mask-page min-h-[100dvh] bg-black text-white">
@@ -168,15 +192,23 @@ const SleepMask = () => {
       </header>
 
       <main>
-        <MaskHero color={color} onColorChange={handleColorChange} onBuyClick={handleBuyClick} ctaRef={heroCtaRef} />
+        <MaskHero
+          picks={picks}
+          photoColor={photoColor}
+          onQuantityChange={handleQuantityChange}
+          onPickChange={handlePickChange}
+          onBuyClick={handleBuyClick}
+          ctaRef={heroCtaRef}
+        />
         <LightSection />
         <BuildSection />
-        <RitualSection color={color} onBuyClick={handleBuyClick} />
+        <RitualSection picks={picks} onBuyClick={handleBuyClick} />
         <AssuranceSection />
         <MaskFaq />
         <ClosingSection
-          color={color}
-          onColorChange={handleColorChange}
+          picks={picks}
+          onQuantityChange={handleQuantityChange}
+          onPickChange={handlePickChange}
           onBuyClick={handleBuyClick}
           sectionRef={closingRef}
         />
@@ -197,7 +229,7 @@ const SleepMask = () => {
         </div>
       </footer>
 
-      <MaskStickyBar color={color} onBuyClick={handleBuyClick} heroPassed={pastHero} closingRef={closingRef} />
+      <MaskStickyBar picks={picks} onBuyClick={handleBuyClick} heroPassed={pastHero} closingRef={closingRef} />
 
       {modals}
     </div>

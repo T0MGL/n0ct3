@@ -11,8 +11,10 @@ import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName
 import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 import { ALL_MASK_COLORS_SOLD_OUT } from "@/lib/mask-colors";
 import {
+  buildOrderLines,
   describeOrderLines,
   legacyOrderFields,
+  metaNumItems,
   summarizeOrder,
   metaContent,
   sumLines,
@@ -199,7 +201,7 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
         value: result.finalTotal,
         currency: 'PYG',
         ...metaContent(prev.item),
-        num_items: prev.item.quantity,
+        num_items: metaNumItems(prev.item, result.lines),
         order_id: prev.orderNumber,
       };
 
@@ -354,7 +356,8 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
     // de WhatsApp salen de las lineas: un antifaz que no figura aca es un
     // antifaz que el cliente no sabe que compro hasta que le llega. Antes de
     // confirmar el pago todavia no hay lineas y vale el item solo.
-    const lines: OrderLine[] = checkoutData.lines ?? [checkoutData.item];
+    const lines: OrderLine[] =
+      checkoutData.lines ?? buildOrderLines(checkoutData.item, { sleepMaskPicks: [], priorityShipping: false });
 
     return {
       orderNumber: checkoutData.orderNumber,

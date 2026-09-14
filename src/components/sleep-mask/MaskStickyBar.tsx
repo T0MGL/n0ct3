@@ -1,10 +1,10 @@
 import { useEffect, useState, type RefObject } from "react";
-import { ALL_MASK_COLORS_SOLD_OUT, MASK_COLORS, type MaskColorId } from "@/lib/mask-colors";
-import { SLEEP_MASK_SOLO_PRICE } from "@/lib/order";
+import { ALL_MASK_COLORS_SOLD_OUT, type MaskColorId } from "@/lib/mask-colors";
+import { describeMaskColors, sleepMaskPack } from "@/lib/order";
 import { cn } from "@/lib/utils";
 
 interface MaskStickyBarProps {
-  color: MaskColorId;
+  picks: readonly MaskColorId[];
   onBuyClick: () => void;
   /** El boton del hero ya salio por arriba. Lo calcula la pagina, que tambien lo usa el header. */
   heroPassed: boolean;
@@ -16,7 +16,7 @@ interface MaskStickyBarProps {
  * arriba y se va mientras el cierre, que tiene su propio boton, esta en
  * pantalla. Observers y no un listener de scroll: nada corre por frame.
  */
-export const MaskStickyBar = ({ color, onBuyClick, heroPassed, closingRef }: MaskStickyBarProps) => {
+export const MaskStickyBar = ({ picks, onBuyClick, heroPassed, closingRef }: MaskStickyBarProps) => {
   const [closingInView, setClosingInView] = useState(false);
 
   useEffect(() => {
@@ -40,9 +40,9 @@ export const MaskStickyBar = ({ color, onBuyClick, heroPassed, closingRef }: Mas
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-[13px] text-white/60">Antifaz 3D {MASK_COLORS[color].name}</p>
+          <p className="truncate text-[13px] text-white/60">{describeMaskColors(picks)}</p>
           <p className="text-lg font-bold leading-tight tabular-nums text-white">
-            {SLEEP_MASK_SOLO_PRICE.toLocaleString("es-PY")} Gs
+            {sleepMaskPack(picks.length).price.toLocaleString("es-PY")} Gs
           </p>
         </div>
         <button

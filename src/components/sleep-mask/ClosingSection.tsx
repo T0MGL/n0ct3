@@ -1,23 +1,23 @@
 import type { Ref } from "react";
 import { Reveal } from "@/components/Reveal";
-import { MaskColorPicker } from "@/components/sleep-mask/MaskColorPicker";
+import { MaskPackPicker } from "@/components/sleep-mask/MaskPackPicker";
 import { ALL_MASK_COLORS_SOLD_OUT, type MaskColorId } from "@/lib/mask-colors";
-import { SLEEP_MASK_SOLO_PRICE } from "@/lib/order";
 
 interface ClosingSectionProps {
-  color: MaskColorId;
-  onColorChange: (next: MaskColorId) => void;
+  picks: readonly MaskColorId[];
+  onQuantityChange: (quantity: number) => void;
+  onPickChange: (index: number, color: MaskColorId) => void;
   onBuyClick: () => void;
   sectionRef: Ref<HTMLElement>;
 }
 
 /**
- * El cierre repite la decision entera (color, precio, boton) para el que llego
+ * El cierre repite la decision entera (cantidad, colores, boton) para el que llego
  * hasta el final sin volver arriba. La barra fija de mobile se esconde
  * mientras esta seccion esta en pantalla: dos botones iguales a la vez
  * compiten por el mismo dedo.
  */
-export const ClosingSection = ({ color, onColorChange, onBuyClick, sectionRef }: ClosingSectionProps) => (
+export const ClosingSection = ({ picks, onQuantityChange, onPickChange, onBuyClick, sectionRef }: ClosingSectionProps) => (
   <section
     ref={sectionRef}
     aria-labelledby="mask-closing-title"
@@ -37,14 +37,12 @@ export const ClosingSection = ({ color, onColorChange, onBuyClick, sectionRef }:
         Esta noche, la oscuridad la ponés vos.
       </h2>
 
-      <div className="mt-10 flex items-center gap-6">
-        <MaskColorPicker value={color} onChange={onColorChange} />
-        <span aria-hidden="true" className="h-6 w-px bg-white/15" />
-        <p className="whitespace-nowrap text-2xl font-bold tabular-nums text-white">
-          {SLEEP_MASK_SOLO_PRICE.toLocaleString("es-PY")}
-          <span className="ml-1 text-base font-medium text-white/60">Gs</span>
-        </p>
-      </div>
+      <MaskPackPicker
+        picks={picks}
+        onQuantityChange={onQuantityChange}
+        onPickChange={onPickChange}
+        className="mt-10 w-full max-w-[440px] text-left"
+      />
 
       <button
         type="button"
