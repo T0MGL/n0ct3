@@ -81,7 +81,7 @@ export const MaskHero = ({ color, onColorChange, onBuyClick, ctaRef }: MaskHeroP
         <div
           aria-hidden="true"
           className={cn(
-            "absolute inset-0 bg-black transition-opacity duration-[1400ms] [transition-timing-function:var(--ease-smooth)] motion-reduce:transition-none",
+            "absolute inset-0 bg-black transition-opacity [transition-duration:1400ms] [transition-timing-function:var(--ease-smooth)] motion-reduce:transition-none",
             lit ? "opacity-0" : "opacity-60",
           )}
         />
