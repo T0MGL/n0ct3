@@ -11,7 +11,8 @@
 // nocte-backend/server.js junto con la resolucion de color y de pack, validada
 // contra la tienda de produccion. Duplicarlo aca seria dos fuentes de verdad.
 
-import { summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { isVariantSoldOut, summarizeVariantCounts, type VariantId } from "@/lib/variants";
+import { BUNDLES } from "@/lib/bundles";
 import { MASK_COLORS, MASK_COLOR_IDS, resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
 import envioPrioritarioIcon from "@/assets/checkout/envio-prioritario.webp";
 
@@ -60,15 +61,37 @@ export const PRIORITY_SHIPPING: AddOn = {
   image: { src: envioPrioritarioIcon, width: 421, height: 431 },
 };
 
+/** El antifaz comprado solo, en /sleep-mask. Es el precio de catalogo de Ordefy. */
+export const SLEEP_MASK_SOLO_PRICE = 169000;
+
 // El color se elige por unidad en el bump (ver mask-colors.ts) y va en el nombre
 // de cada linea con maskName: es lo que el cliente lee en su confirmacion de
 // WhatsApp y tiene que coincidir con lo que llega en la caja.
+//
+// price es el del antifaz acompanado de lentes o clip-on. El backend valida
+// los dos precios contra el pedido entero (expectedLineAmount en server.js).
 export const SLEEP_MASK: AddOn = {
   product: "sleepmask",
   name: "Antifaz 3D para dormir",
   price: 119000,
-  listPrice: 169000,
+  listPrice: SLEEP_MASK_SOLO_PRICE,
 };
+
+const personalBundle = BUNDLES.find((bundle) => bundle.quantity === 1);
+if (!personalBundle) throw new Error("BUNDLES no tiene el pack de un lente");
+
+/**
+ * Bump del checkout del antifaz: un lente rojo al precio de siempre del pack
+ * Personal. Lo que baja es el antifaz, que al ir acompanado pasa a su precio de
+ * bump, asi que el cliente ve sumar la diferencia y nunca un descuento en los
+ * lentes: la linea de lentes que llega a Ordefy vale lo que vale.
+ */
+export const RED_GLASSES = {
+  name: "Lentes Rojos NOCTE",
+  price: personalBundle.price,
+  /** Con el rojo agotado el bump no se ofrece y el pedido no lo puede llevar. */
+  available: !isVariantSoldOut("rojo"),
+} as const;
 
 export const CLIP_ON: AddOn = {
   product: "clipon",
@@ -79,18 +102,27 @@ export const CLIP_ON: AddOn = {
 /** El producto principal del checkout. Los upsells se suman aparte. */
 export type CheckoutItem =
   | { product: "lentes"; quantity: number; amount: number; colors: VariantId[] }
-  | { product: "clipon"; quantity: 1; amount: number };
+  | { product: "clipon"; quantity: 1; amount: number }
+  | { product: "sleepmask"; quantity: number; amount: number; color: MaskColorId };
 
 export interface CheckoutUpsells {
-  /** Color de cada antifaz, uno por unidad. Vacio es sin antifaz. */
+  /** Color de cada antifaz, uno por unidad. Vacio es sin antifaz. No aplica si el principal es el antifaz. */
   sleepMaskPicks: readonly MaskColorId[];
+  /** Lentes rojos del checkout del antifaz. Solo aplica si el principal es el antifaz. */
+  redGlasses?: boolean;
   priorityShipping: boolean;
 }
 
 export const maskName = (color: MaskColorId): string =>
   `Antifaz 3D ${MASK_COLORS[color].name.toLowerCase()} para dormir`;
 
+/**
+ * El pedido linea por linea. La primera linea es siempre el producto principal:
+ * el backend la lee para saber con que identidad sale el Purchase del servidor.
+ */
 export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): OrderLine[] {
+  if (item.product === "sleepmask") return buildSleepMaskLines(item, upsells);
+
   const lines: OrderLine[] = [item];
 
   // Los picks por unidad se agrupan por color: una linea por SKU con su
@@ -115,6 +147,29 @@ export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): O
   return lines;
 }
 
+function buildSleepMaskLines(
+  item: Extract<CheckoutItem, { product: "sleepmask" }>,
+  upsells: CheckoutUpsells,
+): OrderLine[] {
+  const withGlasses = upsells.redGlasses === true && RED_GLASSES.available;
+  const unitPrice = withGlasses ? SLEEP_MASK.price : SLEEP_MASK_SOLO_PRICE;
+  const lines: OrderLine[] = [
+    {
+      product: "sleepmask",
+      color: resolveSelectableMaskColor(item.color),
+      quantity: item.quantity,
+      amount: unitPrice * item.quantity,
+    },
+  ];
+  if (withGlasses) {
+    lines.push({ product: "lentes", quantity: 1, amount: RED_GLASSES.price, colors: ["rojo"] });
+  }
+  if (upsells.priorityShipping) {
+    lines.push({ product: "envio-prioritario", quantity: 1, amount: PRIORITY_SHIPPING.price });
+  }
+  return lines;
+}
+
 export const sumLines = (lines: readonly OrderLine[]): number =>
   lines.reduce((total, line) => total + line.amount, 0);
 
@@ -124,6 +179,32 @@ export const clipOnItem = (): CheckoutItem => ({
   amount: CLIP_ON.price,
 });
 
+export const sleepMaskItem = (color: MaskColorId): CheckoutItem => ({
+  product: "sleepmask",
+  quantity: 1,
+  amount: SLEEP_MASK_SOLO_PRICE,
+  color: resolveSelectableMaskColor(color),
+});
+
+/**
+ * quantity y colors de primer nivel del pedido. Son anteriores a las lineas y
+ * los siguen leyendo n8n (el desglose "1 Lente Rojo" de la plantilla sale de
+ * colors) y el Purchase del servidor. Para lentes y clip-on quedan como
+ * estaban; el antifaz manda los de sus lentes rojos si los lleva, y sin lentes
+ * colors va vacio para que la plantilla no nombre un lente que no se compro.
+ */
+export function legacyOrderFields(
+  item: CheckoutItem,
+  lines: readonly OrderLine[],
+): { quantity: number; colors: VariantId[] | undefined } {
+  if (item.product === "lentes") return { quantity: item.quantity, colors: item.colors };
+  if (item.product === "clipon") return { quantity: item.quantity, colors: undefined };
+  const glasses = lines.find((line) => line.product === "lentes");
+  return glasses?.product === "lentes"
+    ? { quantity: glasses.quantity, colors: glasses.colors }
+    : { quantity: item.quantity, colors: [] };
+}
+
 /**
  * Identidad del producto para Meta. Los content_ids de los lentes quedan tal
  * cual estaban: cambiarlos a mitad de campana parte el historico de la cuenta.
@@ -131,6 +212,11 @@ export const clipOnItem = (): CheckoutItem => ({
 export function metaContent(item: CheckoutItem): { content_name: string; content_ids: string[] } {
   if (item.product === "clipon") {
     return { content_name: "NOCTE® Clip-On Rojo", content_ids: ["nocte-clipon-rojo"] };
+  }
+  // Un id para el antifaz en cualquier color y cantidad, igual que el
+  // Purchase del servidor (purchaseContent en server.js).
+  if (item.product === "sleepmask") {
+    return { content_name: "NOCTE® Antifaz 3D para dormir", content_ids: ["nocte-sleepmask-3d"] };
   }
 
   return {
