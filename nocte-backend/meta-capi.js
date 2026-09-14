@@ -347,11 +347,19 @@ const buildPurchaseUserData = ({ name, phone, email, city, fbp, fbc }) => {
  * without an event id, which makes the browser fall back to today's pixel.
  *
  * Returns the event_id on success (Meta answered events_received >= 1).
+ *
+ * `content` overrides the product identity when the order's main product is
+ * not the glasses (see purchaseContent in server.js). Without it the event
+ * keeps the glasses ids derived from quantity, exactly as before.
  */
-const sendPurchase = async ({ req, orderNumber, value, quantity, name, phone, email, city }) => {
+const sendPurchase = async ({ req, orderNumber, value, quantity, content, name, phone, email, city }) => {
   const eventId = purchaseEventId(orderNumber);
   const referer = req.get('referer');
-  const contentId = quantity === 1 ? CONTENT_ID : `${CONTENT_ID}-${quantity}pack`;
+  const product = content ?? {
+    content_name: quantity === 1 ? CONTENT_NAME : `${CONTENT_NAME} - Pack x${quantity}`,
+    content_ids: [quantity === 1 ? CONTENT_ID : `${CONTENT_ID}-${quantity}pack`],
+    num_items: quantity,
+  };
 
   try {
     const user_data = buildPurchaseUserData({
@@ -376,11 +384,11 @@ const sendPurchase = async ({ req, orderNumber, value, quantity, name, phone, em
       custom_data: {
         value,
         currency: 'PYG',
-        content_name: quantity === 1 ? CONTENT_NAME : `${CONTENT_NAME} - Pack x${quantity}`,
+        content_name: product.content_name,
         content_category: CONTENT_CATEGORY,
         content_type: 'product',
-        content_ids: [contentId],
-        num_items: quantity,
+        content_ids: product.content_ids,
+        num_items: product.num_items,
         order_id: String(orderNumber),
       },
     };
