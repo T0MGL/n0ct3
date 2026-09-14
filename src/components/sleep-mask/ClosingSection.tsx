@@ -52,7 +52,7 @@ export const ClosingSection = ({ color, onColorChange, onBuyClick, sectionRef }:
         disabled={ALL_MASK_COLORS_SOLD_OUT}
         className="sleep-mask-cta mt-8 w-full sm:w-auto sm:min-w-[320px]"
       >
-        {ALL_MASK_COLORS_SOLD_OUT ? "Agotado. Vuelve pronto" : "Comprar ahora"}
+        {ALL_MASK_COLORS_SOLD_OUT ? "Agotado. Reponemos pronto" : "Comprar ahora"}
       </button>
       <p className="mt-3 text-[13px] text-white/60">Delivery gratis a todo Paraguay. Pagás al recibir.</p>
     </Reveal>

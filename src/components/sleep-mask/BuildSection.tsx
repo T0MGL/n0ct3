@@ -28,7 +28,7 @@ const CUP: Detail = {
   src: copa960,
   srcSet: `${copa640} 640w, ${copa960} 960w, ${copa1400} 1400w`,
   sizes: "(min-width: 1240px) 680px, (min-width: 768px) 56vw, 100vw",
-  alt: "Interior del antifaz NOCTE: dos copas 3D acolchadas con el hueco para cada ojo",
+  alt: "Interior del antifaz NOCTE: dos copas 3D contorneadas con el hueco para cada ojo",
 };
 
 const SIDE_DETAILS: readonly Detail[] = [

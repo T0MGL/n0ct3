@@ -13,7 +13,7 @@ const FACTS = [
   {
     icon: BanknotesIcon,
     title: "Pagás al recibir",
-    body: "En efectivo, QR o transferencia cuando te llega. Si preferís, con tarjeta.",
+    body: "En efectivo, QR o transferencia cuando te llega. O con tarjeta en el checkout.",
   },
   {
     icon: ShieldCheckIcon,

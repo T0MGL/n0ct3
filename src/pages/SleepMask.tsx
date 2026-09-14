@@ -151,7 +151,7 @@ const SleepMask = () => {
           >
             <NocteMark title={null} className="h-[20px] w-auto text-white [filter:drop-shadow(0_1px_8px_rgba(0,0,0,0.45))] md:h-[22px]" />
           </Link>
-          {/* En mobile la compra la sostiene la barra fija de abajo. */}
+          {/* Hasta tablet la compra la sostiene la barra fija de abajo. */}
           {!ALL_MASK_COLORS_SOLD_OUT && (
             <div className="pointer-events-auto hidden lg:block">
               <button
@@ -182,7 +182,7 @@ const SleepMask = () => {
         />
       </main>
 
-      <footer className="border-t border-white/10 bg-black px-5 pb-28 pt-12 sm:px-8 md:pb-14">
+      <footer className="border-t border-white/10 bg-black px-5 pb-28 pt-12 sm:px-8 lg:pb-14">
         <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-5 text-center md:flex-row md:justify-between md:text-left">
           <NocteMark className="h-4 w-auto text-white" />
           <nav aria-label="Legal" className="flex items-center gap-6 text-[13px] text-white/60">
@@ -197,7 +197,7 @@ const SleepMask = () => {
         </div>
       </footer>
 
-      <MaskStickyBar color={color} onBuyClick={handleBuyClick} heroCtaRef={heroCtaRef} closingRef={closingRef} />
+      <MaskStickyBar color={color} onBuyClick={handleBuyClick} heroPassed={pastHero} closingRef={closingRef} />
 
       {modals}
     </div>

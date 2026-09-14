@@ -122,7 +122,7 @@ export const MaskHero = ({ color, onColorChange, onBuyClick, ctaRef }: MaskHeroP
           disabled={ALL_MASK_COLORS_SOLD_OUT}
           className="sleep-mask-cta mt-5 w-full lg:mt-8 lg:w-auto lg:min-w-[320px] lg:self-start"
         >
-          {ALL_MASK_COLORS_SOLD_OUT ? "Agotado. Vuelve pronto" : "Comprar ahora"}
+          {ALL_MASK_COLORS_SOLD_OUT ? "Agotado. Reponemos pronto" : "Comprar ahora"}
         </button>
 
         <p className="mt-3 text-[13px] text-white/60 lg:text-sm">

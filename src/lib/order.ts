@@ -77,8 +77,9 @@ export const SLEEP_MASK: AddOn = {
   listPrice: SLEEP_MASK_SOLO_PRICE,
 };
 
+// Sin pack de un lente en BUNDLES el bump no se ofrece: mejor perder el upsell
+// que tirar el bundle principal, que es el de / tambien.
 const personalBundle = BUNDLES.find((bundle) => bundle.quantity === 1);
-if (!personalBundle) throw new Error("BUNDLES no tiene el pack de un lente");
 
 /**
  * Bump del checkout del antifaz: un lente rojo al precio de siempre del pack
@@ -88,9 +89,9 @@ if (!personalBundle) throw new Error("BUNDLES no tiene el pack de un lente");
  */
 export const RED_GLASSES = {
   name: "Lentes Rojos NOCTE",
-  price: personalBundle.price,
+  price: personalBundle?.price ?? 0,
   /** Con el rojo agotado el bump no se ofrece y el pedido no lo puede llevar. */
-  available: !isVariantSoldOut("rojo"),
+  available: personalBundle !== undefined && !isVariantSoldOut("rojo"),
 } as const;
 
 export const CLIP_ON: AddOn = {

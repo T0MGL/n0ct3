@@ -435,7 +435,7 @@ interface StripeCheckoutModalProps {
   onClose: () => void;
   onBack: () => void;
   onSuccess: (result: PaymentResult) => void;
-  /** Que se esta comprando: pack de lentes o clip-on. Los upsells se eligen aca. */
+  /** Que se esta comprando: pack de lentes, clip-on o antifaz. Los upsells se eligen aca. */
   item: CheckoutItem;
   currency: string;
   isProcessingOrder?: boolean;

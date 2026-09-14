@@ -1,5 +1,4 @@
 import { useEffect, useState, type RefObject } from "react";
-import { useScrolledPast } from "@/components/sleep-mask/useScrolledPast";
 import { ALL_MASK_COLORS_SOLD_OUT, MASK_COLORS, type MaskColorId } from "@/lib/mask-colors";
 import { SLEEP_MASK_SOLO_PRICE } from "@/lib/order";
 import { cn } from "@/lib/utils";
@@ -7,17 +6,17 @@ import { cn } from "@/lib/utils";
 interface MaskStickyBarProps {
   color: MaskColorId;
   onBuyClick: () => void;
-  heroCtaRef: RefObject<HTMLElement>;
+  /** El boton del hero ya salio por arriba. Lo calcula la pagina, que tambien lo usa el header. */
+  heroPassed: boolean;
   closingRef: RefObject<HTMLElement>;
 }
 
 /**
- * Barra de compra fija, solo mobile. Aparece cuando el boton del hero ya quedo
+ * Barra de compra fija, mobile y tablet (en desktop el boton va en el header). Aparece cuando el boton del hero ya quedo
  * arriba y se va mientras el cierre, que tiene su propio boton, esta en
  * pantalla. Observers y no un listener de scroll: nada corre por frame.
  */
-export const MaskStickyBar = ({ color, onBuyClick, heroCtaRef, closingRef }: MaskStickyBarProps) => {
-  const heroPassed = useScrolledPast(heroCtaRef);
+export const MaskStickyBar = ({ color, onBuyClick, heroPassed, closingRef }: MaskStickyBarProps) => {
   const [closingInView, setClosingInView] = useState(false);
 
   useEffect(() => {
@@ -34,7 +33,7 @@ export const MaskStickyBar = ({ color, onBuyClick, heroCtaRef, closingRef }: Mas
     <div
       aria-hidden={visible ? undefined : true}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl md:hidden",
+        "fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:hidden",
         "transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
       )}
