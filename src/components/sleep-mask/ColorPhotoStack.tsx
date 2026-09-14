@@ -51,6 +51,9 @@ export const ColorPhotoStack = ({ color, photos, sizes, priority = false, classN
     // Pedir de nuevo un color que fallo es reintentarlo con un <img> nuevo.
     if (failed.has(color)) {
       setFailed((prev) => new Set([...prev].filter((id) => id !== color)));
+      // Un <img> ya cargado que cambio de candidato del srcset y fallo queda en
+      // los dos registros: el reintento empieza sin nada cargado.
+      setLoaded((prev) => new Set([...prev].filter((id) => id !== color)));
       setAttempts((prev) => ({ ...prev, [color]: (prev[color] ?? 0) + 1 }));
     }
   }
