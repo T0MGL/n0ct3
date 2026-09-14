@@ -159,18 +159,9 @@ export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): O
   const lines: OrderLine[] = [item];
 
   // Los picks por unidad se agrupan por color: una linea por SKU con su
-  // cantidad. resolveSelectableMaskColor es la ultima compuerta, un color
-  // agotado que se colo por un estado viejo no llega al pedido.
-  const perColor = new Map<MaskColorId, number>();
-  for (const pick of upsells.sleepMaskPicks) {
-    const color = resolveSelectableMaskColor(pick);
-    perColor.set(color, (perColor.get(color) ?? 0) + 1);
-  }
-  for (const color of MASK_COLOR_IDS) {
-    const quantity = perColor.get(color);
-    if (quantity) {
-      lines.push({ product: "sleepmask", color, quantity, amount: SLEEP_MASK.price * quantity });
-    }
+  // cantidad (countMaskColors resuelve los agotados).
+  for (const { color, quantity } of countMaskColors(upsells.sleepMaskPicks)) {
+    lines.push({ product: "sleepmask", color, quantity, amount: SLEEP_MASK.price * quantity });
   }
 
   if (upsells.priorityShipping) {
@@ -180,7 +171,11 @@ export function buildOrderLines(item: CheckoutItem, upsells: CheckoutUpsells): O
   return lines;
 }
 
-/** Unidades por color en el orden del catalogo, sin colores agotados. */
+/**
+ * Unidades por color en el orden del catalogo. resolveSelectableMaskColor es la
+ * ultima compuerta: un color agotado que se colo por un estado viejo no llega
+ * al pedido.
+ */
 const countMaskColors = (picks: readonly MaskColorId[]): Array<{ color: MaskColorId; quantity: number }> => {
   const perColor = new Map<MaskColorId, number>();
   for (const pick of picks) {

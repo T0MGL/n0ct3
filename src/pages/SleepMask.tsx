@@ -98,8 +98,11 @@ const preloadCheckout = () => {
 const SleepMask = () => {
   // Color de cada antifaz, uno por unidad: el largo es la cantidad del pack.
   const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
-  // La foto del hero muestra el ultimo color que se toco en cualquier unidad.
-  const [photoColor, setPhotoColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
+  // La foto del hero muestra el ultimo color que se toco en cualquier unidad,
+  // mientras siga en el pedido: al bajar la cantidad puede quedar afuera, y la
+  // foto no puede mostrar un antifaz que no se va a comprar.
+  const [touchedColor, setTouchedColor] = useState<MaskColorId>(DEFAULT_MASK_COLOR);
+  const photoColor = picks.includes(touchedColor) ? touchedColor : picks[0];
   const heroCtaRef = useRef<HTMLButtonElement>(null);
   const closingRef = useRef<HTMLElement>(null);
   // AddToCart una vez por visita, como en la landing de lentes: el embudo de
@@ -145,7 +148,7 @@ const SleepMask = () => {
   const handlePickChange = useCallback((index: number, next: MaskColorId) => {
     const color = resolveSelectableMaskColor(next);
     setPicks((prev) => (prev[index] === color ? prev : prev.map((pick, i) => (i === index ? color : pick))));
-    setPhotoColor(color);
+    setTouchedColor(color);
   }, []);
 
   const handleBuyClick = useCallback(() => {

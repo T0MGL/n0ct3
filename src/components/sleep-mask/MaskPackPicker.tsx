@@ -26,6 +26,12 @@ interface MaskPackPickerProps {
   picks: readonly MaskColorId[];
   onQuantityChange: (quantity: number) => void;
   onPickChange: (index: number, color: MaskColorId) => void;
+  /**
+   * Anuncia el precio por unidad y el ahorro al cambiar de pack. Solo una
+   * instancia de la pagina: el selector esta en el hero y en el cierre, y dos
+   * regiones vivas leerian lo mismo dos veces.
+   */
+  announce?: boolean;
   className?: string;
 }
 
@@ -37,7 +43,7 @@ interface MaskPackPickerProps {
  * Las tarjetas son un radiogroup con foco itinerante: Tab entra al elegido y
  * las flechas cambian de pack, como en el selector de color.
  */
-export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, className }: MaskPackPickerProps) => {
+export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce = false, className }: MaskPackPickerProps) => {
   const quantity = picks.length;
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -72,6 +78,7 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, classNam
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-label={`${packLabel(pack.quantity)}, ${gs(pack.price)}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => onQuantityChange(pack.quantity)}
               onKeyDown={(event) => handleKeyDown(event, index)}
@@ -94,7 +101,7 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, classNam
         })}
       </div>
 
-      <p aria-live="polite" className="mt-2 text-[13px] text-white/65">
+      <p aria-live={announce ? "polite" : undefined} className="mt-2 text-[13px] text-white/65">
         {packDetail(quantity)}
       </p>
 

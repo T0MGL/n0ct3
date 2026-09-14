@@ -4,6 +4,8 @@ export interface TimeLeft {
   hours: number;
   minutes: number;
   seconds: number;
+  /** false hasta la primera lectura del reloj: antes marca 00:00:00 de relleno. */
+  ready: boolean;
 }
 
 // Un solo reloj para todo el sitio: el visitante que pasa de / a /sleep-mask ve
@@ -40,7 +42,7 @@ const readTarget = (): Date => {
  * pedido ni del backend la lee, y que llegue a cero no cierra ninguna venta.
  */
 export const useCountdown = (): TimeLeft => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0, ready: false });
 
   useEffect(() => {
     let target = readTarget();
@@ -57,9 +59,9 @@ export const useCountdown = (): TimeLeft => {
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
       setTimeLeft((prev) =>
-        prev.hours === hours && prev.minutes === minutes && prev.seconds === seconds
+        prev.ready && prev.hours === hours && prev.minutes === minutes && prev.seconds === seconds
           ? prev
-          : { hours, minutes, seconds },
+          : { hours, minutes, seconds, ready: true },
       );
     };
 

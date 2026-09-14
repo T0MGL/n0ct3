@@ -110,9 +110,11 @@ export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickCha
           levantarte con energía.
         </p>
 
-        {/* El reloj va pegado a los precios, que son la oferta que vence. */}
+        {/* El reloj va arriba de los precios del pack. Es solo pantalla: los
+            precios no vencen y nada del pedido lo lee. */}
         <MaskCountdown className="mt-5 lg:mt-8" />
         <MaskPackPicker
+          announce
           picks={picks}
           onQuantityChange={onQuantityChange}
           onPickChange={onPickChange}
