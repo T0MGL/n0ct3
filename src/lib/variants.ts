@@ -156,7 +156,7 @@ export const VARIANTS: Readonly<Record<VariantId, Variant>> = {
       "Colores prácticamente naturales",
       "Cero fatiga al final del día",
     ],
-    soldOut: false,
+    soldOut: true,
   },
 } as const;
 
