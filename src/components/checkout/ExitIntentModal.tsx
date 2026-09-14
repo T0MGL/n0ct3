@@ -9,9 +9,11 @@ import { buildWhatsAppUrl } from "@/lib/contact";
 interface ExitIntentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Lo que se estaba por comprar, como se dice en la frase: "los lentes NOCTE". */
+  product?: string;
 }
 
-export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
+export const ExitIntentModal = ({ isOpen, onClose, product = "los lentes NOCTE" }: ExitIntentModalProps) => {
   // Prevent body scroll when modal is open (ref-counted)
   useEffect(() => {
     if (!isOpen) return;
@@ -20,7 +22,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
   }, [isOpen]);
 
   const whatsappUrl = buildWhatsAppUrl(
-    "Hola, estaba por comprar los lentes NOCTE pero tengo una consulta..."
+    `Hola, estaba por comprar ${product} pero tengo una consulta...`
   );
 
   return (
@@ -65,7 +67,7 @@ export const ExitIntentModal = ({ isOpen, onClose }: ExitIntentModalProps) => {
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Hablá con nosotros por WhatsApp y te ayudamos
-                  con cualquier consulta sobre los lentes NOCTE.
+                  con cualquier consulta sobre {product}.
                 </p>
               </div>
 
