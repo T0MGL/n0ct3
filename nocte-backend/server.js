@@ -785,19 +785,40 @@ const PRICE_BY_PRODUCT = {
 
 const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
 
-// El antifaz tiene dos precios y el que vale lo decide el pedido, no la linea:
-// solo es el de catalogo (la landing /sleep-mask), acompanado de lentes o de
-// clip-on es el del bump. Con un precio unico por linea, un antifaz solo a
-// 169.000 rebotaba en COD y uno solo a 119.000, que nadie vende, pasaba.
-const SLEEP_MASK_PRICE = { solo: 169000, acompanado: 119000 };
+// El precio del antifaz lo decide el pedido, no la linea. Acompanado de lentes
+// o de clip-on es el del bump, por unidad. Sin compania es el pack de la web
+// (/sleep-mask), contado sobre el total de antifaces del pedido con los colores
+// sumados. Espejo de SLEEP_MASK_PACKS en src/lib/order.ts. Helena cobra lineal
+// por WhatsApp y no pasa por aca.
+const SLEEP_MASK_UNIT_WITH_COMPANION = 119000;
+const SLEEP_MASK_PACK_PRICE = { 1: 169000, 2: 269000, 3: 369000 };
 const SLEEP_MASK_COMPANIONS = new Set(['lentes', 'clipon']);
+
+/**
+ * Importe esperado de una linea de antifaz. Sin compania el pack se reparte por
+ * unidad: pack / antifaces por cada uno, y el resto de esa division (hoy
+ * ninguno: 269.000 y 369.000 dividen exacto) va a la primera linea de antifaz.
+ * Se valida linea por linea y no la suma: un reparto raro que suma bien, como
+ * 169.000 + 100.000 para dos colores, rebota, porque Ordefy registraria dos
+ * precios unitarios que no existen. Cuatro antifaces o mas sin compania no
+ * tienen pack y rebotan.
+ */
+function expectedSleepMaskAmount(line, lines) {
+  if (lines.some((other) => SLEEP_MASK_COMPANIONS.has(other.product))) {
+    return SLEEP_MASK_UNIT_WITH_COMPANION * line.quantity;
+  }
+  const masks = lines.filter((other) => other.product === 'sleepmask');
+  const units = masks.reduce((total, mask) => total + mask.quantity, 0);
+  const pack = SLEEP_MASK_PACK_PRICE[units];
+  if (pack === undefined) return undefined;
+  const unitPrice = Math.floor(pack / units);
+  const remainder = pack - unitPrice * units;
+  return unitPrice * line.quantity + (line === masks[0] ? remainder : 0);
+}
 
 function expectedLineAmount(line, lines) {
   if (line.product === 'lentes') return LENS_PACK_PRICE[line.quantity];
-  if (line.product === 'sleepmask') {
-    const accompanied = lines.some((other) => SLEEP_MASK_COMPANIONS.has(other.product));
-    return (accompanied ? SLEEP_MASK_PRICE.acompanado : SLEEP_MASK_PRICE.solo) * line.quantity;
-  }
+  if (line.product === 'sleepmask') return expectedSleepMaskAmount(line, lines);
   const prices = PRICE_BY_PRODUCT[line.product];
   if (!prices) return undefined;
   return prices[0] * line.quantity;
@@ -984,8 +1005,10 @@ function purchaseContent(lines) {
   return {
     content_name: 'NOCTE® Antifaz 3D para dormir',
     content_ids: ['nocte-sleepmask-3d'],
+    // Unidades reales: antifaces mas los lentes del bump. El envio no es una
+    // unidad. Mismo conteo que metaNumItems en src/lib/order.ts.
     num_items: lines
-      .filter((line) => line.product === 'sleepmask')
+      .filter((line) => line.product !== 'envio-prioritario')
       .reduce((units, line) => units + line.quantity, 0),
   };
 }
