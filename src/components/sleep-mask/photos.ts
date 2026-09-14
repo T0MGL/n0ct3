@@ -80,8 +80,7 @@ const preloaded = new Set<MaskColorId>();
  * Pide las fotos de un color antes de que se vean, cuando el cliente muestra
  * intencion de elegirlo (hover, foco o toque en las muestras). La carga inicial
  * no baja ningun color que no este a la vista. sizes va antes que srcset para
- * que el navegador elija el mismo archivo que el <img>. El Set tiene como mucho
- * un elemento por color.
+ * que el navegador elija el mismo archivo que el <img>.
  */
 export function preloadColorPhotos(color: MaskColorId): void {
   if (preloaded.has(color)) return;

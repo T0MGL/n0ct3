@@ -40,7 +40,9 @@ import {
   MASK_COLOR_IDS,
   isMaskColorSoldOut,
   resizeMaskPicks,
+  resolveActiveMaskColor,
   resolveSelectableMaskColor,
+  selectedUnitAfterResize,
   type MaskColorId,
 } from "@/lib/mask-colors";
 import { trackViewContent } from "@/lib/meta-pixel";
@@ -101,13 +103,12 @@ const preloadCheckout = () => {
 const SleepMask = () => {
   // Color de cada antifaz, uno por unidad: el largo es la cantidad del pack.
   const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
-  // REGLA DE COLOR, una sola para toda la pagina: el color activo es el de la
-  // unidad seleccionada (la ultima cuyo color se toco) y, si esa unidad ya no
-  // esta en el pedido o no se toco ninguna, el de la primera. Siempre es un
-  // color que se va a comprar. Lo siguen todas las fotos que existen en los dos
-  // colores (hero y ritual); copa, frente y correa solo existen en negro.
+  // REGLA DE COLOR, una sola para la pagina (resolveActiveMaskColor): la unidad
+  // seleccionada manda y, si no esta en el pedido, la primera. La siguen las
+  // fotos que existen en los dos colores (hero y ritual); la barra fija no
+  // tiene foto. Copa, frente y correa solo existen en negro.
   const [selectedUnit, setSelectedUnit] = useState(0);
-  const activeColor = picks[selectedUnit] ?? picks[0];
+  const activeColor = resolveActiveMaskColor(picks, selectedUnit);
   const heroCtaRef = useRef<HTMLButtonElement>(null);
   const closingRef = useRef<HTMLElement>(null);
   // AddToCart una vez por visita, como en la landing de lentes: el embudo de
@@ -148,8 +149,7 @@ const SleepMask = () => {
   const handleQuantityChange = useCallback((quantity: number) => {
     const next = Math.max(1, Math.min(MAX_SLEEP_MASK_PACK, quantity));
     setPicks((prev) => (prev.length === next ? prev : resizeMaskPicks(prev, next)));
-    // La unidad seleccionada que queda afuera del pedido deja de mandar.
-    setSelectedUnit((prev) => (prev < next ? prev : 0));
+    setSelectedUnit((prev) => selectedUnitAfterResize(prev, next));
   }, []);
 
   const handlePickChange = useCallback((index: number, next: MaskColorId) => {

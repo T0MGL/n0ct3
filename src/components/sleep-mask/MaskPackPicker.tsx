@@ -109,7 +109,7 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce
 
       {/* Hover, foco o toque sobre las muestras: la foto del otro color empieza a
           bajar antes del click, y el cruce no espera la red. */}
-      <div className="mt-3" onPointerEnter={onColorIntent} onFocusCapture={onColorIntent} onTouchStart={onColorIntent}>
+      <div className="mt-3" onPointerEnter={onColorIntent} onFocusCapture={onColorIntent}>
         {quantity === 1 ? (
           <MaskColorPicker value={resolveSelectableMaskColor(picks[0])} onChange={(next) => onPickChange(0, next)} />
         ) : (
