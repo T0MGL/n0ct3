@@ -62,6 +62,32 @@
   </url>
 
   <!-- ========================================== -->
+  <!-- ANTIFAZ 3D PARA DORMIR                     -->
+  <!-- ========================================== -->
+  <url>
+    <loc>https://www.nocte.studio/sleep-mask</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+
+    <xhtml:link rel="alternate" hreflang="es-PY" href="https://www.nocte.studio/sleep-mask" />
+    <xhtml:link rel="alternate" hreflang="es"    href="https://www.nocte.studio/sleep-mask" />
+
+    <image:image>
+      <image:loc>https://www.nocte.studio/og-sleep-mask.jpg</image:loc>
+      <image:title>NOCTE® Antifaz 3D para dormir</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.nocte.studio/antifaz-3d-negro.jpg</image:loc>
+      <image:title>NOCTE® Antifaz 3D para dormir, Negro</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.nocte.studio/antifaz-3d-rosado.jpg</image:loc>
+      <image:title>NOCTE® Antifaz 3D para dormir, Rosado</image:title>
+    </image:image>
+  </url>
+
+  <!-- ========================================== -->
   <!-- REPORTES DE TRANSMITANCIA (QR de garantia)  -->
   <!-- ========================================== -->
   <url>

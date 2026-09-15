@@ -3,7 +3,8 @@ import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
 import { MaskColorPicker } from "@/components/sleep-mask/MaskColorPicker";
 import { MASK_SWATCH_OPTIONS } from "@/components/sleep-mask/mask-swatches";
 import { resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
-import { SLEEP_MASK_PACKS, sleepMaskPack, sleepMaskPackSavings } from "@/lib/order";
+import { sleepMaskPack, sleepMaskPackSavings } from "@/lib/order";
+import { SLEEP_MASK_PACKS } from "@/lib/sleep-mask-packs";
 import { cn } from "@/lib/utils";
 
 const gs = (amount: number) => `${amount.toLocaleString("es-PY")} Gs`;

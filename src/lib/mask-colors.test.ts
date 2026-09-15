@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { resizeMaskPicks, resolveActiveMaskColor, selectedUnitAfterResize } from "@/lib/mask-colors";
+import {
+  DEFAULT_MASK_COLOR,
+  maskColorFromSearch,
+  resizeMaskPicks,
+  resolveActiveMaskColor,
+  selectedUnitAfterResize,
+} from "@/lib/mask-colors";
 
 describe("color activo de /sleep-mask", () => {
   it("con colores mezclados manda la unidad seleccionada", () => {
@@ -29,5 +35,18 @@ describe("color activo de /sleep-mask", () => {
   it("siempre es un color del pedido", () => {
     expect(resolveActiveMaskColor(["negro", "rosado"], 7)).toBe("negro");
     expect(resolveActiveMaskColor(["rosado"], 7)).toBe("rosado");
+  });
+});
+
+describe("color inicial por ?color=", () => {
+  it("preselecciona el color del link", () => {
+    expect(maskColorFromSearch("?color=rosado")).toBe("rosado");
+    expect(maskColorFromSearch("?utm_source=meta&color=negro")).toBe("negro");
+  });
+
+  it("sin parametro o con un valor que no existe cae en el default", () => {
+    expect(maskColorFromSearch("")).toBe(DEFAULT_MASK_COLOR);
+    expect(maskColorFromSearch("?color=ROSADO")).toBe(DEFAULT_MASK_COLOR);
+    expect(maskColorFromSearch("?color=constructor")).toBe(DEFAULT_MASK_COLOR);
   });
 });

@@ -33,12 +33,14 @@ import { MaskStickyBar } from "@/components/sleep-mask/MaskStickyBar";
 import { RitualSection } from "@/components/sleep-mask/RitualSection";
 import { useScrolledPast } from "@/components/sleep-mask/useScrolledPast";
 import { preloadColorPhotos } from "@/components/sleep-mask/photos";
+import { SLEEP_MASK_DESCRIPTION, SLEEP_MASK_TITLE, SLEEP_MASK_URL } from "@/components/sleep-mask/seo";
 import "@/components/sleep-mask/sleep-mask.css";
 import {
   ALL_MASK_COLORS_SOLD_OUT,
   DEFAULT_MASK_COLOR,
   MASK_COLOR_IDS,
   isMaskColorSoldOut,
+  maskColorFromSearch,
   resizeMaskPicks,
   resolveActiveMaskColor,
   resolveSelectableMaskColor,
@@ -49,18 +51,14 @@ import { trackViewContent } from "@/lib/meta-pixel";
 import {
   MAX_SLEEP_MASK_PACK,
   SLEEP_MASK,
-  SLEEP_MASK_SOLO_PRICE,
   describeMaskColors,
   metaContent,
   sleepMaskItem,
   type CheckoutItem,
 } from "@/lib/order";
+import { SLEEP_MASK_SOLO_PRICE } from "@/lib/sleep-mask-packs";
 import { getStripe } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
-
-const PAGE_TITLE = "Antifaz 3D para dormir | NOCTE®";
-const PAGE_DESCRIPTION =
-  "Antifaz 3D NOCTE: oscuridad total y cero presión en los párpados. Delivery gratis a todo Paraguay y pago contra entrega. Desde 169.000 Gs.";
 
 const initialItem = () => sleepMaskItem([DEFAULT_MASK_COLOR]);
 
@@ -68,9 +66,10 @@ const checkoutLabel = (item: CheckoutItem) =>
   item.product === "sleepmask" ? `NOCTE® ${describeMaskColors(item.colors)}` : `NOCTE® ${SLEEP_MASK.name}`;
 
 /**
- * Titulo, descripcion y canonical propios mientras la pagina esta montada. El
- * index.html es uno solo para todo el sitio y habla de los lentes; al salir se
- * devuelve lo que habia.
+ * Titulo, descripcion y canonical propios mientras la pagina esta montada. Con
+ * entrada directa ya vienen en sleep-mask.html y esto no cambia nada; hace
+ * falta cuando se llega navegando desde otra ruta, que trae el head de los
+ * lentes. Al salir se devuelve lo que habia.
  */
 const useDocumentMeta = () => {
   useEffect(() => {
@@ -82,9 +81,9 @@ const useDocumentMeta = () => {
       canonical: canonical?.href,
     };
 
-    document.title = PAGE_TITLE;
-    if (description) description.content = PAGE_DESCRIPTION;
-    if (canonical) canonical.href = "https://nocte.studio/sleep-mask";
+    document.title = SLEEP_MASK_TITLE;
+    if (description) description.content = SLEEP_MASK_DESCRIPTION;
+    if (canonical) canonical.href = SLEEP_MASK_URL;
 
     return () => {
       document.title = previous.title;
@@ -102,7 +101,7 @@ const preloadCheckout = () => {
 
 const SleepMask = () => {
   // Color de cada antifaz, uno por unidad: el largo es la cantidad del pack.
-  const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
+  const [picks, setPicks] = useState<MaskColorId[]>(() => [maskColorFromSearch(window.location.search)]);
   // REGLA DE COLOR, una sola para la pagina (resolveActiveMaskColor): la unidad
   // seleccionada manda y, si no esta en el pedido, la primera. La siguen las
   // fotos del antifaz (hero, construccion y ritual); la barra fija no tiene

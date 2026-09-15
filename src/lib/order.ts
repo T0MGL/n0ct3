@@ -20,6 +20,7 @@ import {
   resolveSelectableMaskColor,
   type MaskColorId,
 } from "@/lib/mask-colors";
+import { SLEEP_MASK_PACKS, SLEEP_MASK_SOLO_PRICE, type SleepMaskPack } from "@/lib/sleep-mask-packs";
 import envioPrioritarioIcon from "@/assets/checkout/envio-prioritario.webp";
 
 export type OrderProduct = "lentes" | "sleepmask" | "clipon" | "envio-prioritario";
@@ -66,24 +67,6 @@ export const PRIORITY_SHIPPING: AddOn = {
   // apunta al CDN de otra tienda y se rompe el dia que la borren.
   image: { src: envioPrioritarioIcon, width: 421, height: 431 },
 };
-
-/**
- * Packs del antifaz comprado sin lentes ni clip-on, solo en la web (/sleep-mask).
- * El pack se cuenta sobre el total de antifaces del pedido, colores sumados: un
- * negro y un rosado son el pack de dos. Helena cobra lineal y no lee esto.
- * Espejo en nocte-backend/server.js (SLEEP_MASK_PACK_PRICE): si cambia un
- * precio, cambia en los dos lados o el backend rebota los pedidos en COD.
- */
-export const SLEEP_MASK_PACKS = [
-  { quantity: 1, price: 169000 },
-  { quantity: 2, price: 269000 },
-  { quantity: 3, price: 369000 },
-] as const;
-
-export type SleepMaskPack = (typeof SLEEP_MASK_PACKS)[number];
-
-/** El antifaz de a uno. Es el precio de catalogo de Ordefy y la base del ahorro. */
-export const SLEEP_MASK_SOLO_PRICE = SLEEP_MASK_PACKS[0].price;
 
 export const MAX_SLEEP_MASK_PACK = SLEEP_MASK_PACKS[SLEEP_MASK_PACKS.length - 1].quantity;
 

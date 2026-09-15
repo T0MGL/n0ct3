@@ -788,7 +788,7 @@ const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
 // El precio del antifaz lo decide el pedido, no la linea. Acompanado de lentes
 // o de clip-on es el del bump, por unidad. Sin compania es el pack de la web
 // (/sleep-mask), contado sobre el total de antifaces del pedido con los colores
-// sumados. Espejo de SLEEP_MASK_PACKS en src/lib/order.ts. Helena cobra lineal
+// sumados. Espejo de SLEEP_MASK_PACKS en src/lib/sleep-mask-packs.ts. Helena cobra lineal
 // por WhatsApp y no pasa por aca.
 const SLEEP_MASK_UNIT_WITH_COMPANION = 119000;
 const SLEEP_MASK_PACK_PRICE = { 1: 169000, 2: 269000, 3: 369000 };

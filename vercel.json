@@ -5,6 +5,10 @@
       "destination": "/cert.html"
     },
     {
+      "source": "/sleep-mask",
+      "destination": "/sleep-mask.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -84,6 +88,11 @@
     {
       "source": "/cert/",
       "destination": "/cert",
+      "permanent": true
+    },
+    {
+      "source": "/sleep-mask/",
+      "destination": "/sleep-mask",
       "permanent": true
     },
     {

@@ -59,6 +59,17 @@ export const ALL_MASK_COLORS_SOLD_OUT: boolean = MASK_COLOR_IDS.every(isMaskColo
 export const resolveSelectableMaskColor = (id: MaskColorId): MaskColorId =>
   isMaskColorSoldOut(id) ? DEFAULT_MASK_COLOR : id;
 
+/**
+ * Color inicial de /sleep-mask a partir de ?color=, el link de cada variante en
+ * el JSON-LD y el que puede usar un anuncio del rosado. Sin parametro, con un
+ * valor que no existe o con un color agotado, el default.
+ */
+export const maskColorFromSearch = (search: string): MaskColorId => {
+  const value = new URLSearchParams(search).get("color");
+  const id = MASK_COLOR_IDS.find((colorId) => colorId === value);
+  return id ? resolveSelectableMaskColor(id) : DEFAULT_MASK_COLOR;
+};
+
 // Tope del stepper. A partir de 6 los lentes ya son precio mayorista por
 // WhatsApp (WHOLESALE_THRESHOLD), y el antifaz sigue la misma linea.
 export const MAX_MASK_QUANTITY = 5;

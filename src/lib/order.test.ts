@@ -4,7 +4,6 @@ import {
   buildOrderLines,
   clipOnItem,
   describeOrderLines,
-  SLEEP_MASK_PACKS,
   describeMaskColors,
   legacyOrderFields,
   metaContent,
@@ -15,6 +14,7 @@ import {
   summarizeOrder,
   type CheckoutItem,
 } from "@/lib/order";
+import { SLEEP_MASK_PACKS } from "@/lib/sleep-mask-packs";
 import type { VariantId } from "@/lib/variants";
 
 const NO_UPSELLS = { sleepMaskPicks: [], priorityShipping: false } as const;
