@@ -105,8 +105,8 @@ const SleepMask = () => {
   const [picks, setPicks] = useState<MaskColorId[]>([DEFAULT_MASK_COLOR]);
   // REGLA DE COLOR, una sola para la pagina (resolveActiveMaskColor): la unidad
   // seleccionada manda y, si no esta en el pedido, la primera. La siguen las
-  // fotos que existen en los dos colores (hero y ritual); la barra fija no
-  // tiene foto. Copa, frente y correa solo existen en negro.
+  // fotos del antifaz (hero, construccion y ritual); la barra fija no tiene
+  // foto. Las rosadas de construccion son recoloreos (ver photos.ts).
   const [selectedUnit, setSelectedUnit] = useState(0);
   const activeColor = resolveActiveMaskColor(picks, selectedUnit);
   const heroCtaRef = useRef<HTMLButtonElement>(null);
@@ -218,7 +218,7 @@ const SleepMask = () => {
           ctaRef={heroCtaRef}
         />
         <LightSection />
-        <BuildSection />
+        <BuildSection activeColor={activeColor} />
         <RitualSection picks={picks} activeColor={activeColor} onBuyClick={handleBuyClick} />
         <AssuranceSection />
         <MaskFaq />
