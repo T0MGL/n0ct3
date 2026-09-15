@@ -17,6 +17,10 @@ import { VariantProvider } from "@/lib/variant-context";
 // rewrite de Vercel se llega a tocar.
 const Cert = lazy(() => import("./pages/Cert"));
 
+// Landing del antifaz. Lazy para que nada de esta pagina (fotos, fuente,
+// secciones) entre en el bundle de /, que es donde aterriza el trafico de lentes.
+const SleepMask = lazy(() => import("./pages/SleepMask"));
+
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +57,14 @@ const App = () => {
                 element={
                   <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
                     <Cert />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/sleep-mask"
+                element={
+                  <Suspense fallback={<div className="min-h-[100dvh] bg-black" />}>
+                    <SleepMask />
                   </Suspense>
                 }
               />

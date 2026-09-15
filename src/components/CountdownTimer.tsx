@@ -1,10 +1,5 @@
-import { useState, useEffect, useRef, memo } from "react";
-
-interface TimeLeft {
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import { memo } from "react";
+import { useCountdown } from "@/hooks/useCountdown";
 
 // Cada unidad es una ficha, no un numero suelto entre dos puntos: asi el
 // contador se lee como un reloj y no como un rectangulo con texto adentro.
@@ -30,77 +25,7 @@ const Colon = () => (
 );
 
 export const CountdownTimer = memo(() => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
-  const targetDateRef = useRef<Date | null>(null);
-
-  useEffect(() => {
-    const STORAGE_KEY = 'nocte-countdown-target';
-
-    // Get or create target date
-    const getTargetDate = (): Date => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const storedDate = new Date(stored);
-          if (storedDate.getTime() > Date.now()) {
-            return storedDate;
-          }
-        }
-      } catch {
-        // localStorage unavailable
-      }
-
-      // Create new target date 24 hours from now
-      const newTarget = new Date();
-      newTarget.setHours(newTarget.getHours() + 24);
-      try {
-        localStorage.setItem(STORAGE_KEY, newTarget.toISOString());
-      } catch {
-        // localStorage unavailable
-      }
-      return newTarget;
-    };
-
-    targetDateRef.current = getTargetDate();
-
-    const updateTimer = () => {
-      if (!targetDateRef.current) return;
-
-      const now = Date.now();
-      let distance = targetDateRef.current.getTime() - now;
-
-      if (distance < 0) {
-        // Reset to 24 hours when countdown ends
-        targetDateRef.current = new Date();
-        targetDateRef.current.setHours(targetDateRef.current.getHours() + 24);
-        try {
-          localStorage.setItem(STORAGE_KEY, targetDateRef.current.toISOString());
-        } catch {
-          // localStorage unavailable
-        }
-        distance = targetDateRef.current.getTime() - Date.now();
-      }
-
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      setTimeLeft(prev => {
-        // Only update if values changed to prevent unnecessary re-renders
-        if (prev.hours === hours && prev.minutes === minutes && prev.seconds === seconds) {
-          return prev;
-        }
-        return { hours, minutes, seconds };
-      });
-    };
-
-    // Initial update
-    updateTimer();
-
-    const timer = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const timeLeft = useCountdown();
 
   const formatNumber = (num: number) => String(num).padStart(2, '0');
 

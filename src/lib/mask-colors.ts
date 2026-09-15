@@ -70,6 +70,19 @@ export function resizeMaskPicks(prev: readonly MaskColorId[], quantity: number):
   return next;
 }
 
+/**
+ * El color activo de /sleep-mask, la unica regla que siguen sus fotos: el de
+ * la unidad seleccionada (la ultima cuyo color se toco) y, si esa unidad ya no
+ * esta en el pedido o no se toco ninguna, el de la primera. Siempre es un
+ * color que se compra.
+ */
+export const resolveActiveMaskColor = (picks: readonly MaskColorId[], selectedUnit: number): MaskColorId =>
+  resolveSelectableMaskColor(picks[selectedUnit] ?? picks[0] ?? DEFAULT_MASK_COLOR);
+
+/** La unidad seleccionada despues de cambiar la cantidad: si quedo afuera, manda la primera. */
+export const selectedUnitAfterResize = (selectedUnit: number, quantity: number): number =>
+  selectedUnit < quantity ? selectedUnit : 0;
+
 /** Aviso de colores agotados, o null si esta todo en stock. */
 export const MASK_SOLD_OUT_NOTICE: string | null = (() => {
   const names = MASK_COLOR_IDS.filter(isMaskColorSoldOut).map((id) => MASK_COLORS[id].name);

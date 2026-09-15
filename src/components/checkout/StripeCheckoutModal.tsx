@@ -30,12 +30,20 @@ import { summarizeVariantCounts } from '@/lib/variants';
 import {
   CLIP_ON,
   PRIORITY_SHIPPING,
+  RED_GLASSES,
   SLEEP_MASK,
   buildOrderLines,
+  describeMaskColors,
+  maskColorBreakdown,
+  metaContent,
+  metaNumItems,
   sumLines,
   type CheckoutItem,
   type OrderLine,
 } from '@/lib/order';
+import lentesRojos480 from '@/assets/checkout/lentes-rojos-480.webp';
+import lentesRojos720 from '@/assets/checkout/lentes-rojos-720.webp';
+import lentesRojos896 from '@/assets/checkout/lentes-rojos-896.webp';
 
 type PaymentMethod = 'card' | 'cash_on_delivery';
 
@@ -48,6 +56,10 @@ const FALLBACK_EMAIL = 'noreply@nocte.studio';
 function describeProduct(item: CheckoutItem): { title: string; breakdown: string | null } {
   if (item.product === 'clipon') {
     return { title: `NOCTE® ${CLIP_ON.name}`, breakdown: null };
+  }
+  if (item.product === 'sleepmask') {
+    if (item.quantity === 1) return { title: `NOCTE® ${describeMaskColors(item.colors)}`, breakdown: null };
+    return { title: `NOCTE® Antifaz 3D, pack de ${item.quantity}`, breakdown: maskColorBreakdown(item.colors) };
   }
 
   const packSuffix = item.quantity > 1 ? ` - Pack x${item.quantity}` : '';
@@ -230,6 +242,26 @@ const ShippingIcon = ({ src, width, height }: { src: string; width: number; heig
   </div>
 );
 
+/**
+ * Foto del bump de lentes rojos en el checkout del antifaz: el lente rojo
+ * puesto, de noche, con la lampara prendida. Es el "dos horas antes" del
+ * ritual, asi que va con escena y no con el producto sobre fondo blanco.
+ * Mismo alto que la franja del antifaz sin marcar.
+ */
+const GlassesPhoto = () => (
+  <div className="relative bg-white/[0.04] pt-[38%]">
+    <img
+      src={lentesRojos720}
+      srcSet={`${lentesRojos480} 480w, ${lentesRojos720} 720w, ${lentesRojos896} 896w`}
+      sizes={MASK_PHOTO_SIZES}
+      alt="Hombre en su cuarto de noche con los lentes rojos NOCTE puestos"
+      loading="lazy"
+      decoding="async"
+      className="absolute inset-0 h-full w-full object-cover object-[50%_42%]"
+    />
+  </div>
+);
+
 // Los colores agotados no se bajan: nadie los puede elegir.
 const MASK_PHOTO_COLORS = MASK_COLOR_IDS.filter((id) => !isMaskColorSoldOut(id));
 
@@ -407,7 +439,7 @@ interface StripeCheckoutModalProps {
   onClose: () => void;
   onBack: () => void;
   onSuccess: (result: PaymentResult) => void;
-  /** Que se esta comprando: pack de lentes o clip-on. Los upsells se eligen aca. */
+  /** Que se esta comprando: pack de lentes, clip-on o antifaz. Los upsells se eligen aca. */
   item: CheckoutItem;
   currency: string;
   isProcessingOrder?: boolean;
@@ -442,6 +474,8 @@ const CheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [isPriorityShipping, setIsPriorityShipping] = useState(false);
+  // Lentes rojos del checkout del antifaz. Arranca sin marcar: se ofrece, no se pone.
+  const [withRedGlasses, setWithRedGlasses] = useState(false);
   // Color de cada antifaz, uno por unidad. Vacio es sin antifaz.
   const [maskPicks, setMaskPicks] = useState<MaskColorId[]>([]);
   // La foto del antifaz muestra el ultimo color que se toco. Si ese color ya
@@ -481,9 +515,27 @@ const CheckoutForm = ({
   // aca y de restarlo en el backend.
   const orderLines = buildOrderLines(item, {
     sleepMaskPicks: maskPicks,
+    redGlasses: withRedGlasses,
     priorityShipping: isPriorityShipping,
   });
   const finalTotal = sumLines(orderLines);
+
+  // El bump de lentes muestra lo que suma al total y no el precio de los
+  // lentes: el antifaz baja a su precio acompanado y la diferencia es la que
+  // cierra con el total de abajo. Calculado desde las lineas para que la
+  // tarjeta nunca diga un numero que el pedido no cobra.
+  const offersRedGlasses = item.product === 'sleepmask' && RED_GLASSES.available;
+  const ritualTotals = offersRedGlasses
+    ? {
+        alone: sumLines(buildOrderLines(item, { sleepMaskPicks: [], priorityShipping: false })),
+        together: sumLines(buildOrderLines(item, { sleepMaskPicks: [], redGlasses: true, priorityShipping: false })),
+      }
+    : null;
+
+  // AddPaymentInfo de lentes y clip-on sale con el content_id por defecto del
+  // pixel desde siempre y asi queda. El antifaz lleva el suyo, el mismo de
+  // ViewContent a Purchase, para no aparecer como lentes en el medio del embudo.
+  const paymentInfoContent = item.product === 'sleepmask' ? { content_ids: metaContent(item).content_ids } : {};
 
   const submitButtonRef = useRef<HTMLDivElement>(null);
   const paymentElementRef = useRef<HTMLDivElement>(null);
@@ -560,17 +612,19 @@ const CheckoutForm = ({
               hashCountry(),
             ]);
             trackAddPaymentInfo({
+              ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Pago contra entrega',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
           } catch {
             trackAddPaymentInfo({
+              ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Pago contra entrega',
             });
           }
@@ -674,17 +728,19 @@ const CheckoutForm = ({
               hashCountry(),
             ]);
             trackAddPaymentInfo({
+              ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Tarjeta',
               user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
             });
           } catch {
             trackAddPaymentInfo({
+              ...paymentInfoContent,
               value: finalTotal,
               currency: currency.toUpperCase(),
-              num_items: item.quantity,
+              num_items: metaNumItems(item, orderLines),
               payment_type: 'Tarjeta',
             });
           }
@@ -1013,9 +1069,21 @@ const CheckoutForm = ({
             media={PRIORITY_SHIPPING.image && <ShippingIcon {...PRIORITY_SHIPPING.image} />}
           />
 
+          {ritualTotals && (
+            <UpsellRow
+              checked={withRedGlasses}
+              onToggle={() => setWithRedGlasses((prev) => !prev)}
+              title={RED_GLASSES.name}
+              description={`Dos horas antes de dormir, los lentes. Al apagar la luz, el antifaz. Separados ${formatPrice(ritualTotals.alone + RED_GLASSES.price, currency)}, juntos ${formatPrice(ritualTotals.together, currency)}.`}
+              price={ritualTotals.together - ritualTotals.alone}
+              media={<GlassesPhoto />}
+            />
+          )}
+
           {/* Con todos los colores agotados el antifaz no se ofrece. Precio
-              unico por unidad: el total de la fila es precio por cantidad. */}
-          {!ALL_MASK_COLORS_SOLD_OUT && (
+              unico por unidad: el total de la fila es precio por cantidad.
+              En el checkout del antifaz no se ofrece a si mismo. */}
+          {!ALL_MASK_COLORS_SOLD_OUT && item.product !== 'sleepmask' && (
             <UpsellRow
               checked={maskPicks.length > 0}
               onToggle={toggleMask}

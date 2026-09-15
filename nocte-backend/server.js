@@ -779,18 +779,49 @@ function buildProductLineItem(tier, colors, productPrice) {
 // courier despacha y cobra. Los lentes valen por pack y sus tres importes son
 // los tres bundles de src/lib/bundles.ts; si ahi cambia un precio, cambia aca.
 const PRICE_BY_PRODUCT = {
-  sleepmask: [119000],
   clipon: [189000],
   'envio-prioritario': [10000],
 };
 
 const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
 
-function expectedLineAmount(product, quantity) {
-  if (product === 'lentes') return LENS_PACK_PRICE[quantity];
-  const prices = PRICE_BY_PRODUCT[product];
+// El precio del antifaz lo decide el pedido, no la linea. Acompanado de lentes
+// o de clip-on es el del bump, por unidad. Sin compania es el pack de la web
+// (/sleep-mask), contado sobre el total de antifaces del pedido con los colores
+// sumados. Espejo de SLEEP_MASK_PACKS en src/lib/order.ts. Helena cobra lineal
+// por WhatsApp y no pasa por aca.
+const SLEEP_MASK_UNIT_WITH_COMPANION = 119000;
+const SLEEP_MASK_PACK_PRICE = { 1: 169000, 2: 269000, 3: 369000 };
+const SLEEP_MASK_COMPANIONS = new Set(['lentes', 'clipon']);
+
+/**
+ * Importe esperado de una linea de antifaz. Sin compania el pack se reparte por
+ * unidad: pack / antifaces por cada uno, y el resto de esa division (hoy
+ * ninguno: 269.000 y 369.000 dividen exacto) va a la primera linea de antifaz.
+ * Se valida linea por linea y no la suma: un reparto raro que suma bien, como
+ * 169.000 + 100.000 para dos colores, rebota, porque Ordefy registraria dos
+ * precios unitarios que no existen. Cuatro antifaces o mas sin compania no
+ * tienen pack y rebotan.
+ */
+function expectedSleepMaskAmount(line, lines) {
+  if (lines.some((other) => SLEEP_MASK_COMPANIONS.has(other.product))) {
+    return SLEEP_MASK_UNIT_WITH_COMPANION * line.quantity;
+  }
+  const masks = lines.filter((other) => other.product === 'sleepmask');
+  const units = masks.reduce((total, mask) => total + mask.quantity, 0);
+  const pack = SLEEP_MASK_PACK_PRICE[units];
+  if (pack === undefined) return undefined;
+  const unitPrice = Math.floor(pack / units);
+  const remainder = pack - unitPrice * units;
+  return unitPrice * line.quantity + (line === masks[0] ? remainder : 0);
+}
+
+function expectedLineAmount(line, lines) {
+  if (line.product === 'lentes') return LENS_PACK_PRICE[line.quantity];
+  if (line.product === 'sleepmask') return expectedSleepMaskAmount(line, lines);
+  const prices = PRICE_BY_PRODUCT[line.product];
   if (!prices) return undefined;
-  return prices[0] * quantity;
+  return prices[0] * line.quantity;
 }
 
 // Topes por pedido, no por linea: el antifaz llega partido por color y un POST
@@ -879,7 +910,7 @@ function readOrderLines(rawLines) {
  */
 function priceMismatches(lines) {
   const perLine = lines.flatMap((line) => {
-    const expected = expectedLineAmount(line.product, line.quantity);
+    const expected = expectedLineAmount(line, lines);
     if (expected === undefined) {
       return [`cantidad no vendible: ${line.product} x${line.quantity}`];
     }
@@ -957,6 +988,29 @@ function describeOrderForN8n(lines) {
       return `${line.quantity}x ${entry.label ?? entry.name}`;
     })
     .join(' + ');
+}
+
+/**
+ * Identidad del producto para el Purchase del servidor, que tiene que decir lo
+ * mismo que el pixel del navegador (metaContent en src/lib/order.ts). La
+ * primera linea es el producto principal del checkout: buildOrderLines la pone
+ * primera y el camino legado arranca siempre por los lentes.
+ *
+ * Solo el antifaz tiene identidad propia aca. Todo lo demas devuelve undefined
+ * y sale con los content_ids de los lentes de siempre, que no se tocan: partir
+ * su historico a mitad de campana le cuesta a la cuenta.
+ */
+function purchaseContent(lines) {
+  if (lines[0]?.product !== 'sleepmask') return undefined;
+  return {
+    content_name: 'NOCTE® Antifaz 3D para dormir',
+    content_ids: ['nocte-sleepmask-3d'],
+    // Unidades reales: antifaces mas los lentes del bump. El envio no es una
+    // unidad. Mismo conteo que metaNumItems en src/lib/order.ts.
+    num_items: lines
+      .filter((line) => line.product !== 'envio-prioritario')
+      .reduce((units, line) => units + line.quantity, 0),
+  };
 }
 
 /**
@@ -1332,6 +1386,7 @@ app.post('/api/send-order', async (req, res) => {
         orderNumber: createdOrderNumber,
         value: webhookPayload.order.total,
         quantity: webhookPayload.order.quantity,
+        content: purchaseContent(orderLines),
         name,
         phone,
         email,
@@ -1494,6 +1549,7 @@ Object.assign(app, {
   buildN8nLines,
   readOrderLines,
   priceMismatches,
+  purchaseContent,
   TIER,
   UNITS_PER_PACK,
   LENS_SKU,

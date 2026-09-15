@@ -1,0 +1,83 @@
+/* Satoshi solo para /sleep-mask. Este archivo lo importa el chunk lazy de la
+   pagina, asi que la landing de lentes nunca baja la fuente ni la declara: su
+   font-family computada sigue siendo la del sistema. Si algun dia el sitio
+   entero pasa a Satoshi, el @font-face se muda a index.css y esto se borra. */
+@font-face {
+  font-family: "Satoshi";
+  src: url("../../assets/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.sleep-mask-page {
+  font-family: "Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* El boton de compra de la pagina. Rojo pleno sin brillos que corren ni
+   degradados que se mueven: en esta pagina el unico movimiento autorado es la
+   luz que se apaga. El press de 0.97 lo pone el sistema global de index.css. */
+.sleep-mask-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 3.5rem;
+  padding-inline: 1.75rem;
+  border-radius: 0.75rem;
+  background-color: hsl(var(--primary));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px -14px hsl(var(--primary) / 0.9);
+}
+
+.sleep-mask-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sleep-mask-cta:hover {
+    background-color: hsl(0 95% 52%);
+  }
+}
+
+.sleep-mask-cta:disabled {
+  cursor: not-allowed;
+  background-color: rgb(255 255 255 / 0.12);
+  color: rgb(255 255 255 / 0.6);
+  box-shadow: none;
+}
+
+/* Version de la barra fija de mobile: mas baja para que la barra no se coma
+   un cuarto de la pantalla. */
+.sleep-mask-cta--compact {
+  height: 3rem;
+  padding-inline: 1.25rem;
+  font-size: 0.9375rem;
+}
+
+/* Entrada de la foto de un color nuevo, encima de la anterior que queda a
+   opacidad 1. Animacion y no transicion: arranca desde 0 aunque la foto ya
+   estuviera en cache y su estado inicial no llegara a pintarse. */
+@keyframes sleep-mask-photo-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sleep-mask-photo-in {
+  animation: sleep-mask-photo-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sleep-mask-photo-in {
+    animation: none;
+  }
+}

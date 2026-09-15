@@ -283,3 +283,74 @@ test('flag on: test_event_code travels only when configured', async () => {
   delete process.env.META_CAPI_TEST_EVENT_CODE;
   assert.equal(metaCalls[0].body.test_event_code, 'TEST12345');
 });
+
+// Pedido del checkout de /sleep-mask: el antifaz es el producto principal y el
+// Purchase tiene que decir antifaz, igual que el pixel del navegador. El total
+// sigue saliendo de las lineas.
+const MASK_ORDER_BODY = {
+  ...ORDER_BODY,
+  quantity: 1,
+  total: 368000,
+  colors: ['rojo'],
+  lines: [
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+  ],
+};
+
+test('flag on: pedido de antifaz con lentes emite Purchase con la identidad del antifaz', async () => {
+  process.env.META_SERVER_PURCHASE = 'on';
+  const { status, json } = await sendOrder(MASK_ORDER_BODY);
+  assert.equal(status, 200);
+  assert.equal(json.purchaseEventId, 'nocte-purchase-ORD20260823a1b2c3');
+  const { custom_data } = metaCalls[0].body.data[0];
+  assert.equal(custom_data.value, 368000);
+  assert.deepEqual(custom_data.content_ids, ['nocte-sleepmask-3d']);
+  assert.equal(custom_data.content_name, 'NOCTE® Antifaz 3D para dormir');
+  assert.equal(custom_data.num_items, 2);
+});
+
+test('COD: antifaz solo a 169.000 entra, antifaz solo a 119.000 rebota', async () => {
+  const solo = (amount) => ({
+    ...ORDER_BODY,
+    quantity: 1,
+    total: amount,
+    colors: [],
+    lines: [{ product: 'sleepmask', color: 'negro', quantity: 1, amount }],
+  });
+  const ok = await sendOrder(solo(169000));
+  assert.equal(ok.status, 200);
+  assert.equal(ok.json.success, true);
+
+  const rejected = await sendOrder(solo(119000));
+  assert.equal(rejected.status, 400);
+  assert.deepEqual(rejected.json, { error: 'Pedido invalido', success: false });
+});
+
+// El pago con tarjeta ya se cobro cuando llega el pedido: aunque el precio del
+// pack no cierre, se registra igual en Ordefy (con su alerta) como hasta hoy.
+test('tarjeta: pack de antifaces con importe que no cierra se registra igual', async () => {
+  const ordefyBodies = [];
+  const previous = ordefyReply;
+  ordefyReply = () => jsonResponse(201, { success: true, order_number: 'ORD-20260914-card01' });
+  const fetchBefore = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).startsWith(process.env.ORDEFY_WEBHOOK_URL)) ordefyBodies.push(JSON.parse(init.body));
+    return fetchBefore(url, init);
+  };
+  const { status, json } = await sendOrder({
+    ...ORDER_BODY,
+    quantity: 2,
+    total: 338000,
+    colors: [],
+    paymentType: 'Card',
+    isPaid: true,
+    lines: [{ product: 'sleepmask', color: 'negro', quantity: 2, amount: 338000 }],
+  });
+  globalThis.fetch = fetchBefore;
+  ordefyReply = previous;
+  assert.equal(status, 200);
+  assert.equal(json.success, true);
+  assert.equal(ordefyBodies.length, 1);
+  assert.equal(ordefyBodies[0].totals.total, 338000);
+});
