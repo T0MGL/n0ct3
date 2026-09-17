@@ -1,11 +1,10 @@
-import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { Reveal } from "@/components/Reveal";
 import robertDowney from "@/assets/Robert-Downey-Jr-Glasses-5.jpg";
 import lewisHamilton from "@/assets/lewis-hamilton.webp";
 import cbum from "@/assets/cbum.jpeg";
 import selenaGomez from "@/assets/selena-gomez-sunglasses-tint-bb13-2017-billboard-1548.jpeg";
 import tomHolland from "@/assets/tumblr_880f0d056d244f576f1dc8c30b9fab6e_16c94225_1280.jpg";
-import erlingHaaland from "@/assets/WhatsApp_Image_2025-04-13_at_17.40.59.jpg";
+import erlingHaaland from "@/assets/celebrities/erling-haaland-2023.jpg";
 
 const celebrities = [
     {
@@ -49,7 +48,7 @@ export const CelebritiesMarquee = () => {
                     as="h2"
                     className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-12 md:mb-16 text-white"
                 >
-                    CUANDO ALGO FUNCIONA, SE NOTA...
+                    MIRADAS QUE RECONOCÉS
                 </Reveal>
 
                 {/* Infinite Marquee */}
@@ -71,7 +70,7 @@ export const CelebritiesMarquee = () => {
                                         key={`${setIndex}-${index}`}
                                         className="flex flex-col items-center gap-3 min-w-[120px] md:min-w-[140px]"
                                     >
-                                        {/* Avatar with verified badge */}
+                                        {/* Portrait */}
                                         <div className="relative">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/10 bg-card">
                                                 <img
@@ -82,10 +81,6 @@ export const CelebritiesMarquee = () => {
                                                     className="w-full h-full object-cover"
                                                     draggable={false}
                                                 />
-                                            </div>
-                                            {/* Verified badge */}
-                                            <div className="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5">
-                                                <CheckBadgeIcon className="w-5 h-5 md:w-6 md:h-6 text-[#1DA1F2]" />
                                             </div>
                                         </div>
 
@@ -112,8 +107,15 @@ export const CelebritiesMarquee = () => {
                     delay={160}
                     className="text-center mt-12 md:mt-16 text-sm md:text-base text-white font-light tracking-wide"
                 >
-                    Confiado por profesionales y celebridades alrededor del mundo
+                    Imágenes de referencia. Estas personas no promocionan NOCTE.
                 </Reveal>
+                <p className="mt-3 text-center text-xs text-white/55">
+                    Foto de Haaland: Jacek Stanislawek, recorte de{" "}
+                    <a href="https://commons.wikimedia.org/wiki/File:Erling_Haaland_2023_(cropped_square).jpg" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">
+                        Wikimedia Commons
+                    </a>{" "}
+                    (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">CC BY-SA 4.0</a>).
+                </p>
             </div>
         </section>
     );
