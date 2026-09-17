@@ -1,3 +1,5 @@
+import departments from '../../nocte-backend/paraguay-departments.json';
+
 /**
  * Meta Advanced Matching helpers.
  *
@@ -147,7 +149,7 @@ export const hashLastName = async (fullName: string | undefined): Promise<string
 
 export const hashCity = async (city: string | undefined): Promise<string | undefined> => {
   if (!city) return undefined;
-  const normalized = city.trim().toLowerCase().replace(/[^a-z\u00e0-\u00ff]/g, '');
+  const normalized = normalizeLocation(city).replace(/[0-9]/g, '');
   if (!normalized) return undefined;
   return sha256Hex(normalized);
 };
@@ -158,4 +160,16 @@ export const hashCountry = async (): Promise<string | undefined> => {
   const hash = await sha256Hex('py');
   if (hash) PY_COUNTRY_HASH_CACHE.value = hash;
   return hash;
+};
+
+const normalizeLocation = (value: string): string => value.normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const departmentByCity = new Map<string, string>(Object.entries(departments)
+  .flatMap(([department, cities]) => cities.map((city): [string, string] => [normalizeLocation(city), department])));
+
+export const hashDepartment = async (city: string | undefined): Promise<string | undefined> => {
+  if (!city) return undefined;
+  const department = departmentByCity.get(normalizeLocation(city));
+  return department ? sha256Hex(normalizeLocation(department)) : undefined;
 };

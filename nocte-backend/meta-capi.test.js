@@ -354,3 +354,20 @@ test('tarjeta: pack de antifaces con importe que no cierra se registra igual', a
   assert.equal(ordefyBodies.length, 1);
   assert.equal(ordefyBodies[0].totals.total, 338000);
 });
+
+test('matching enrichment preserves Purchase id/value and falls back for old clients', async () => {
+  process.env.META_SERVER_PURCHASE = 'on';
+  const { json } = await sendOrder({ ...ORDER_BODY, location: 'San Lorenzo', client_ipv6: '2800:abcd:12::5' }, {
+    'x-forwarded-for': '181.120.10.10',
+  });
+  const event = metaCalls[0].body.data[0];
+  const hash = value => require('node:crypto').createHash('sha256').update(value).digest('hex');
+  assert.equal(event.user_data.st, hash('central'));
+  assert.equal(event.user_data.ct, hash('sanlorenzo'));
+  assert.equal(event.user_data.ln, hash('ramírez'));
+  assert.equal(event.user_data.client_ip_address, '2800:abcd:12::5');
+  assert.equal(event.event_id, json.purchaseEventId);
+  assert.equal(event.custom_data.value, ORDER_BODY.total);
+  await sendOrder(ORDER_BODY, { 'x-forwarded-for': '181.120.10.10' });
+  assert.equal(metaCalls[1].body.data[0].user_data.client_ip_address, '181.120.10.10');
+});

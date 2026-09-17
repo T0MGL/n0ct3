@@ -23,13 +23,15 @@
  *
  * Security contract:
  *   - Access token never leaves the server. Never logged, never echoed.
- *   - Never trusts client_ip or client_user_agent from the body. Reads them
- *     from the request headers / connection.
+ *   - User agent and fallback IP come from the request. A validated public IPv6
+ *     hint can supplement IPv4 ingress for matching only, never authorization.
  *   - Rate limited at the Express layer (100 req/min per IP).
  *   - Always returns 202 to the client so no UX signal leaks the server state.
  */
 
 const { createHash } = require('node:crypto');
+const { isIP } = require('node:net');
+const departments = require('./paraguay-departments.json');
 
 const ALLOWED_EVENTS = new Set([
   'PageView',
@@ -40,7 +42,7 @@ const ALLOWED_EVENTS = new Set([
   'Purchase',
 ]);
 
-const ALLOWED_USER_DATA_KEYS = new Set(['em', 'ph', 'fn', 'ln', 'external_id', 'fbc', 'fbp']);
+const ALLOWED_USER_DATA_KEYS = new Set(['em', 'ph', 'fn', 'ln', 'ct', 'st', 'country', 'external_id', 'fbc', 'fbp']);
 
 const ALLOWED_CUSTOM_DATA_KEYS = new Set([
   'value',
@@ -64,7 +66,7 @@ const sanitizeUserData = (raw) => {
   if (!raw || typeof raw !== 'object') return undefined;
   const out = {};
 
-  for (const key of ['em', 'ph', 'fn', 'ln', 'external_id']) {
+  for (const key of ['em', 'ph', 'fn', 'ln', 'ct', 'st', 'country', 'external_id']) {
     const value = raw[key];
     if (isString(value) && HEX_64.test(value)) {
       out[key] = value;
@@ -122,15 +124,19 @@ const validateEvent = (body) => {
   return { ok: true };
 };
 
+const validIp = (value) => typeof value === 'string' && value.length <= 45 && /^[0-9a-f:.]+$/i.test(value) && isIP(value) ? value : undefined;
+
 const extractClientIp = (req) => {
   const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0].trim();
-  }
-  if (Array.isArray(forwarded) && forwarded.length > 0) {
-    return String(forwarded[0]).trim();
-  }
-  return req.ip || req.socket?.remoteAddress || undefined;
+  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0].trim();
+  const observed = validIp(first) || validIp(req.ip) || validIp(req.socket?.remoteAddress);
+  // A browser hint is only an optional matching signal, never an auth/rate-limit IP.
+  // Do not replace a native IPv6 already observed by our trusted ingress.
+  if (observed && isIP(observed) === 6 && !observed.toLowerCase().startsWith('::ffff:')) return observed;
+  const hint = req.body?.client_ipv6;
+  if (process.env.META_CLIENT_IPV6 !== 'off' && validIp(hint) && isIP(hint) === 6 &&
+      /^[23][0-9a-f]{3}:/i.test(hint) && !/^2001:0?db8:/i.test(hint)) return hint.toLowerCase();
+  return observed;
 };
 
 const buildMetaEvent = (body, req) => {
@@ -293,6 +299,11 @@ const normalize = {
       .replace(/[^a-z]/g, '') || undefined,
 };
 
+const locationKey = (value) => String(value || '').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const departmentByCity = new Map(Object.entries(departments)
+  .flatMap(([department, cities]) => cities.map((city) => [locationKey(city), department])));
+
 const cookieFrom = (req, name) => {
   const header = req.headers.cookie;
   if (typeof header !== 'string') return undefined;
@@ -333,6 +344,7 @@ const buildPurchaseUserData = ({ name, phone, email, city, fbp, fbc }) => {
     fn: hashIfPresent(normalize.name(first)),
     ln: hashIfPresent(normalize.name(rest.join(' '))),
     ct: hashIfPresent(normalize.city(city)),
+    st: hashIfPresent(normalize.city(departmentByCity.get(locationKey(city)))),
     country: sha256('py'),
     external_id: hashIfPresent(phoneDigits),
     fbp,
@@ -411,6 +423,8 @@ const sendPurchase = async ({ req, orderNumber, value, quantity, content, name, 
 
 module.exports = {
   register,
+  extractClientIp,
+  buildMetaEvent,
   sendPurchase,
   serverPurchaseEnabled,
   purchaseEventId,

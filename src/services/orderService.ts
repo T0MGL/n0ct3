@@ -1,3 +1,4 @@
+import { getClientIpv6 } from '@/lib/meta-ip';
 /**
  * Order Service
  * Handles order data submission to backend
@@ -155,6 +156,7 @@ export async function sendOrderToN8N(
       },
       body: JSON.stringify({
         ...orderData,
+        client_ipv6: getClientIpv6(),
         googleMapsLink,
       }),
     });

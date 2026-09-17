@@ -1,3 +1,4 @@
+import { collectClientIpv6 } from './lib/meta-ip';
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
@@ -6,6 +7,7 @@ import { captureFbclid, ensureFbp } from "./lib/meta-matching";
 // Meta Pixel is initialized in index.html for faster loading
 // Capture fbclid into _fbc cookie before React mounts so every subsequent
 // event that reads getFbc() sees it, including Purchase.
+collectClientIpv6();
 captureFbclid();
 ensureFbp();
 

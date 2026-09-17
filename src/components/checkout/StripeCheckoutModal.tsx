@@ -6,7 +6,7 @@ import { getStripe, formatPrice } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { useStripePayment, PaymentAmountError } from '@/hooks/useStripePayment';
 import { trackAddPaymentInfo } from '@/lib/meta-pixel';
-import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry } from '@/lib/meta-matching';
+import { getFbc, getFbp, hashEmail, hashPhoneE164, hashExternalId, hashFirstName, hashLastName, hashCity, hashCountry, hashDepartment } from '@/lib/meta-matching';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { buildWhatsAppUrl } from '@/lib/contact';
@@ -602,7 +602,7 @@ const CheckoutForm = ({
 
         void (async () => {
           try {
-            const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
+            const [em, ph, external_id, fn, ln, ct, country, st] = await Promise.all([
               hashEmail(emailForPipeline),
               hashPhoneE164(customerData.phone),
               hashExternalId(customerData.orderNumber),
@@ -610,6 +610,7 @@ const CheckoutForm = ({
               hashLastName(customerData.name),
               hashCity(customerData.location),
               hashCountry(),
+              hashDepartment(customerData.location),
             ]);
             trackAddPaymentInfo({
               ...paymentInfoContent,
@@ -617,7 +618,7 @@ const CheckoutForm = ({
               currency: currency.toUpperCase(),
               num_items: metaNumItems(item, orderLines),
               payment_type: 'Pago contra entrega',
-              user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
+              user_data: { em, ph, fn, ln, ct, country, st, external_id, fbc: getFbc(), fbp: getFbp() },
             });
           } catch {
             trackAddPaymentInfo({
@@ -718,7 +719,7 @@ const CheckoutForm = ({
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         void (async () => {
           try {
-            const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
+            const [em, ph, external_id, fn, ln, ct, country, st] = await Promise.all([
               hashEmail(emailTrimmed),
               hashPhoneE164(customerData.phone),
               hashExternalId(customerData.orderNumber),
@@ -726,6 +727,7 @@ const CheckoutForm = ({
               hashLastName(customerData.name),
               hashCity(customerData.location),
               hashCountry(),
+              hashDepartment(customerData.location),
             ]);
             trackAddPaymentInfo({
               ...paymentInfoContent,
@@ -733,7 +735,7 @@ const CheckoutForm = ({
               currency: currency.toUpperCase(),
               num_items: metaNumItems(item, orderLines),
               payment_type: 'Tarjeta',
-              user_data: { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() },
+              user_data: { em, ph, fn, ln, ct, country, st, external_id, fbc: getFbc(), fbp: getFbp() },
             });
           } catch {
             trackAddPaymentInfo({

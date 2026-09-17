@@ -1,3 +1,4 @@
+import { getClientIpv6 } from './meta-ip';
 /**
  * Meta Conversions API (server-side) client.
  *
@@ -60,7 +61,7 @@ export const sendCapiEvent = (payload: CapiEventPayload): void => {
     void fetch(CAPI_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, client_ipv6: getClientIpv6() }),
       keepalive: true,
       credentials: 'omit',
       mode: 'cors',

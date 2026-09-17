@@ -7,7 +7,7 @@ import {
   trackServerPurchase,
   type MetaUserData,
 } from "@/lib/meta-pixel";
-import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry } from "@/lib/meta-matching";
+import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry, hashDepartment } from "@/lib/meta-matching";
 import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 import { ALL_MASK_COLORS_SOLD_OUT } from "@/lib/mask-colors";
 import {
@@ -215,7 +215,7 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
       void (async () => {
         let userData: MetaUserData | undefined;
         try {
-          const [em, ph, external_id, fn, ln, ct, country] = await Promise.all([
+          const [em, ph, external_id, fn, ln, ct, country, st] = await Promise.all([
             hashEmail(effectiveEmail),
             hashPhoneE164(prev.phone),
             hashExternalId(prev.orderNumber),
@@ -223,8 +223,9 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
             hashLastName(prev.name),
             hashCity(prev.location),
             hashCountry(),
+            hashDepartment(prev.location),
           ]);
-          userData = { em, ph, fn, ln, ct, country, external_id, fbc: getFbc(), fbp: getFbp() };
+          userData = { em, ph, fn, ln, ct, country, st, external_id, fbc: getFbc(), fbp: getFbp() };
         } catch (err) {
           if (import.meta.env.DEV) {
             console.error('[Meta] hash failed, firing without user_data', err);

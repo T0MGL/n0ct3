@@ -51,6 +51,7 @@ export interface MetaUserData {
   fn?: string;
   ln?: string;
   ct?: string;
+  st?: string;
   country?: string;
   external_id?: string;
   fbc?: string;
