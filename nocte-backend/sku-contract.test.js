@@ -68,14 +68,14 @@ const itemsFor = (rawLines) => buildOrdefyItems(readOrderLines(rawLines).lines);
 
 test('cada color del antifaz sale con el SKU de su variante, nunca con el padre', () => {
   const items = itemsFor([
-    { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
-    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 99000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
   ]);
   const masks = items.filter((item) => item.sku.startsWith('NOCTE-SLEEPMASK'));
   assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity} @${m.price} ${m.name}`), [
-    'NOCTE-SLEEPMASK-3D-NEGRO x1 @119000 NOCTE Sleep Mask 3D Negro',
-    'NOCTE-SLEEPMASK-3D-ROSADO x1 @119000 NOCTE Sleep Mask 3D Rosado',
+    'NOCTE-SLEEPMASK-3D-NEGRO x1 @99000 NOCTE Sleep Mask 3D Negro',
+    'NOCTE-SLEEPMASK-3D-ROSADO x1 @99000 NOCTE Sleep Mask 3D Rosado',
   ]);
   assert.ok(items.every((item) => typeof item.sku === 'string' && item.sku !== 'NOCTE-SLEEPMASK-3D'));
 });
@@ -84,10 +84,10 @@ test('cada color del antifaz sale con el SKU de su variante, nunca con el padre'
 // item salia sin SKU y Ordefy tumbaba la orden entera.
 test('colores y productos con nombre de propiedad del prototipo se separan', () => {
   for (const raw of [
-    { product: 'sleepmask', color: 'constructor', quantity: 1, amount: 119000 },
-    { product: 'sleepmask', color: '__proto__', quantity: 1, amount: 119000 },
-    { product: 'constructor', quantity: 1, amount: 119000 },
-    { product: 'toString', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'constructor', quantity: 1, amount: 99000 },
+    { product: 'sleepmask', color: '__proto__', quantity: 1, amount: 99000 },
+    { product: 'constructor', quantity: 1, amount: 99000 },
+    { product: 'toString', quantity: 1, amount: 99000 },
   ]) {
     const { lines, dropped } = readOrderLines([raw]);
     assert.equal(lines.length, 0, JSON.stringify(raw));
@@ -98,29 +98,29 @@ test('colores y productos con nombre de propiedad del prototipo se separan', () 
 test('dos negros y un rosado son dos items, uno por SKU con su cantidad', () => {
   const masks = itemsFor([
     { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
   ]);
   assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity} @${m.price}`), [
     'NOCTE-SLEEPMASK-3D-NEGRO x2 @119000',
-    'NOCTE-SLEEPMASK-3D-ROSADO x1 @119000',
+    'NOCTE-SLEEPMASK-3D-ROSADO x1 @99000',
   ]);
 });
 
 test('dos lineas del mismo color se juntan en un solo item', () => {
   const masks = itemsFor([
-    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
-    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 99000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 99000 },
   ]);
   assert.deepEqual(masks.map((m) => `${m.sku} x${m.quantity}`), ['NOCTE-SLEEPMASK-3D-NEGRO x2']);
 });
 
 test('antifaz sin color es un checkout viejo y va negro; un color desconocido se separa', () => {
-  const legacy = readOrderLines([{ product: 'sleepmask', quantity: 1, amount: 119000 }]);
+  const legacy = readOrderLines([{ product: 'sleepmask', quantity: 1, amount: 99000 }]);
   assert.equal(legacy.lines[0].color, 'negro');
-  const unknown = readOrderLines([{ product: 'sleepmask', color: 'verde', quantity: 1, amount: 119000 }]);
+  const unknown = readOrderLines([{ product: 'sleepmask', color: 'verde', quantity: 1, amount: 99000 }]);
   assert.equal(unknown.lines.length, 0);
   assert.match(unknown.dropped[0], /color de antifaz desconocido/);
-  const garbage = readOrderLines([{ product: 'sleepmask', color: 7, quantity: 1, amount: 119000 }]);
+  const garbage = readOrderLines([{ product: 'sleepmask', color: 7, quantity: 1, amount: 99000 }]);
   assert.equal(garbage.lines.length, 0);
 });
 
@@ -130,7 +130,7 @@ test('el texto para n8n nombra el antifaz con su color, como lo lee el cliente',
   const text = describeOrderForN8n(readOrderLines([
     { product: 'clipon', quantity: 1, amount: 189000 },
     { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
   ]).lines);
   assert.equal(
     text,
@@ -143,16 +143,16 @@ test('el texto para n8n nombra el antifaz con su color, como lo lee el cliente',
 // contra esta forma: si este test falla, avisar antes de cambiarla.
 test('contrato de order.lines para n8n: lentes + 2 antifaces negros + 1 rosado', () => {
   const { lines } = readOrderLines([
-    { product: 'lentes', quantity: 2, amount: 389000, colors: ['amarillo', 'rojo'] },
+    { product: 'lentes', quantity: 2, amount: 349000, colors: ['amarillo', 'rojo'] },
     { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
   ]);
   assert.deepEqual(buildN8nLines(lines), [
     {
       product: 'lentes',
       quantity: 2,
-      amount: 389000,
-      unit_price: 194500,
+      amount: 349000,
+      unit_price: 174500,
       sku: 'NOCTE-GLASSES-PAREJA',
       name: 'NOCTE® Lentes Anti-Luz Azul',
       colors: ['amarillo', 'rojo'],
@@ -169,8 +169,8 @@ test('contrato de order.lines para n8n: lentes + 2 antifaces negros + 1 rosado',
     {
       product: 'sleepmask',
       quantity: 1,
-      amount: 119000,
-      unit_price: 119000,
+      amount: 99000,
+      unit_price: 99000,
       sku: 'NOCTE-SLEEPMASK-3D-ROSADO',
       name: 'NOCTE® Antifaz 3D rosado para dormir',
       color: 'rosado',
@@ -194,52 +194,53 @@ test('contrato de order.lines para n8n: lentes + 2 antifaces negros + 1 rosado',
 // linea, ni partiendo por color, ni repitiendo lineas.
 test('los topes son por pedido: antifaz 5 entre colores, una linea de lentes, clip-on y envio', () => {
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
-  const mask = (color, quantity) => ({ product: 'sleepmask', color, quantity, amount: 119000 * quantity });
+  const mask = (color, quantity) => ({ product: 'sleepmask', color, quantity, amount: 99000 * quantity });
   const once = (product, amount) => ({ product, quantity: 1, amount });
 
-  // A 119.000 el antifaz va acompanado: sin los lentes rebotaria por precio y no por tope.
-  const withLens = { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] };
+  // A 99.000 el antifaz va acompanado: sin los lentes rebotaria por precio y no por tope.
+  const withLens = { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] };
   assert.deepEqual(check([withLens, mask('negro', 3), mask('rosado', 2)]), []);
   assert.match(check([mask('negro', 6)]).join(), /cantidad no vendible: sleepmask x6/);
   assert.match(check([mask('negro', 5), mask('rosado', 5)]).join(), /cantidad no vendible: sleepmask x10/);
   assert.match(check([{ product: 'clipon', quantity: 6, amount: 189000 * 6 }]).join(), /cantidad no vendible/);
   assert.match(check([once('clipon', 189000), once('clipon', 189000)]).join(), /clipon repetido en 2 lineas/);
   assert.match(check([once('envio-prioritario', 10000), once('envio-prioritario', 10000)]).join(), /envio-prioritario repetido/);
-  const lens = { product: 'lentes', quantity: 3, amount: 549000, colors: ['rojo', 'rojo', 'rojo'] };
+  const lens = { product: 'lentes', quantity: 3, amount: 489000, colors: ['rojo', 'rojo', 'rojo'] };
   assert.match(check([lens, lens]).join(), /lentes repetido en 2 lineas/);
 });
 
 // Sept 2026: el antifaz se vende solo en /sleep-mask. El precio depende del
-// pedido: 169.000 solo, 119.000 con lentes o clip-on. Los cuatro casos, en COD
+// pedido: 149.000 solo, 99.000 con lentes o clip-on. Los cuatro casos, en COD
 // son exactamente los que rebotan o pasan.
-test('antifaz: precio por contexto del pedido, solo 169.000 y acompanado 119.000', () => {
+test('antifaz: precio por contexto del pedido, solo 149.000 y acompanado 99.000', () => {
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
   const mask = (amount, color = 'negro') => ({ product: 'sleepmask', color, quantity: 1, amount });
-  const lens = { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] };
+  const lens = { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] };
   const clipon = { product: 'clipon', quantity: 1, amount: 189000 };
 
-  assert.deepEqual(check([mask(169000)]), []);
-  assert.match(check([mask(119000)]).join(), /precio invalido en sleepmask x1: 119000, se esperaba 169000/);
+  assert.deepEqual(check([mask(149000)]), []);
+  assert.match(check([mask(99000)]).join(), /precio invalido en sleepmask x1: 99000, se esperaba 149000/);
   assert.deepEqual(check([mask(119000), lens]), []);
-  assert.deepEqual(check([lens, mask(119000)]), []);
-  assert.match(check([mask(169000), lens]).join(), /precio invalido en sleepmask x1: 169000, se esperaba 119000/);
+  assert.match(check([mask(99000), lens]).join(), /se esperaba 119000/);
+  assert.deepEqual(check([lens, mask(99000)]), []);
+  assert.match(check([mask(149000), lens]).join(), /precio invalido en sleepmask x1: 149000, se esperaba 119000/);
 
-  assert.deepEqual(check([clipon, mask(119000)]), []);
-  assert.match(check([clipon, mask(169000)]).join(), /se esperaba 119000/);
+  assert.deepEqual(check([clipon, mask(99000)]), []);
+  assert.match(check([clipon, mask(149000)]).join(), /se esperaba 99000/);
   // El envio prioritario no es compania: un antifaz con envio sigue siendo solo.
-  assert.deepEqual(check([mask(169000), { product: 'envio-prioritario', quantity: 1, amount: 10000 }]), []);
+  assert.deepEqual(check([mask(149000), { product: 'envio-prioritario', quantity: 1, amount: 10000 }]), []);
   assert.match(
-    check([mask(119000), { product: 'envio-prioritario', quantity: 1, amount: 10000 }]).join(),
-    /se esperaba 169000/,
+    check([mask(99000), { product: 'envio-prioritario', quantity: 1, amount: 10000 }]).join(),
+    /se esperaba 149000/,
   );
 });
 
-test('antifaz: con lentes el tope sigue en 5 a 119.000 cada uno', () => {
+test('antifaz: con lentes el tope sigue en 5 a 99.000 cada uno', () => {
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
-  const lens = { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] };
-  assert.deepEqual(check([lens, { product: 'sleepmask', color: 'negro', quantity: 5, amount: 119000 * 5 }]), []);
+  const lens = { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] };
+  assert.deepEqual(check([lens, { product: 'sleepmask', color: 'negro', quantity: 5, amount: 99000 * 5 }]), []);
   assert.match(
-    check([lens, { product: 'sleepmask', color: 'negro', quantity: 6, amount: 119000 * 6 }]).join(),
+    check([lens, { product: 'sleepmask', color: 'negro', quantity: 6, amount: 99000 * 6 }]).join(),
     /cantidad no vendible: sleepmask x6/,
   );
 });
@@ -251,7 +252,7 @@ test('antifaz sin compania: packs de 1, 2 y 3 al precio de la tabla', () => {
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
   const mask = (color, quantity, amount) => ({ product: 'sleepmask', color, quantity, amount });
 
-  assert.deepEqual(check([mask('negro', 1, 169000)]), []);
+  assert.deepEqual(check([mask('negro', 1, 149000)]), []);
   assert.deepEqual(check([mask('negro', 2, 269000)]), []);
   assert.deepEqual(check([mask('rosado', 3, 369000)]), []);
   // Mezcla de colores: el pack de dos es uno negro y uno rosado.
@@ -271,9 +272,9 @@ test('antifaz sin compania: precio lineal, precio de bump o cantidad sin pack re
   assert.match(check([mask('negro', 2, 269000), mask('rosado', 2, 269000)]).join(), /cantidad no vendible/);
 });
 
-test('antifaz con lentes: 119.000 por antifaz, nunca el pack', () => {
+test('antifaz con lentes: 99.000 por antifaz, nunca el pack', () => {
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
-  const lens = { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] };
+  const lens = { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] };
   assert.deepEqual(check([{ product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 }, lens]), []);
   assert.deepEqual(check([{ product: 'sleepmask', color: 'rosado', quantity: 3, amount: 357000 }, lens]), []);
   assert.match(
@@ -292,10 +293,10 @@ test('antifaz: importes manipulados rebotan aunque la suma cierre', () => {
   };
   const mask = (color, quantity, amount) => ({ product: 'sleepmask', color, quantity, amount });
 
-  assert.match(check([mask('negro', 1, 1000)]).join(), /se esperaba 169000/);
-  assert.match(check([mask('negro', 1, -169000)]).join(), /cantidad o importe invalidos/);
+  assert.match(check([mask('negro', 1, 1000)]).join(), /se esperaba 149000/);
+  assert.match(check([mask('negro', 1, -149000)]).join(), /cantidad o importe invalidos/);
   // Suma 269.000 pero repartido raro entre colores.
-  assert.match(check([mask('negro', 1, 169000), mask('rosado', 1, 100000)]).join(), /se esperaba 134500/);
+  assert.match(check([mask('negro', 1, 149000), mask('rosado', 1, 100000)]).join(), /se esperaba 134500/);
   // Una linea en 0 y la otra con el pack entero.
   assert.match(check([mask('negro', 1, 269000), mask('rosado', 1, 0)]).join(), /se esperaba 134500/);
 });
@@ -324,23 +325,23 @@ test('antifaz: Ordefy recibe precio unitario del pack y la suma de items es el p
 // despues. Ordefy recibe una linea por SKU con su precio unitario.
 test('antifaz rosado + lentes rojos: items de Ordefy por SKU con precio unitario', () => {
   const items = itemsFor([
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
-    { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
+    { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
   ]);
   assert.deepEqual(items, [
-    { sku: 'NOCTE-SLEEPMASK-3D-ROSADO', name: 'NOCTE Sleep Mask 3D Rosado', quantity: 1, price: 119000 },
-    { sku: 'NOCTE-GLASSES-ROJO', name: 'NOCTE Lente Rojo (Noche)', quantity: 1, price: 249000 },
+    { sku: 'NOCTE-SLEEPMASK-3D-ROSADO', name: 'NOCTE Sleep Mask 3D Rosado', quantity: 1, price: 99000 },
+    { sku: 'NOCTE-GLASSES-ROJO', name: 'NOCTE Lente Rojo (Noche)', quantity: 1, price: 229000 },
   ]);
 });
 
-test('antifaz solo: un item de Ordefy a 169.000, con envio prioritario aparte', () => {
+test('antifaz solo: un item de Ordefy a 149.000, con envio prioritario aparte', () => {
   assert.deepEqual(
     itemsFor([
-      { product: 'sleepmask', color: 'negro', quantity: 1, amount: 169000 },
+      { product: 'sleepmask', color: 'negro', quantity: 1, amount: 149000 },
       { product: 'envio-prioritario', quantity: 1, amount: 10000 },
     ]),
     [
-      { sku: 'NOCTE-SLEEPMASK-3D-NEGRO', name: 'NOCTE Sleep Mask 3D Negro', quantity: 1, price: 169000 },
+      { sku: 'NOCTE-SLEEPMASK-3D-NEGRO', name: 'NOCTE Sleep Mask 3D Negro', quantity: 1, price: 149000 },
       { sku: 'NOCTE-ENVIO-PRIORITARIO', name: 'Envío Prioritario VIP', quantity: 1, price: 10000 },
     ],
   );
@@ -350,8 +351,8 @@ test('Purchase del servidor: el antifaz como producto principal lleva su identid
   const content = (raw) => purchaseContent(readOrderLines(raw).lines);
   assert.deepEqual(
     content([
-      { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
-      { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+      { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
+      { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
     ]),
     { content_name: 'NOCTE® Antifaz 3D para dormir', content_ids: ['nocte-sleepmask-3d'], num_items: 2 },
   );
@@ -359,7 +360,7 @@ test('Purchase del servidor: el antifaz como producto principal lleva su identid
   assert.equal(
     content([
       { product: 'sleepmask', color: 'rosado', quantity: 3, amount: 357000 },
-      { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+      { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
       { product: 'envio-prioritario', quantity: 1, amount: 10000 },
     ]).num_items,
     4,
@@ -367,8 +368,8 @@ test('Purchase del servidor: el antifaz como producto principal lleva su identid
   // Checkout de lentes con el antifaz de bump: sigue siendo un pedido de lentes.
   assert.equal(
     content([
-      { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
-      { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
+      { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
+      { product: 'sleepmask', color: 'negro', quantity: 1, amount: 99000 },
     ]),
     undefined,
   );

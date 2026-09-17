@@ -636,7 +636,7 @@ const MIXED_CONTAINER_SKU = {
 // Productos de un solo SKU: una clave del payload, un SKU y sus nombres. El
 // precio NO vive aca, viaja en la linea. Ordefy respeta el precio por linea del
 // payload (no hace lookup contra el catalogo), asi que el bump del antifaz
-// cobra 119.000 con el catalogo en 169.000 y eso es lo correcto.
+// cobra el precio de la oferta con el catalogo en 149.000 y eso es lo correcto.
 //
 // `name` es el que va a Ordefy y coincide con su catalogo. `label` es el que lee
 // el cliente: n8n lo usa tal cual en la plantilla de WhatsApp en espanol cuando
@@ -783,15 +783,16 @@ const PRICE_BY_PRODUCT = {
   'envio-prioritario': [10000],
 };
 
-const LENS_PACK_PRICE = { 1: 249000, 2: 389000, 3: 549000 };
+const LENS_PACK_PRICE = { 1: 229000, 2: 349000, 3: 489000 };
 
 // El precio del antifaz lo decide el pedido, no la linea. Acompanado de lentes
 // o de clip-on es el del bump, por unidad. Sin compania es el pack de la web
 // (/sleep-mask), contado sobre el total de antifaces del pedido con los colores
 // sumados. Espejo de SLEEP_MASK_PACKS en src/lib/order.ts. Helena cobra lineal
 // por WhatsApp y no pasa por aca.
-const SLEEP_MASK_UNIT_WITH_COMPANION = 119000;
-const SLEEP_MASK_PACK_PRICE = { 1: 169000, 2: 269000, 3: 369000 };
+const SLEEP_MASK_UNIT_WITH_COMPANION = 99000;
+const SLEEP_MASK_UNIT_WITH_GLASSES_FROM_MASK = 119000;
+const SLEEP_MASK_PACK_PRICE = { 1: 149000, 2: 269000, 3: 369000 };
 const SLEEP_MASK_COMPANIONS = new Set(['lentes', 'clipon']);
 
 /**
@@ -805,7 +806,9 @@ const SLEEP_MASK_COMPANIONS = new Set(['lentes', 'clipon']);
  */
 function expectedSleepMaskAmount(line, lines) {
   if (lines.some((other) => SLEEP_MASK_COMPANIONS.has(other.product))) {
-    return SLEEP_MASK_UNIT_WITH_COMPANION * line.quantity;
+    return (lines[0].product === 'sleepmask' && lines.some((other) => other.product === 'lentes')
+      ? SLEEP_MASK_UNIT_WITH_GLASSES_FROM_MASK
+      : SLEEP_MASK_UNIT_WITH_COMPANION) * line.quantity;
   }
   const masks = lines.filter((other) => other.product === 'sleepmask');
   const units = masks.reduce((total, mask) => total + mask.quantity, 0);

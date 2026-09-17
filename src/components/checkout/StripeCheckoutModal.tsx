@@ -190,7 +190,7 @@ const UpsellRow = ({
             <span id={priceId} className="mt-0.5 flex flex-wrap items-baseline gap-x-2 leading-tight">
               {listPrice !== undefined && (
                 <span className="text-[11px] text-white/50 line-through">
-                  {/* Sin esto el lector de pantalla dice "169.000 119.000" y el
+                  {/* Sin esto el lector de pantalla dice "149.000 99.000" y el
                       tachado, que es puramente visual, no significa nada. */}
                   <span className="sr-only">Precio de lista, </span>
                   {formatPrice(listPrice, 'pyg')}
@@ -663,7 +663,7 @@ const CheckoutForm = ({
       // Se sincroniza SIEMPRE, no solo cuando finalTotal difiere del precio del
       // producto: el intent sobrevive a un intento de pago fallido, asi que
       // quien marca el antifaz, se come un rechazo y despues lo destilda queda
-      // con un intent en 368.000 y una pantalla que dice 249.000. Comparar
+      // con un intent en 348.000 y una pantalla que dice 229.000. Comparar
       // contra el producto no ve esa vuelta; el monto realmente sincronizado,
       // que es lo que guarda el padre, si. Si el ajuste falla se corta el pago:
       // cobrar distinto de lo que dice la pantalla es peor que pedir reintento.

@@ -87,7 +87,7 @@ const ORDER_BODY = {
   location: 'Asunción',
   address: 'Calle 1',
   quantity: 2,
-  total: 389000,
+  total: 349000,
   orderNumber: '#NOC-0823-4321',
   paymentType: 'COD',
   deliveryType: 'común',
@@ -216,7 +216,7 @@ test('flag on: emits Purchase after Ordefy and returns the n8n-compatible event 
   assert.equal(event.user_data.fbc, ORDER_BODY.fbc);
   assert.equal(event.user_data.external_id, event.user_data.ph);
   assert.deepEqual(event.custom_data, {
-    value: 389000,
+    value: 349000,
     currency: 'PYG',
     content_name: 'NOCTE® Red Light Blocking Glasses - Pack x2',
     content_category: 'Sleep & Wellness',
@@ -290,11 +290,11 @@ test('flag on: test_event_code travels only when configured', async () => {
 const MASK_ORDER_BODY = {
   ...ORDER_BODY,
   quantity: 1,
-  total: 368000,
+  total: 348000,
   colors: ['rojo'],
   lines: [
     { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
-    { product: 'lentes', quantity: 1, amount: 249000, colors: ['rojo'] },
+    { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
   ],
 };
 
@@ -304,13 +304,13 @@ test('flag on: pedido de antifaz con lentes emite Purchase con la identidad del 
   assert.equal(status, 200);
   assert.equal(json.purchaseEventId, 'nocte-purchase-ORD20260823a1b2c3');
   const { custom_data } = metaCalls[0].body.data[0];
-  assert.equal(custom_data.value, 368000);
+  assert.equal(custom_data.value, 348000);
   assert.deepEqual(custom_data.content_ids, ['nocte-sleepmask-3d']);
   assert.equal(custom_data.content_name, 'NOCTE® Antifaz 3D para dormir');
   assert.equal(custom_data.num_items, 2);
 });
 
-test('COD: antifaz solo a 169.000 entra, antifaz solo a 119.000 rebota', async () => {
+test('COD: antifaz solo a 149.000 entra, antifaz solo a 99.000 rebota', async () => {
   const solo = (amount) => ({
     ...ORDER_BODY,
     quantity: 1,
@@ -318,11 +318,11 @@ test('COD: antifaz solo a 169.000 entra, antifaz solo a 119.000 rebota', async (
     colors: [],
     lines: [{ product: 'sleepmask', color: 'negro', quantity: 1, amount }],
   });
-  const ok = await sendOrder(solo(169000));
+  const ok = await sendOrder(solo(149000));
   assert.equal(ok.status, 200);
   assert.equal(ok.json.success, true);
 
-  const rejected = await sendOrder(solo(119000));
+  const rejected = await sendOrder(solo(99000));
   assert.equal(rejected.status, 400);
   assert.deepEqual(rejected.json, { error: 'Pedido invalido', success: false });
 });
