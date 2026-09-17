@@ -60,7 +60,7 @@ import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Antifaz 3D para dormir | NOCTE®";
 const PAGE_DESCRIPTION =
-  "Antifaz 3D NOCTE: oscuridad total y cero presión en los párpados. Delivery gratis a todo Paraguay y pago contra entrega. Desde 169.000 Gs.";
+  "Antifaz 3D NOCTE: oscuridad total y cero presión en los párpados. Delivery gratis a todo Paraguay y pago contra entrega. Desde 149.000 Gs.";
 
 const initialItem = () => sleepMaskItem([DEFAULT_MASK_COLOR]);
 

@@ -75,7 +75,7 @@ export const PRIORITY_SHIPPING: AddOn = {
  * precio, cambia en los dos lados o el backend rebota los pedidos en COD.
  */
 export const SLEEP_MASK_PACKS = [
-  { quantity: 1, price: 169000 },
+  { quantity: 1, price: 149000 },
   { quantity: 2, price: 269000 },
   { quantity: 3, price: 369000 },
 ] as const;
@@ -105,9 +105,13 @@ export const sleepMaskPackSavings = (pack: SleepMaskPack): number =>
 export const SLEEP_MASK: AddOn = {
   product: "sleepmask",
   name: "Antifaz 3D para dormir",
-  price: 119000,
+  price: 99000,
   listPrice: SLEEP_MASK_SOLO_PRICE,
 };
+
+// En /sleep-mask el lente rojo agrega 199.000 Gs al antifaz de 149.000.
+// La linea del lente conserva su precio de 229.000; el antifaz queda a 119.000.
+const SLEEP_MASK_WITH_RED_GLASSES_FROM_MASK = 119000;
 
 // Sin pack de un lente en BUNDLES el bump no se ofrece: mejor perder el upsell
 // que tirar el bundle principal, que es el de / tambien.
@@ -211,7 +215,7 @@ function buildSleepMaskLines(
     color,
     quantity,
     amount: withGlasses
-      ? SLEEP_MASK.price * quantity
+      ? SLEEP_MASK_WITH_RED_GLASSES_FROM_MASK * quantity
       : packUnitPrice * quantity + (index === 0 ? remainder : 0),
   }));
   if (withGlasses) {
