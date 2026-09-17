@@ -11,8 +11,7 @@ interface FaqEntry {
   a: string;
 }
 
-// Objection killers ordered by frequency in WhatsApp inbound. Copy is direct,
-// no hedging, no em dash. Plain ASCII separators only.
+// Preguntas frecuentes de clientes, ordenadas por frecuencia en WhatsApp.
 const FAQS: ReadonlyArray<FaqEntry> = [
   {
     q: "¿Y si no me funcionan? Ya gasté en otros que no sirvieron.",
@@ -58,15 +57,13 @@ export const FAQSection = () => {
       <div className="mx-auto max-w-[820px]">
         <Reveal as="header" className="mb-12 text-center md:mb-16">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-variant-active">
-            Dudas que detienen ventas
+            Preguntas frecuentes
           </p>
           <h2
             id="faq-title"
             className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[1.05] tracking-tighter text-foreground"
           >
-            Lo que <span className="text-variant-active">realmente</span> te
-            <br />
-            preguntás antes de comprar.
+            ¿Tenés alguna <span className="text-variant-active">duda</span> antes de comprar?
           </h2>
         </Reveal>
 
