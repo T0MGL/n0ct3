@@ -31,9 +31,10 @@ export const ClipOnHero = ({ onBuyClick, ctaRef }: ClipOnHeroProps) => (
         // fetchPriority en camelCase.
         {...{ fetchpriority: "high" }}
         decoding="async"
-        // En mobile la foto va mas apaisada para que el boton entre en la
-        // primera pantalla de un iPhone SE (667). El producto esta centrado:
-        // el recorte se come fondo blanco, no el clip-on.
+        // En mobile la foto va mas apaisada para que el boton entre sin
+        // scroll en un viewport de 375x667, el mas chico que medimos. El
+        // producto esta centrado: el recorte se come fondo blanco, no el
+        // clip-on.
         className="aspect-[5/3] w-full rounded-2xl bg-white/[0.06] object-cover ring-1 ring-white/10 sm:aspect-[4/3]"
       />
     </div>

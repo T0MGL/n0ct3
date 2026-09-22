@@ -89,19 +89,19 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce
                 // Mismo estado elegido que los packs de lentes (SelectedCard):
                 // el filete se dibuja contra el boton, asi que va relative y
                 // recorta en su radio.
-                "relative overflow-hidden rounded-xl border px-3 py-2.5 text-left transition-[border-color,background-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+                "relative overflow-hidden rounded-xl border px-2 py-2.5 text-left sm:px-3 transition-[border-color,background-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
                 selected
                   ? SELECTED_CARD_CLASS
                   : "border-white/15 bg-transparent [@media(hover:hover)]:hover:border-white/35",
               )}
             >
               {selected && <SelectedCardEdge />}
-              <span className={cn("relative block text-[13px]", selected ? "text-white" : "text-white/65")}>
+              <span className={cn("block text-[13px]", selected ? "text-white" : "text-white/65")}>
                 {packLabel(pack.quantity)}
               </span>
-              <span className="relative mt-0.5 block whitespace-nowrap text-[17px] font-bold leading-tight tracking-[-0.01em] text-white tabular-nums">
+              <span className="mt-0.5 block whitespace-nowrap text-[13px] font-bold leading-tight tracking-[-0.01em] text-white tabular-nums min-[340px]:text-[15px] min-[375px]:text-[16px] sm:text-[17px]">
                 {pack.price.toLocaleString("es-PY")}
-                <span className="ml-0.5 text-[12px] font-medium tracking-normal text-white/60">Gs</span>
+                <span className="ml-0.5 text-[10px] font-medium tracking-normal text-white/60 min-[340px]:text-[12px]">Gs</span>
               </span>
             </button>
           );

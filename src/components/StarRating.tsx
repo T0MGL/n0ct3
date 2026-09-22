@@ -19,7 +19,8 @@ interface StarRatingProps {
  * el mismo lugar del hero, y tres copias del mismo marcado se desincronizan.
  */
 export const StarRating = ({ label, partial = 1, className }: StarRatingProps) => {
-  const full = partial >= 1 ? 5 : 4;
+  const filled = Math.min(1, Math.max(0, partial));
+  const full = filled >= 1 ? 5 : 4;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
@@ -30,7 +31,7 @@ export const StarRating = ({ label, partial = 1, className }: StarRatingProps) =
         {full < 5 && (
           <div className="relative w-5 h-5">
             <StarIcon className="w-5 h-5 text-white/20 absolute" />
-            <div className="overflow-hidden absolute inset-0" style={{ width: `${partial * 100}%` }}>
+            <div className="overflow-hidden absolute inset-0" style={{ width: `${filled * 100}%` }}>
               <StarIcon className="w-5 h-5 star-gold" />
             </div>
           </div>
