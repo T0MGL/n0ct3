@@ -35,7 +35,7 @@ const FAQS: ReadonlyArray<FaqEntry> = [
   },
   {
     q: "¿Cómo pago?",
-    a: "Tarjeta de crédito o débito, transferencia bancaria, o contraentrega en Asunción y Central. Pago seguro vía Stripe.",
+    a: "Tarjeta de crédito o débito, transferencia bancaria, o contraentrega en todo Paraguay. Pago seguro vía Stripe.",
   },
   {
     q: "¿Sirven sobre lentes recetados?",
