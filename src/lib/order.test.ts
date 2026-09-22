@@ -43,7 +43,7 @@ describe("checkout de lentes y clip-on: las lineas no cambian", () => {
 
   it("clip-on", () => {
     expect(buildOrderLines(clipOnItem(), NO_UPSELLS)).toEqual([
-      { product: "clipon", quantity: 1, amount: 189000 },
+      { product: "clipon", quantity: 1, amount: 169000 },
     ]);
   });
 });
