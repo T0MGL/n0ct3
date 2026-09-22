@@ -65,7 +65,8 @@ const PRODUCT_JSON_LD = {
 
 // selector -> valor. Son los mismos que escribe clip-on.html en el build (ver
 // seo.ts); aca cubren al que llega navegando desde la home, que trae el head
-// de index.html.
+// de index.html. Las keywords y el DC.title de los lentes, que el build borra,
+// aca se sacan mientras la pagina esta montada (LENS_ONLY_META).
 const META_CONTENT: ReadonlyArray<readonly [string, string]> = [
   ['meta[name="title"]', CLIP_ON_TITLE],
   ['meta[name="description"]', CLIP_ON_DESCRIPTION],
@@ -84,6 +85,8 @@ const META_CONTENT: ReadonlyArray<readonly [string, string]> = [
   ['meta[name="twitter:image:alt"]', CLIP_ON_SHARE_IMAGE.alt],
 ];
 
+const LENS_ONLY_META = ['meta[name="keywords"]', 'meta[name="DC.title"]'] as const;
+
 /**
  * Title, meta, canonical y el Product de schema.org (con el precio de
  * order.ts) mientras la pagina esta montada. Al salir vuelve lo que habia.
@@ -101,6 +104,12 @@ const useDocumentMeta = () => {
       return [() => (tag.content = previous)];
     });
 
+    const lensOnly = LENS_ONLY_META.flatMap((selector) => {
+      const tag = document.querySelector<HTMLMetaElement>(selector);
+      return tag ? [tag] : [];
+    });
+    for (const tag of lensOnly) tag.remove();
+
     document.title = CLIP_ON_TITLE;
     if (canonical) canonical.href = CLIP_ON_URL;
 
@@ -113,6 +122,7 @@ const useDocumentMeta = () => {
       document.title = previousTitle;
       if (canonical && previousCanonical !== undefined) canonical.href = previousCanonical;
       for (const restore of restores) restore();
+      document.head.append(...lensOnly);
       jsonLd.remove();
     };
   }, []);
