@@ -128,7 +128,7 @@ test('antifaz sin color es un checkout viejo y va negro; un color desconocido se
 // tiene que decir antifaz y el color, no el nombre de catalogo de Ordefy.
 test('el texto para n8n nombra el antifaz con su color, como lo lee el cliente', () => {
   const text = describeOrderForN8n(readOrderLines([
-    { product: 'clipon', quantity: 1, amount: 189000 },
+    { product: 'clipon', quantity: 1, amount: 169000 },
     { product: 'sleepmask', color: 'negro', quantity: 2, amount: 238000 },
     { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 99000 },
   ]).lines);
@@ -202,8 +202,8 @@ test('los topes son por pedido: antifaz 5 entre colores, una linea de lentes, cl
   assert.deepEqual(check([withLens, mask('negro', 3), mask('rosado', 2)]), []);
   assert.match(check([mask('negro', 6)]).join(), /cantidad no vendible: sleepmask x6/);
   assert.match(check([mask('negro', 5), mask('rosado', 5)]).join(), /cantidad no vendible: sleepmask x10/);
-  assert.match(check([{ product: 'clipon', quantity: 6, amount: 189000 * 6 }]).join(), /cantidad no vendible/);
-  assert.match(check([once('clipon', 189000), once('clipon', 189000)]).join(), /clipon repetido en 2 lineas/);
+  assert.match(check([{ product: 'clipon', quantity: 6, amount: 169000 * 6 }]).join(), /cantidad no vendible/);
+  assert.match(check([once('clipon', 169000), once('clipon', 169000)]).join(), /clipon repetido en 2 lineas/);
   assert.match(check([once('envio-prioritario', 10000), once('envio-prioritario', 10000)]).join(), /envio-prioritario repetido/);
   const lens = { product: 'lentes', quantity: 3, amount: 489000, colors: ['rojo', 'rojo', 'rojo'] };
   assert.match(check([lens, lens]).join(), /lentes repetido en 2 lineas/);
@@ -216,7 +216,7 @@ test('antifaz: precio por contexto del pedido, solo 149.000 y acompanado 99.000'
   const check = (raw) => priceMismatches(readOrderLines(raw).lines);
   const mask = (amount, color = 'negro') => ({ product: 'sleepmask', color, quantity: 1, amount });
   const lens = { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] };
-  const clipon = { product: 'clipon', quantity: 1, amount: 189000 };
+  const clipon = { product: 'clipon', quantity: 1, amount: 169000 };
 
   assert.deepEqual(check([mask(149000)]), []);
   assert.match(check([mask(99000)]).join(), /precio invalido en sleepmask x1: 99000, se esperaba 149000/);
@@ -373,5 +373,5 @@ test('Purchase del servidor: el antifaz como producto principal lleva su identid
     ]),
     undefined,
   );
-  assert.equal(content([{ product: 'clipon', quantity: 1, amount: 189000 }]), undefined);
+  assert.equal(content([{ product: 'clipon', quantity: 1, amount: 169000 }]), undefined);
 });

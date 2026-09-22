@@ -133,7 +133,7 @@ export const RED_GLASSES = {
 export const CLIP_ON: AddOn = {
   product: "clipon",
   name: "Clip-On Rojo",
-  price: 189000,
+  price: 169000,
 };
 
 /** El producto principal del checkout. Los upsells se suman aparte. */

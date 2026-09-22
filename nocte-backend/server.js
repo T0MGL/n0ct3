@@ -779,7 +779,7 @@ function buildProductLineItem(tier, colors, productPrice) {
 // courier despacha y cobra. Los lentes valen por pack y sus tres importes son
 // los tres bundles de src/lib/bundles.ts; si ahi cambia un precio, cambia aca.
 const PRICE_BY_PRODUCT = {
-  clipon: [189000],
+  clipon: [169000],
   'envio-prioritario': [10000],
 };
 
