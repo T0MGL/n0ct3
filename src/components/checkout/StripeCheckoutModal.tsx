@@ -1117,7 +1117,7 @@ const CheckoutForm = ({
               onToggle={toggleMask}
               title={SLEEP_MASK.name}
               description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
-              badge="RECOMENDADO"
+              badge="MÁS VENDIDO"
               price={SLEEP_MASK.price * Math.max(1, maskPicks.length)}
               listPrice={
                 SLEEP_MASK.listPrice === undefined
