@@ -93,10 +93,15 @@ export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickCha
           levantarte con energía.
         </p>
 
-        {/* 627 clientes con un pedido entregado en Ordefy, y 48 calificaciones de
-            entrega, todas de 5 estrellas. Solo eso: sin promedio, sin cantidad de
-            resenas y sin "clientes satisfechos", que no tienen de donde salir. */}
-        <StarRating label="+600 clientes en Paraguay" className="mt-5 lg:mt-6" />
+        {/* Numeros de Ordefy al 2026-09-22: 48 calificaciones de entrega, todas
+            de 5 estrellas, y 627 clientes con un pedido entregado. Van a mano y
+            envejecen: antes de tocarlos, volver a consultarlos. La primera linea
+            dice que miden las estrellas, para que el +600 no se lea como resenas. */}
+        <StarRating
+          label="5/5 en 48 entregas calificadas"
+          note="+600 clientes en Paraguay"
+          className="mt-4 items-start lg:mt-6"
+        />
 
         {/* El reloj va arriba de los precios del pack. Es solo pantalla: los
             precios no vencen y nada del pedido lo lee. */}
