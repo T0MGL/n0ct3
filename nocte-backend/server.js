@@ -999,12 +999,23 @@ function describeOrderForN8n(lines) {
  * primera linea es el producto principal del checkout: buildOrderLines la pone
  * primera y el camino legado arranca siempre por los lentes.
  *
- * Solo el antifaz tiene identidad propia aca. Todo lo demas devuelve undefined
- * y sale con los content_ids de los lentes de siempre, que no se tocan: partir
- * su historico a mitad de campana le cuesta a la cuenta.
+ * El antifaz y el clip-on tienen identidad propia, con el mismo content_id que
+ * el pixel (el slug de metaContent, no el SKU de Ordefy). Los lentes devuelven
+ * undefined y salen con los content_ids de siempre, que no se tocan: partir su
+ * historico a mitad de campana le cuesta a la cuenta.
  */
 function purchaseContent(lines) {
-  if (lines[0]?.product !== 'sleepmask') return undefined;
+  const main = lines[0];
+  // El clip-on cuenta solo su unidad, igual que metaNumItems en el navegador:
+  // el antifaz del bump suma al value del pedido, no a la identidad.
+  if (main?.product === 'clipon') {
+    return {
+      content_name: 'NOCTE® Clip-On Rojo',
+      content_ids: ['nocte-clipon-rojo'],
+      num_items: main.quantity,
+    };
+  }
+  if (main?.product !== 'sleepmask') return undefined;
   return {
     content_name: 'NOCTE® Antifaz 3D para dormir',
     content_ids: ['nocte-sleepmask-3d'],

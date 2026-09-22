@@ -1,6 +1,80 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import {
+  CLIP_ON_DESCRIPTION,
+  CLIP_ON_SHARE_IMAGE,
+  CLIP_ON_SHARE_TITLE,
+  CLIP_ON_TITLE,
+  CLIP_ON_URL,
+} from "./src/components/clip-on/seo";
+
+const escapeAttr = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * dist/clip-on.html: el index.html ya construido (mismos scripts, preloader y
+ * pixel) con el head de /clip-on. WhatsApp y Facebook no ejecutan JS: sin esto
+ * un link a /clip-on se previsualiza como la landing de lentes. vercel.json
+ * reescribe /clip-on a este archivo; la app arranca igual y el router monta
+ * la pagina.
+ *
+ * Cada reemplazo tiene que encontrar su tag exactamente una vez. Si alguien
+ * edita el head de index.html y un tag deja de existir, el build se cae aca en
+ * vez de publicar una preview a medias.
+ */
+const clipOnHtml = (): Plugin => ({
+  name: "nocte-clip-on-html",
+  apply: "build",
+  enforce: "post",
+  generateBundle(_options, bundle) {
+    const index = bundle["index.html"];
+    if (!index || index.type !== "asset") {
+      this.error("clip-on.html: index.html no esta en el bundle");
+    }
+    let html = String(index.source);
+
+    const swap = (pattern: RegExp, replacement: string, label: string) => {
+      const matches = html.match(new RegExp(pattern.source, "g"))?.length ?? 0;
+      if (matches !== 1) this.error(`clip-on.html: ${label} aparece ${matches} veces en index.html`);
+      html = html.replace(pattern, replacement);
+    };
+    const meta = (attr: "name" | "property", key: string, value: string | null) =>
+      swap(
+        new RegExp(`\\s*<meta ${attr}="${key.replace(/[.:]/g, "\\$&")}" content="[^"]*"\\s*/?>`),
+        value === null ? "" : `\n    <meta ${attr}="${key}" content="${escapeAttr(value)}" />`,
+        key,
+      );
+
+    swap(/<title>[^<]*<\/title>/, `<title>${escapeAttr(CLIP_ON_TITLE)}</title>`, "title");
+    swap(/<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${CLIP_ON_URL}" />`, "canonical");
+    meta("name", "title", CLIP_ON_TITLE);
+    meta("name", "description", CLIP_ON_DESCRIPTION);
+    // Las keywords y el DC.title hablan de los lentes (y de melatonina): fuera.
+    meta("name", "keywords", null);
+    meta("name", "DC.title", null);
+    meta("property", "og:url", CLIP_ON_URL);
+    meta("property", "og:title", CLIP_ON_SHARE_TITLE);
+    meta("property", "og:description", CLIP_ON_DESCRIPTION);
+    meta("property", "og:image", CLIP_ON_SHARE_IMAGE.url);
+    meta("property", "og:image:type", CLIP_ON_SHARE_IMAGE.type);
+    meta("property", "og:image:width", String(CLIP_ON_SHARE_IMAGE.width));
+    meta("property", "og:image:height", String(CLIP_ON_SHARE_IMAGE.height));
+    meta("property", "og:image:alt", CLIP_ON_SHARE_IMAGE.alt);
+    meta("name", "twitter:url", CLIP_ON_URL);
+    meta("name", "twitter:title", CLIP_ON_SHARE_TITLE);
+    meta("name", "twitter:description", CLIP_ON_DESCRIPTION);
+    meta("name", "twitter:image", CLIP_ON_SHARE_IMAGE.url);
+    meta("name", "twitter:image:alt", CLIP_ON_SHARE_IMAGE.alt);
+
+    // Los JSON-LD de index.html son de los lentes, con porcentajes y reclamos
+    // de sueno que no aplican al clip-on. El Product del clip-on, con su
+    // precio, lo agrega la pagina al montar.
+    html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
+
+    this.emitFile({ type: "asset", fileName: "clip-on.html", source: html });
+  },
+});
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,7 +82,7 @@ export default defineConfig({
     host: "::",
     port: 8080,
   },
-  plugins: [react()],
+  plugins: [react(), clipOnHtml()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

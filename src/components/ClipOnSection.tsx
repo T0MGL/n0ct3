@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -263,6 +264,12 @@ export const ClipOnSection = ({ onBuyClick }: ClipOnSectionProps) => {
               <p className="mt-3 text-sm text-muted-foreground">
                 Envío gratis a todo Paraguay. Pagás al recibir.
               </p>
+              <Link
+                to="/clip-on"
+                className="mt-4 inline-block text-sm font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Ver el Clip-On
+              </Link>
             </Reveal>
           </div>
         </div>

@@ -1126,7 +1126,9 @@ const CheckoutForm = ({
           type="submit"
           variant="hero"
           size="xl"
-          className="w-full h-14 text-sm md:text-base"
+          // px-4 y no el px-10 del size xl: a 375 el padding se comia el
+          // ancho y el truncate cortaba el total ("Gs. 278.0...").
+          className="w-full h-14 px-4 text-sm md:text-base"
           disabled={paymentMethod === 'card' ? (!stripe || !isElementReady || isProcessing) : isProcessing}
         >
           {isProcessing ? (
