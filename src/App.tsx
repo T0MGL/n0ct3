@@ -21,6 +21,9 @@ const Cert = lazy(() => import("./pages/Cert"));
 // secciones) entre en el bundle de /, que es donde aterriza el trafico de lentes.
 const SleepMask = lazy(() => import("./pages/SleepMask"));
 
+// Landing del clip-on, lazy por la misma razon.
+const ClipOn = lazy(() => import("./pages/ClipOn"));
+
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +68,14 @@ const App = () => {
                 element={
                   <Suspense fallback={<div className="min-h-[100dvh] bg-black" />}>
                     <SleepMask />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/clip-on"
+                element={
+                  <Suspense fallback={<div className="min-h-[100dvh] bg-black" />}>
+                    <ClipOn />
                   </Suspense>
                 }
               />
