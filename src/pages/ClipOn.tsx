@@ -10,8 +10,8 @@
  *
  * Reclamos: solo los que ya estan aprobados en el sitio. Es un lente rojo que
  * se engancha sobre los lentes recetados, se saca en un segundo y filtra la luz
- * azul. Sin porcentaje: el 99% es de los lentes de marco completo y el clip-on
- * no tiene reporte propio (ver 84c231e).
+ * azul. Sin porcentaje: el 99% sale de los reportes de transmitancia de los
+ * lentes de marco completo, y el clip-on no tiene reporte propio.
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -49,6 +49,7 @@ const PRODUCT_JSON_LD = {
   "@type": "Product",
   name: "NOCTE® Clip-On Rojo",
   description: "Clip-On de lente rojo que se engancha sobre tus lentes recetados y se saca en un segundo.",
+  // El SKU de Ordefy, no el content_id del pixel: son dos identidades distintas.
   sku: "NOCTE-CLIPON-ROJO",
   brand: { "@type": "Brand", name: "NOCTE" },
   image: SHARE_IMAGE,
