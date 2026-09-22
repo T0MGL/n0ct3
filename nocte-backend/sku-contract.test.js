@@ -209,6 +209,17 @@ test('los topes son por pedido: antifaz 5 entre colores, una linea de lentes, cl
   assert.match(check([lens, lens]).join(), /lentes repetido en 2 lineas/);
 });
 
+// Una pestana abierta antes del cambio de precio todavia manda 189.000. Ordefy
+// registraria un precio que ya no existe, asi que rebota.
+test('clip-on: solo 169.000, el precio viejo rebota', () => {
+  const check = (raw) => priceMismatches(readOrderLines(raw).lines);
+  assert.deepEqual(check([{ product: 'clipon', quantity: 1, amount: 169000 }]), []);
+  assert.match(
+    check([{ product: 'clipon', quantity: 1, amount: 189000 }]).join(),
+    /precio invalido en clipon x1: 189000, se esperaba 169000/,
+  );
+});
+
 // Sept 2026: el antifaz se vende solo en /sleep-mask. El precio depende del
 // pedido: 149.000 solo, 99.000 con lentes o clip-on. Los cuatro casos, en COD
 // son exactamente los que rebotan o pasan.
