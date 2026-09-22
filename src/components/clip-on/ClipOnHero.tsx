@@ -1,5 +1,6 @@
 import type { Ref } from "react";
 import { HERO_PHOTO } from "@/components/clip-on/photos";
+import { StarRating } from "@/components/StarRating";
 import { CLIP_ON } from "@/lib/order";
 import { formatPrice } from "@/lib/stripe";
 
@@ -30,7 +31,10 @@ export const ClipOnHero = ({ onBuyClick, ctaRef }: ClipOnHeroProps) => (
         // fetchPriority en camelCase.
         {...{ fetchpriority: "high" }}
         decoding="async"
-        className="aspect-[4/3] w-full rounded-2xl bg-white/[0.06] object-cover ring-1 ring-white/10"
+        // En mobile la foto va mas apaisada para que el boton entre en la
+        // primera pantalla de un iPhone SE (667). El producto esta centrado:
+        // el recorte se come fondo blanco, no el clip-on.
+        className="aspect-[5/3] w-full rounded-2xl bg-white/[0.06] object-cover ring-1 ring-white/10 sm:aspect-[4/3]"
       />
     </div>
 
@@ -47,7 +51,12 @@ export const ClipOnHero = ({ onBuyClick, ctaRef }: ClipOnHeroProps) => (
         dejar tu receta.
       </p>
 
-      <p className="mt-6 text-[28px] font-bold leading-none tracking-[-0.02em] tabular-nums text-white lg:mt-8 lg:text-4xl">
+      {/* 627 clientes con un pedido entregado en Ordefy, y 48 calificaciones de
+          entrega, todas de 5 estrellas. Solo eso: sin promedio, sin cantidad de
+          resenas y sin "clientes satisfechos", que no tienen de donde salir. */}
+      <StarRating label="+600 clientes en Paraguay" className="mt-4 lg:mt-6" />
+
+      <p className="mt-5 text-[28px] font-bold leading-none tracking-[-0.02em] tabular-nums text-white lg:mt-8 lg:text-4xl">
         {formatPrice(CLIP_ON.price, "pyg")}
       </p>
 
@@ -55,7 +64,7 @@ export const ClipOnHero = ({ onBuyClick, ctaRef }: ClipOnHeroProps) => (
         ref={ctaRef}
         type="button"
         onClick={onBuyClick}
-        className="sleep-mask-cta mt-5 w-full lg:w-auto lg:min-w-[320px]"
+        className="sleep-mask-cta mt-4 w-full lg:mt-5 lg:w-auto lg:min-w-[320px]"
       >
         Comprar ahora
       </button>

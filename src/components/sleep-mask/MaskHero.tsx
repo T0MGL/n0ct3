@@ -1,5 +1,6 @@
 import { useEffect, useState, type Ref } from "react";
 import { MaskCountdown } from "@/components/sleep-mask/MaskCountdown";
+import { StarRating } from "@/components/StarRating";
 import { MaskPackPicker } from "@/components/sleep-mask/MaskPackPicker";
 import { ColorPhotoStack } from "@/components/sleep-mask/ColorPhotoStack";
 import { IN_USE_PHOTOS, IN_USE_SIZES } from "@/components/sleep-mask/photos";
@@ -91,6 +92,11 @@ export const MaskHero = ({ picks, photoColor: color, onQuantityChange, onPickCha
           Antifaz 3D NOCTE. Oscuridad total y cero presión en los párpados, para dormir profundo y
           levantarte con energía.
         </p>
+
+        {/* 627 clientes con un pedido entregado en Ordefy, y 48 calificaciones de
+            entrega, todas de 5 estrellas. Solo eso: sin promedio, sin cantidad de
+            resenas y sin "clientes satisfechos", que no tienen de donde salir. */}
+        <StarRating label="+600 clientes en Paraguay" className="mt-5 lg:mt-6" />
 
         {/* El reloj va arriba de los precios del pack. Es solo pantalla: los
             precios no vencen y nada del pedido lo lee. */}
