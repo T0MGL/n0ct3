@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent } from "react";
 import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
+import { SELECTED_CARD_CLASS, SelectedCardEdge } from "@/components/SelectedCard";
 import { MaskColorPicker } from "@/components/sleep-mask/MaskColorPicker";
 import { MASK_SWATCH_OPTIONS } from "@/components/sleep-mask/mask-swatches";
 import { resolveSelectableMaskColor, type MaskColorId } from "@/lib/mask-colors";
@@ -85,16 +86,20 @@ export const MaskPackPicker = ({ picks, onQuantityChange, onPickChange, announce
               onClick={() => onQuantityChange(pack.quantity)}
               onKeyDown={(event) => handleKeyDown(event, index)}
               className={cn(
-                "rounded-xl border px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+                // Mismo estado elegido que los packs de lentes (SelectedCard):
+                // el filete se dibuja contra el boton, asi que va relative y
+                // recorta en su radio.
+                "relative overflow-hidden rounded-xl border px-3 py-2.5 text-left transition-[border-color,background-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
                 selected
-                  ? "border-white/80 bg-white/[0.07]"
+                  ? SELECTED_CARD_CLASS
                   : "border-white/15 bg-transparent [@media(hover:hover)]:hover:border-white/35",
               )}
             >
-              <span className={cn("block text-[13px]", selected ? "text-white" : "text-white/65")}>
+              {selected && <SelectedCardEdge />}
+              <span className={cn("relative block text-[13px]", selected ? "text-white" : "text-white/65")}>
                 {packLabel(pack.quantity)}
               </span>
-              <span className="mt-0.5 block whitespace-nowrap text-[17px] font-bold leading-tight tracking-[-0.01em] text-white tabular-nums">
+              <span className="relative mt-0.5 block whitespace-nowrap text-[17px] font-bold leading-tight tracking-[-0.01em] text-white tabular-nums">
                 {pack.price.toLocaleString("es-PY")}
                 <span className="ml-0.5 text-[12px] font-medium tracking-normal text-white/60">Gs</span>
               </span>

@@ -3,6 +3,7 @@ import { TruckIcon } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
 import { BUNDLES, ORIGINAL_UNIT_PRICE } from "@/lib/bundles";
 import { VariantPicker } from "@/components/VariantPicker";
+import { SELECTED_CARD_CLASS, SelectedCardEdge } from "@/components/SelectedCard";
 import {
   VARIANTS,
   VARIANT_IDS,
@@ -68,20 +69,13 @@ export const BundleSelector = ({
             className={[
               "relative w-full overflow-hidden rounded-xl border transition-[border-color,background-color,box-shadow] duration-300",
               isSelected
-                ? "border-variant-active bg-[hsl(var(--variant-active)/0.025)] shadow-[0_8px_22px_-16px_hsl(var(--variant-active)/0.35)]"
+                ? SELECTED_CARD_CLASS
                 : isHighlighted
                   ? "border-variant-active/25 bg-transparent hover:border-variant-active/50"
                   : "border-white/8 bg-transparent hover:border-white/15",
             ].join(" ")}
           >
-            {isSelected && (
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-variant-active z-10"
-              />
-            )}
-
-            {isSelected && <span aria-hidden="true" className="laser-border z-10" />}
+            {isSelected && <SelectedCardEdge />}
 
             <button
               type="button"
