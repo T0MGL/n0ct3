@@ -23,7 +23,7 @@ const FAQS: readonly FaqEntry[] = [
   },
   {
     q: "¿Cuánto sale y cómo pago?",
-    a: `El Clip-On Rojo sale ${formatPrice(CLIP_ON.price, "pyg")}. El envío es gratis a todo Paraguay y pagás cuando lo recibís, en efectivo, QR o transferencia, o con tarjeta en el checkout.`,
+    a: `El Clip-On Rojo sale ${formatPrice(CLIP_ON.price, "pyg")}. El envío es gratis y el pago contra entrega es en todo Paraguay: pagás cuando lo recibís, en efectivo, QR o transferencia. También podés pagar con tarjeta en el checkout.`,
   },
   {
     q: "¿Cuánto tarda en llegar?",
