@@ -5,6 +5,10 @@
       "destination": "/cert.html"
     },
     {
+      "source": "/clip-on",
+      "destination": "/clip-on.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

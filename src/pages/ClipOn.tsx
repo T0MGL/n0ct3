@@ -25,7 +25,13 @@ import { ClipOnHero } from "@/components/clip-on/ClipOnHero";
 import { ClipOnStickyBar } from "@/components/clip-on/ClipOnStickyBar";
 import { InUseSection } from "@/components/clip-on/InUseSection";
 import { MechanismSection } from "@/components/clip-on/MechanismSection";
-import { HERO_PHOTO } from "@/components/clip-on/photos";
+import {
+  CLIP_ON_DESCRIPTION,
+  CLIP_ON_SHARE_IMAGE,
+  CLIP_ON_SHARE_TITLE,
+  CLIP_ON_TITLE,
+  CLIP_ON_URL,
+} from "@/components/clip-on/seo";
 // Los hechos de tienda, la fuente y el boton son los de /sleep-mask, tal cual.
 // Si aparece una tercera landing, esto se muda a una carpeta compartida.
 import { AssuranceSection } from "@/components/sleep-mask/AssuranceSection";
@@ -33,14 +39,8 @@ import { useScrolledPast } from "@/components/sleep-mask/useScrolledPast";
 import "@/components/sleep-mask/sleep-mask.css";
 import { trackViewContent } from "@/lib/meta-pixel";
 import { CLIP_ON, clipOnItem, metaContent } from "@/lib/order";
-import { formatPrice, getStripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
-
-const PAGE_URL = "https://nocte.studio/clip-on";
-const PAGE_TITLE = "Clip-On Rojo para lentes recetados | NOCTE®";
-const PAGE_DESCRIPTION = `Clip-On Rojo NOCTE: se engancha sobre tus lentes con aumento, filtra la luz azul y se saca en un segundo. Envío gratis a todo Paraguay y pagás al recibir. ${formatPrice(CLIP_ON.price, "pyg")}.`;
-const SHARE_TITLE = "NOCTE Clip-On Rojo, para los que usan lentes con aumento";
-const SHARE_IMAGE = `https://nocte.studio${HERO_PHOTO.src}`;
 
 // Sin categoria ni descripcion de salud: el dominio ya tiene un antecedente de
 // clasificacion de salud en Meta y esto lo lee cualquier crawler.
@@ -52,39 +52,41 @@ const PRODUCT_JSON_LD = {
   // El SKU de Ordefy, no el content_id del pixel: son dos identidades distintas.
   sku: "NOCTE-CLIPON-ROJO",
   brand: { "@type": "Brand", name: "NOCTE" },
-  image: SHARE_IMAGE,
-  url: PAGE_URL,
+  image: CLIP_ON_SHARE_IMAGE.url,
+  url: CLIP_ON_URL,
   offers: {
     "@type": "Offer",
-    url: PAGE_URL,
+    url: CLIP_ON_URL,
     price: CLIP_ON.price,
     priceCurrency: "PYG",
     availability: "https://schema.org/InStock",
   },
 };
 
-// selector -> valor. El index.html es uno solo y habla de los lentes: mientras
-// la pagina esta montada manda esto, y al salir vuelve lo que habia.
+// selector -> valor. Son los mismos que escribe clip-on.html en el build (ver
+// seo.ts); aca cubren al que llega navegando desde la home, que trae el head
+// de index.html.
 const META_CONTENT: ReadonlyArray<readonly [string, string]> = [
-  ['meta[name="description"]', PAGE_DESCRIPTION],
-  ['meta[property="og:url"]', PAGE_URL],
-  ['meta[property="og:title"]', SHARE_TITLE],
-  ['meta[property="og:description"]', PAGE_DESCRIPTION],
-  ['meta[property="og:image"]', SHARE_IMAGE],
-  ['meta[property="og:image:width"]', String(HERO_PHOTO.width)],
-  ['meta[property="og:image:height"]', String(HERO_PHOTO.height)],
-  ['meta[property="og:image:alt"]', HERO_PHOTO.alt],
-  ['meta[name="twitter:url"]', PAGE_URL],
-  ['meta[name="twitter:title"]', SHARE_TITLE],
-  ['meta[name="twitter:description"]', PAGE_DESCRIPTION],
-  ['meta[name="twitter:image"]', SHARE_IMAGE],
-  ['meta[name="twitter:image:alt"]', HERO_PHOTO.alt],
+  ['meta[name="title"]', CLIP_ON_TITLE],
+  ['meta[name="description"]', CLIP_ON_DESCRIPTION],
+  ['meta[property="og:url"]', CLIP_ON_URL],
+  ['meta[property="og:title"]', CLIP_ON_SHARE_TITLE],
+  ['meta[property="og:description"]', CLIP_ON_DESCRIPTION],
+  ['meta[property="og:image"]', CLIP_ON_SHARE_IMAGE.url],
+  ['meta[property="og:image:type"]', CLIP_ON_SHARE_IMAGE.type],
+  ['meta[property="og:image:width"]', String(CLIP_ON_SHARE_IMAGE.width)],
+  ['meta[property="og:image:height"]', String(CLIP_ON_SHARE_IMAGE.height)],
+  ['meta[property="og:image:alt"]', CLIP_ON_SHARE_IMAGE.alt],
+  ['meta[name="twitter:url"]', CLIP_ON_URL],
+  ['meta[name="twitter:title"]', CLIP_ON_SHARE_TITLE],
+  ['meta[name="twitter:description"]', CLIP_ON_DESCRIPTION],
+  ['meta[name="twitter:image"]', CLIP_ON_SHARE_IMAGE.url],
+  ['meta[name="twitter:image:alt"]', CLIP_ON_SHARE_IMAGE.alt],
 ];
 
 /**
- * Title, meta, canonical y el Product de schema.org mientras la pagina esta
- * montada. Lo leen los crawlers que ejecutan JS (Google). Los que no (el
- * scraper de WhatsApp y Facebook) siguen viendo la preview de index.html.
+ * Title, meta, canonical y el Product de schema.org (con el precio de
+ * order.ts) mientras la pagina esta montada. Al salir vuelve lo que habia.
  */
 const useDocumentMeta = () => {
   useEffect(() => {
@@ -99,8 +101,8 @@ const useDocumentMeta = () => {
       return [() => (tag.content = previous)];
     });
 
-    document.title = PAGE_TITLE;
-    if (canonical) canonical.href = PAGE_URL;
+    document.title = CLIP_ON_TITLE;
+    if (canonical) canonical.href = CLIP_ON_URL;
 
     const jsonLd = document.createElement("script");
     jsonLd.type = "application/ld+json";
