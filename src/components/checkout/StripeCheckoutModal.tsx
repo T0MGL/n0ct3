@@ -88,6 +88,12 @@ interface UpsellRowProps {
   price: number;
   /** Precio de catalogo, tachado arriba del real. Ausente cuando no hay descuento. */
   listPrice?: number;
+  /**
+   * Mismo tratamiento que el badge de "MAS VENDIDO" del pack Pareja en
+   * BundleSelector: la fila que mas conviene tambien lleva su etiqueta arriba
+   * del titulo. Ausente en las demas filas, que no reclaman ser la mejor opcion.
+   */
+  badge?: string;
   /** Foto a todo el ancho arriba de la tarjeta. Tocarla marca el bump. */
   media?: ReactNode;
   /** Lo que se despliega al marcarla, como la eleccion de color del antifaz. */
@@ -115,6 +121,7 @@ const UpsellRow = ({
   description,
   price,
   listPrice,
+  badge,
   media,
   children,
 }: UpsellRowProps) => {
@@ -180,6 +187,19 @@ const UpsellRow = ({
           </span>
 
           <div className="min-w-0 flex-1">
+            {badge && (
+              <div className="mb-1.5 flex">
+                <span
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.16em] text-white"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, hsl(var(--variant-active)), hsl(var(--variant-active) / 0.7))',
+                  }}
+                >
+                  {badge}
+                </span>
+              </div>
+            )}
             {/* span y no p: dentro de un button solo va contenido en linea. */}
             <span
               id={titleId}
@@ -1084,13 +1104,20 @@ const CheckoutForm = ({
 
           {/* Con todos los colores agotados el antifaz no se ofrece. Precio
               unico por unidad: el total de la fila es precio por cantidad.
-              En el checkout del antifaz no se ofrece a si mismo. */}
+              En el checkout del antifaz no se ofrece a si mismo.
+
+              Lleva badge porque es el upsell que mas conviene ofrecer: 70,5%
+              de margen contra 48-63% de los packs de lentes (analisis Hormozi
+              2026-09-21). El pack de lentes sigue disponible en BundleSelector
+              para quien lo prefiera, pero aca, donde el cliente ya eligio
+              Personal, el que se destaca es el antifaz. */}
           {!ALL_MASK_COLORS_SOLD_OUT && item.product !== 'sleepmask' && (
             <UpsellRow
               checked={maskPicks.length > 0}
               onToggle={toggleMask}
               title={SLEEP_MASK.name}
               description="Oscuridad total y cero presión en los párpados. Lo que empieza el filtro rojo, lo termina el antifaz."
+              badge="MÁS VENDIDO"
               price={SLEEP_MASK.price * Math.max(1, maskPicks.length)}
               listPrice={
                 SLEEP_MASK.listPrice === undefined
