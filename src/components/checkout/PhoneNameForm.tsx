@@ -573,7 +573,6 @@ export const PhoneNameForm = ({ isOpen, onSubmit, onClose }: PhoneNameFormProps)
                       }}
                       placeholder="Ej: 4123456-7"
                       maxLength={12}
-                      inputMode="tel"
                       autoComplete="off"
                       className={`w-full pl-11 pr-4 py-3 bg-secondary border rounded-lg text-base text-foreground placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-variant-active/40 transition-all ${errors.ruc ? "border-red-500" : "border-border focus:border-variant-active"
                         }`}
