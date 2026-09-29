@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { captureFbclid, ensureFbp } from "./lib/meta-matching";
 import { captureAttribution } from "./lib/attribution";
+import { readPendingPayment } from "./lib/pending-payment";
 
 // Meta Pixel is initialized in index.html for faster loading
 // Capture fbclid into _fbc cookie before React mounts so every subsequent
@@ -14,6 +15,9 @@ ensureFbp();
 // Antes del primer render: el router y los redirects de /certificados pueden
 // cambiar la URL y con ella las UTMs del anuncio.
 captureAttribution();
+// Leerlo poda el pedido pendiente vencido o corrupto. Sin esto, el de un pago
+// abandonado en el banco solo se borraria si el cliente vuelve a /payment-success.
+readPendingPayment();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

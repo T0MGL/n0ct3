@@ -1,34 +1,14 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { sendOrderInBackground, generateOrderNumber, notifyCheckoutStarted } from "@/services/orderService";
-import {
-  trackInitiateCheckout,
-  trackAddToCart,
-  trackPurchase,
-  trackServerPurchase,
-  type MetaUserData,
-} from "@/lib/meta-pixel";
-import { getFbc, getFbp, hashEmail, hashExternalId, hashPhoneE164, hashFirstName, hashLastName, hashCity, hashCountry, hashDepartment } from "@/lib/meta-matching";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { generateOrderNumber, notifyCheckoutStarted } from "@/services/orderService";
+import { trackInitiateCheckout, trackAddToCart } from "@/lib/meta-pixel";
 import { ALL_VARIANTS_SOLD_OUT } from "@/lib/variants";
 import { ALL_MASK_COLORS_SOLD_OUT } from "@/lib/mask-colors";
-import {
-  buildOrderLines,
-  describeOrderLines,
-  legacyOrderFields,
-  metaNumItems,
-  summarizeOrder,
-  metaContent,
-  sumLines,
-  type CheckoutItem,
-  type OrderLine,
-} from "@/lib/order";
+import { buildOrderLines, metaContent, type CheckoutItem, type OrderLine } from "@/lib/order";
 import { preloadMaskPhoto } from "@/lib/mask-photos";
 import { useExitIntent } from "@/hooks/useExitIntent";
-import { readOrderAttribution } from "@/lib/attribution";
+import { discardPendingPayment, savePendingPayment } from "@/lib/pending-payment";
+import { buildPaidOrder, submitPaidOrder, successOrderData } from "@/components/checkout/paidOrder";
 import type { PaymentResult } from "@/components/checkout/StripeCheckoutModal";
-
-// How long the Purchase pixel waits for /api/send-order to hand back the
-// server event id before falling back to the legacy pixel.
-const PURCHASE_ID_WAIT_MS = 6000;
 
 const PhoneNameForm = lazy(() => import("@/components/checkout/PhoneNameForm"));
 const SuccessPage = lazy(() => import("@/components/checkout/SuccessPage"));
@@ -92,10 +72,15 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
     enabled: isInCheckout && !showSuccess && !exitIntentShown && !showExitIntent,
   });
 
+  // Mientras Stripe confirma un pago la pagina puede irse al banco a proposito.
+  // Sin esto el aviso de salida frena el redirect y el cliente queda con el
+  // pago a medio autorizar.
+  const leavingForPaymentRef = useRef(false);
+
   // Prevent page close/reload during checkout
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (checkoutInProgress && !showSuccess) {
+      if (checkoutInProgress && !showSuccess && !leavingForPaymentRef.current) {
         e.preventDefault();
         e.returnValue = "Tenés un pedido en proceso. Si salís ahora, perdés tu progreso.";
         return e.returnValue;
@@ -165,100 +150,37 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
   const handlePaymentSuccess = useCallback((result: PaymentResult) => {
     // INSTANT transition - no waiting for API calls
     setCheckoutData((prev) => {
-      // Prefer the email that came back from the payment modal (card typed
-      // it in-form, COD may have it from the factura path) and fall back to
-      // whatever was already stored on checkoutData from PhoneNameForm.
-      const effectiveEmail = result.email || prev.email;
-      const { quantity, colors } = legacyOrderFields(prev.item, result.lines);
-
-      // Send the order to the backend. The success screen never waits on
-      // this, only the Purchase pixel does: with META_SERVER_PURCHASE on, the
-      // server emits the Purchase itself and answers with its event_id.
-      const orderSent = sendOrderInBackground({
-        name: prev.name,
-        phone: prev.phone,
-        location: prev.location,
-        address: prev.address,
-        lat: prev.lat,
-        long: prev.long,
-        ruc: prev.ruc,
-        lines: result.lines,
-        quantity,
-        total: result.finalTotal,
-        orderNumber: prev.orderNumber,
-        paymentIntentId: result.paymentIntentId,
-        email: effectiveEmail,
-        paymentType: result.paymentType,
-        isPaid: result.isPaid,
-        deliveryType: result.deliveryType,
-        colors,
-        fbp: getFbp(),
-        fbc: getFbc(),
-        attribution: readOrderAttribution(),
-      });
-
-      // El value del Purchase es el total real cobrado, upsells incluidos, no
-      // el precio del producto: sale de la suma de las lineas del pedido.
-      const purchaseParams = {
-        value: result.finalTotal,
-        currency: 'PYG',
-        ...metaContent(prev.item),
-        num_items: metaNumItems(prev.item, result.lines),
-        order_id: prev.orderNumber,
-      };
-
-      // Hash the Advanced Matching payload off the main thread while the
-      // order is in flight, then fire Purchase once the backend answers. If
-      // the server already emitted it, the pixel replays under the same
-      // event_id and Meta dedupes. Otherwise (flag off, Meta down, request
-      // lost) today's pixel plus CAPI mirror fires exactly as before. If
-      // hashing fails the event still goes out without user_data so we never
-      // lose a conversion signal.
-      void (async () => {
-        let userData: MetaUserData | undefined;
-        try {
-          const [em, ph, external_id, fn, ln, ct, country, st] = await Promise.all([
-            hashEmail(effectiveEmail),
-            hashPhoneE164(prev.phone),
-            hashExternalId(prev.orderNumber),
-            hashFirstName(prev.name),
-            hashLastName(prev.name),
-            hashCity(prev.location),
-            hashCountry(),
-            hashDepartment(prev.location),
-          ]);
-          userData = { em, ph, fn, ln, ct, country, st, external_id, fbc: getFbc(), fbp: getFbp() };
-        } catch (err) {
-          if (import.meta.env.DEV) {
-            console.error('[Meta] hash failed, firing without user_data', err);
-          }
-        }
-
-        // Bounded wait: on a slow backend the legacy pixel fires anyway so a
-        // buyer closing the tab never costs the conversion. With the flag on
-        // and a backend slower than this, Meta may see two ids for one order
-        // (server ORD-based, browser #NOC-based); rarer and cheaper than
-        // losing the event.
-        const { purchaseEventId } = await Promise.race([
-          orderSent,
-          new Promise<{ purchaseEventId?: undefined }>((resolve) => {
-            setTimeout(() => resolve({}), PURCHASE_ID_WAIT_MS);
-          }),
-        ]);
-        if (purchaseEventId) {
-          trackServerPurchase(purchaseParams, userData, purchaseEventId);
-        } else {
-          trackPurchase(purchaseParams, userData, prev.orderNumber);
-        }
-      })();
-
-      return { ...prev, paymentIntentId: result.paymentIntentId, lines: result.lines, email: effectiveEmail };
+      const paid = buildPaidOrder(prev, result);
+      submitPaidOrder(paid);
+      return { ...prev, paymentIntentId: result.paymentIntentId, lines: result.lines, email: paid.order.email };
     });
 
     // INSTANT UI update - show success immediately
     setShowStripeCheckout(false);
     setShowSuccess(true);
   }, []);
+
+  /**
+   * Corre justo antes de confirmPayment. Si el metodo de pago redirige, esta
+   * pagina se descarga y el pedido lo manda /payment-success desde lo que se
+   * guarda aca, que es exactamente lo que handlePaymentSuccess habria mandado.
+   * Devuelve que hacer cuando la confirmacion vuelve a esta pagina: el aviso de
+   * salida se rearma siempre, el pedido guardado se tira solo si se pide.
+   */
+  const preparePaymentRedirect = useCallback((result: PaymentResult) => {
+    // Corre antes de cobrar: nada de lo que pase aca puede frenar el pago. Si
+    // falla se pierde solo la red del retorno.
+    try {
+      savePendingPayment(result.paymentIntentId, buildPaidOrder(checkoutData, result), window.location.pathname);
+    } catch {
+      // savePendingPayment no tira; buildPaidOrder lee cookies y storage.
+    }
+    leavingForPaymentRef.current = true;
+    return (discardPending: boolean) => {
+      leavingForPaymentRef.current = false;
+      if (discardPending) discardPendingPayment(result.paymentIntentId);
+    };
+  }, [checkoutData]);
 
   const handleBackToPhoneForm = useCallback(() => {
     setShowStripeCheckout(false);
@@ -348,32 +270,18 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
     setCheckoutData(resetCheckoutData());
   }, [resetCheckoutData]);
 
-  const orderData = useMemo(() => {
-    // Generate Google Maps link if we have coordinates
-    let googleMapsLink: string | undefined;
-    if (checkoutData.lat && checkoutData.long) {
-      googleMapsLink = `https://www.google.com/maps?q=${checkoutData.lat},${checkoutData.long}`;
-    }
-
-    // El pedido cerrado incluye los upsells, asi que el resumen y el mensaje
-    // de WhatsApp salen de las lineas: un antifaz que no figura aca es un
-    // antifaz que el cliente no sabe que compro hasta que le llega. Antes de
-    // confirmar el pago todavia no hay lineas y vale el item solo.
-    const lines: OrderLine[] =
-      checkoutData.lines ?? buildOrderLines(checkoutData.item, { sleepMaskPicks: [], priorityShipping: false });
-
-    return {
-      orderNumber: checkoutData.orderNumber,
-      products: describeOrderLines(lines),
-      summary: summarizeOrder(lines),
-      total: `${sumLines(lines).toLocaleString('es-PY')} Gs`,
-      location: checkoutData.location,
-      phone: checkoutData.phone,
-      name: checkoutData.name,
-      address: checkoutData.address,
-      googleMapsLink,
-    };
-  }, [checkoutData]);
+  // El pedido cerrado incluye los upsells, asi que el resumen y el mensaje de
+  // WhatsApp salen de las lineas: un antifaz que no figura aca es un antifaz
+  // que el cliente no sabe que compro hasta que le llega. Antes de confirmar el
+  // pago todavia no hay lineas y vale el item solo.
+  const orderData = useMemo(
+    () =>
+      successOrderData(
+        checkoutData,
+        checkoutData.lines ?? buildOrderLines(checkoutData.item, { sleepMaskPicks: [], priorityShipping: false }),
+      ),
+    [checkoutData],
+  );
 
   // Memoize customerData to prevent re-renders of StripeCheckoutModal (contains expensive Stripe Elements)
   const customerData = useMemo(() => ({
@@ -405,6 +313,7 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
             onClose={handleStripeCheckoutClose}
             onBack={handleBackToPhoneForm}
             onSuccess={handlePaymentSuccess}
+            preparePaymentRedirect={preparePaymentRedirect}
             item={checkoutItem}
             currency="pyg"
             isProcessingOrder={false}

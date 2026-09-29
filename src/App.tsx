@@ -21,6 +21,11 @@ const Cert = lazy(() => import("./pages/Cert"));
 // secciones) entre en el bundle de /, que es donde aterriza el trafico de lentes.
 const SleepMask = lazy(() => import("./pages/SleepMask"));
 
+// Vuelta de Stripe despues de un pago que salio a autorizarse al banco. El path
+// es el return_url del checkout y attribution.ts lo excluye de la captura: no
+// se cambia sin cambiar los dos.
+const PaymentReturn = lazy(() => import("./pages/PaymentReturn"));
+
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +70,14 @@ const App = () => {
                 element={
                   <Suspense fallback={<div className="min-h-[100dvh] bg-black" />}>
                     <SleepMask />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/payment-success"
+                element={
+                  <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
+                    <PaymentReturn />
                   </Suspense>
                 }
               />
