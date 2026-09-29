@@ -23,6 +23,7 @@ import {
 } from "@/lib/order";
 import { preloadMaskPhoto } from "@/lib/mask-photos";
 import { useExitIntent } from "@/hooks/useExitIntent";
+import { readOrderAttribution } from "@/lib/attribution";
 import type { PaymentResult } from "@/components/checkout/StripeCheckoutModal";
 
 // How long the Purchase pixel waits for /api/send-order to hand back the
@@ -193,6 +194,7 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
         colors,
         fbp: getFbp(),
         fbc: getFbc(),
+        attribution: readOrderAttribution(),
       });
 
       // El value del Purchase es el total real cobrado, upsells incluidos, no

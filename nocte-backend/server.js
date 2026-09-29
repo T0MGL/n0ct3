@@ -9,6 +9,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const metaCapi = require('./meta-capi');
+const { sanitizeAttribution, describeAttributionResult } = require('./attribution');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1080,6 +1081,7 @@ async function sendToOrdefy(orderData) {
     paymentType,
     isPaid,
     ruc,
+    attribution,
   } = orderData;
 
   // Check if Ordefy is configured
@@ -1134,9 +1136,16 @@ async function sendToOrdefy(orderData) {
     },
     payment_method: paymentType === 'Card' ? 'online' : 'cash_on_delivery',
     payment_status: paymentStatus,
+    // Sin toque valido la key no existe: el pedido sale identico al de antes.
+    ...(attribution ? { attribution } : {}),
   };
 
-  console.log('📤 Sending to Ordefy:', JSON.stringify(ordefyPayload, null, 2));
+  // Los click ids identifican al comprador en Meta y Google: al log van solo
+  // los nombres de los campos.
+  const loggablePayload = attribution
+    ? { ...ordefyPayload, attribution: Object.keys(attribution) }
+    : ordefyPayload;
+  console.log('📤 Sending to Ordefy:', JSON.stringify(loggablePayload, null, 2));
 
   try {
     const response = await fetch(process.env.ORDEFY_WEBHOOK_URL, {
@@ -1156,6 +1165,8 @@ async function sendToOrdefy(orderData) {
 
     const result = await response.json();
     console.log('✅ Ordefy response:', result);
+    const attributionResult = describeAttributionResult(result);
+    if (attributionResult) console.log(`🧭 Ordefy attribution: ${attributionResult}`);
     return { success: true, data: result };
   } catch (error) {
     console.error('❌ Ordefy request failed:', error.message);
@@ -1170,7 +1181,8 @@ async function sendToOrdefy(orderData) {
 app.post('/api/send-order', async (req, res) => {
   try {
     console.log('📦 Sending order to n8n and Ordefy...');
-    console.log('Order data:', JSON.stringify(req.body, null, 2));
+    const { attribution: rawAttribution, ...loggableBody } = req.body || {};
+    console.log('Order data:', JSON.stringify(loggableBody, null, 2));
 
     const {
       name,
@@ -1331,6 +1343,8 @@ app.post('/api/send-order', async (req, res) => {
         paymentType,
         isPaid,
         ruc,
+        // Solo Ordefy. El payload de n8n no cambia.
+        attribution: sanitizeAttribution(rawAttribution),
       }),
     ]);
 
