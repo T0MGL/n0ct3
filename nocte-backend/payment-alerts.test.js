@@ -126,6 +126,23 @@ test('webhook firmado de payment_intent.succeeded: se verifica sobre el body cru
   assert.deepEqual(outbound, []);
 });
 
+test('el webhook firmado entra igual con barra final o con mayusculas, como el resto de las rutas', async () => {
+  const payload = JSON.stringify({ id: 'evt_3', object: 'event', type: 'payment_intent.succeeded', data: { object: intent() } });
+  const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret: process.env.STRIPE_WEBHOOK_SECRET });
+
+  for (const path of ['/api/webhook/', '/API/webhook']) {
+    const response = await withGuards(() =>
+      fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'stripe-signature': signature },
+        body: payload,
+      }),
+    );
+    assert.equal(response.status, 200, path);
+  }
+  assert.deepEqual(outbound, []);
+});
+
 test('webhook con firma invalida se rechaza', async () => {
   const payload = JSON.stringify({ id: 'evt_2', object: 'event', type: 'payment_intent.succeeded', data: { object: intent() } });
   const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret: 'whsec_otro' });

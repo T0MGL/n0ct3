@@ -57,11 +57,14 @@ app.use('/api/update-payment-intent', paymentLimiter);
 app.use('/api/send-order', paymentLimiter);
 app.use('/api/payment-without-order', paymentLimiter);
 
-// Parse JSON bodies. El webhook de Stripe queda afuera: la firma se verifica
+// El webhook de Stripe se registra antes del parser JSON: la firma se verifica
 // sobre los bytes crudos, y con el body ya parseado constructEvent rechazaba
-// todos los eventos.
-const jsonParser = express.json();
-app.use((req, res, next) => (req.path === '/api/webhook' ? next() : jsonParser(req, res, next)));
+// todos los eventos. Declarado como ruta, Express lo matchea igual que al
+// resto (sin distinguir mayusculas ni barra final).
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
+// Parse JSON bodies
+app.use(express.json());
 
 // CORS Configuration for localhost development
 const corsOptions = {
@@ -1490,7 +1493,7 @@ app.post('/api/payment-without-order', async (req, res) => {
  * POST /api/webhook
  * Stripe webhook endpoint (for production use)
  */
-app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+async function handleStripeWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -1536,7 +1539,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   }
 
   res.json({ received: true });
-});
+}
 
 // ==================== META CONVERSIONS API ====================
 
