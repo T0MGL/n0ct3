@@ -1483,7 +1483,7 @@ app.post('/api/checkout-started', async (req, res) => {
 app.post('/api/payment-without-order', async (req, res) => {
   const { status, alert } = await verifyPaymentWithoutOrder(req.body, (id) => stripe.paymentIntents.retrieve(id));
   if (alert) console.error(alert);
-  res.status(status).json({ received: status === 202 });
+  res.status(status).json({ received: status === 202 || status === 502 });
 });
 
 /**

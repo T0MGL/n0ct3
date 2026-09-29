@@ -49,8 +49,11 @@ async function verifyPaymentWithoutOrder(body, retrievePaymentIntent) {
   let paymentIntent;
   try {
     paymentIntent = await retrievePaymentIntent(paymentIntentId);
-  } catch {
-    return { status: 404 };
+  } catch (error) {
+    if (error?.code === 'resource_missing') return { status: 404 };
+    // Stripe caido o sin credenciales: el aviso puede ser real y es el unico
+    // que va a llegar, asi que se deja la marca aunque no se haya verificado.
+    return { status: 502, alert: `🚨 PAGO_SIN_PEDIDO_NO_VERIFICADO pi=${paymentIntentId}. Revisar el cobro en Stripe.` };
   }
   if (paymentIntent.client_secret !== clientSecret) return { status: 403 };
   if (paymentIntent.status !== 'succeeded') return { status: 409 };

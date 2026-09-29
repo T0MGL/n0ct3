@@ -49,10 +49,15 @@ test('el aviso del navegador solo alerta un cobro real del que trae el client se
   assert.deepEqual(await verifyPaymentWithoutOrder({ ...body, clientSecret: '' }, found(intent())), { status: 400 });
   assert.deepEqual(
     await verifyPaymentWithoutOrder(body, async () => {
-      throw new Error('No such payment_intent');
+      throw Object.assign(new Error('No such payment_intent'), { code: 'resource_missing' });
     }),
     { status: 404 },
   );
+  const stripeDown = await verifyPaymentWithoutOrder(body, async () => {
+    throw new Error('connect ETIMEDOUT');
+  });
+  assert.equal(stripeDown.status, 502);
+  assert.equal(stripeDown.alert, '🚨 PAGO_SIN_PEDIDO_NO_VERIFICADO pi=pi_3QxRedirect01. Revisar el cobro en Stripe.');
   assert.deepEqual(await verifyPaymentWithoutOrder({ ...body, clientSecret: 'pi_3QxRedirect01_secret_otro' }, found(intent())), {
     status: 403,
   });
