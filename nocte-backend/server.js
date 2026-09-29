@@ -404,6 +404,71 @@ app.post('/api/geocode', async (req, res) => {
 });
 
 /**
+ * Reverse-geocodes GPS coordinates into a human-readable Paraguayan address
+ * via Google's Geocoding API. Shared by POST /api/reverse-geocode (the
+ * frontend's "usar mi ubicación actual" button) and buildOrdefyShippingAddress
+ * (the order payload, so a failed geocode never blocks order creation) so the
+ * Google call lives in exactly one place.
+ *
+ * Never throws: a missing key, timeout, network error, or a non-OK Google
+ * status all resolve to status !== 'OK' with the same fallback shape, so
+ * callers only need to branch on `status`.
+ */
+async function reverseGeocodeCoordinates(latitude, longitude, { timeoutMs = 4000 } = {}) {
+  const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+  const fallback = { address: 'Paraguay', city: 'Paraguay', formattedAddress: 'Paraguay', lat: latitude, lng: longitude, googleMapsLink };
+
+  if (!process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+    console.log('⚠️ No Google Maps API key - using fallback location');
+    return { status: 'NO_API_KEY', ...fallback };
+  }
+
+  const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.GOOGLE_MAPS_API_KEY}&language=es`;
+
+  console.log(`🔍 Reverse geocoding: ${latitude}, ${longitude}`);
+
+  try {
+    const response = await fetch(reverseGeocodeUrl, { signal: AbortSignal.timeout(timeoutMs) });
+    const data = await response.json();
+
+    if (data.status === 'OK' && data.results.length > 0) {
+      const result = data.results[0];
+      const formattedAddress = result.formatted_address;
+
+      // Extract city from address components
+      let city = 'Paraguay';
+      let locality = null;
+
+      for (const component of result.address_components) {
+        if (component.types.includes('locality')) {
+          locality = component.long_name;
+        } else if (component.types.includes('administrative_area_level_2')) {
+          city = component.long_name;
+        } else if (component.types.includes('administrative_area_level_1') && !locality) {
+          city = component.long_name;
+        }
+      }
+
+      // Prefer locality over administrative areas
+      if (locality) {
+        city = locality;
+      }
+
+      console.log(`✅ Reverse geocoded to: ${city}, ${formattedAddress}`);
+
+      return { status: 'OK', address: formattedAddress, city, formattedAddress, lat: latitude, lng: longitude, googleMapsLink };
+    }
+
+    console.warn(`⚠️ Reverse geocoding failed: ${data.status}`);
+    return { status: data.status || 'ERROR', ...fallback };
+  } catch (error) {
+    const status = error.name === 'TimeoutError' || error.name === 'AbortError' ? 'TIMEOUT' : 'FETCH_ERROR';
+    console.error(`❌ Reverse geocoding error (${status}):`, error.message);
+    return { status, ...fallback, error: error.message };
+  }
+}
+
+/**
  * POST /api/reverse-geocode
  * Convert GPS coordinates to human-readable address
  */
@@ -433,75 +498,13 @@ app.post('/api/reverse-geocode', async (req, res) => {
       });
     }
 
-    // If no Google Maps API key, return fallback with coordinates
-    if (!process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-      console.log('⚠️ No Google Maps API key - using fallback location');
-      return res.json({
-        address: 'Paraguay',
-        city: 'Paraguay',
-        formattedAddress: 'Paraguay',
-        lat: latitude,
-        lng: longitude,
-        usesFallback: true,
-        googleMapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`
-      });
-    }
+    const { status, error, ...result } = await reverseGeocodeCoordinates(latitude, longitude);
 
-    // Use Google Reverse Geocoding API for precise address
-    const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.GOOGLE_MAPS_API_KEY}&language=es`;
-
-    console.log(`🔍 Reverse geocoding: ${latitude}, ${longitude}`);
-
-    const response = await fetch(reverseGeocodeUrl);
-    const data = await response.json();
-
-    if (data.status === 'OK' && data.results.length > 0) {
-      const result = data.results[0];
-      const formattedAddress = result.formatted_address;
-
-      // Extract city from address components
-      let city = 'Paraguay';
-      let locality = null;
-
-      for (const component of result.address_components) {
-        if (component.types.includes('locality')) {
-          locality = component.long_name;
-        } else if (component.types.includes('administrative_area_level_2')) {
-          city = component.long_name;
-        } else if (component.types.includes('administrative_area_level_1') && !locality) {
-          city = component.long_name;
-        }
-      }
-
-      // Prefer locality over administrative areas
-      if (locality) {
-        city = locality;
-      }
-
-      console.log(`✅ Reverse geocoded to: ${city}, ${formattedAddress}`);
-
-      return res.json({
-        address: formattedAddress,
-        city: city,
-        formattedAddress: formattedAddress,
-        lat: latitude,
-        lng: longitude,
-        usesFallback: false,
-        googleMapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`
-      });
-    } else {
-      // Fallback if reverse geocoding fails
-      console.warn(`⚠️ Reverse geocoding failed: ${data.status}`);
-      return res.json({
-        address: 'Paraguay',
-        city: 'Paraguay',
-        formattedAddress: 'Paraguay',
-        lat: latitude,
-        lng: longitude,
-        usesFallback: true,
-        googleMapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`
-      });
-    }
+    res.json({
+      ...result,
+      usesFallback: status !== 'OK',
+      ...(error ? { error } : {}),
+    });
   } catch (error) {
     console.error('❌ Reverse geocoding error:', error.message);
 
@@ -535,11 +538,50 @@ function generateOrdefyIdempotencyKey() {
 }
 
 /**
- * Build Ordefy shipping address from order data
- * ONLY sends google_maps_url when we have real GPS coordinates
- * When user types address manually, sends text address fields instead
+ * Build Ordefy shipping address from order data.
+ *
+ * Boton "usar mi ubicacion actual" (lat/long presentes, sin address de texto):
+ * el checkout nunca manda una direccion escrita en este camino, solo el pin.
+ * Mandarle a Ordefy unicamente google_maps_url produce el placeholder mudo
+ * "Ver ubicación en Google Maps" (90 pedidos historicos, 35 en septiembre),
+ * que bloquea despacho y factura SIFEN a un default generico de Asuncion. Por
+ * eso reverse-geocodeamos las coordenadas aca mismo antes de armar el
+ * payload:
+ *   - geocoding OK: manda address (texto real) Y google_maps_url juntos.
+ *   - geocoding falla (status != OK, timeout, sin API key, etc.): NUNCA se
+ *     inventa un placeholder en address, queda ausente del payload.
+ *     google_maps_url se manda igual, siempre, es el respaldo. Se suma una
+ *     senal de revision legible en notes (needs_address_review no es un
+ *     campo real del webhook de Ordefy hoy, ver PR).
+ *
+ * Direccion manual tipeada (sin GPS, o GPS con address ya provista): sin
+ * cambios, se manda el texto tal cual.
  */
-function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, reference }) {
+async function buildOrdefyShippingAddress({ lat, long, address, city, googleMapsLink, reference }) {
+  // GPS puro: hay coordenadas y el checkout no mando direccion de texto.
+  if (lat && long && !address) {
+    const geocoded = await reverseGeocodeCoordinates(lat, long);
+
+    if (geocoded.status === 'OK') {
+      return {
+        address: geocoded.formattedAddress,
+        google_maps_url: geocoded.googleMapsLink,
+        city: city || geocoded.city || undefined,
+        notes: reference || undefined,
+      };
+    }
+
+    console.warn(`⚠️ Geocoding de pedido fallo (${geocoded.status}), queda solo el pin de Maps`);
+    return {
+      google_maps_url: geocoded.googleMapsLink,
+      city: city || undefined,
+      needs_address_review: true,
+      notes: [reference, 'Direccion no resuelta automaticamente, ver link de Maps.']
+        .filter(Boolean)
+        .join(' | '),
+    };
+  }
+
   // ONLY use Google Maps URL if we have real GPS coordinates
   // This prevents sending "fake" search links to Ordefy
   if (lat && long) {
@@ -1121,7 +1163,7 @@ async function sendToOrdefy(orderData) {
       email: email || undefined,
       ...parsedRuc,
     },
-    shipping_address: buildOrdefyShippingAddress({
+    shipping_address: await buildOrdefyShippingAddress({
       lat,
       long,
       address,
