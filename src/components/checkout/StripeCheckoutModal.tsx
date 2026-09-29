@@ -442,9 +442,9 @@ interface StripeCheckoutModalProps {
   /**
    * Guarda el pedido antes de confirmar la tarjeta, para el caso en que Stripe
    * saque al cliente de la pagina (banco, 3DS a pantalla completa). Devuelve
-   * con que deshacerlo si la confirmacion vuelve sin redirigir.
+   * que llamar cuando la confirmacion vuelve a esta pagina.
    */
-  preparePaymentRedirect?: (result: PaymentResult) => () => void;
+  preparePaymentRedirect?: (result: PaymentResult) => (discardPending: boolean) => void;
   /** Que se esta comprando: pack de lentes, clip-on o antifaz. Los upsells se eligen aca. */
   item: CheckoutItem;
   currency: string;
@@ -699,7 +699,7 @@ const CheckoutForm = ({
         return;
       }
 
-      const undoRedirectPrep = paymentIntentId
+      const settleRedirectPrep = paymentIntentId
         ? preparePaymentRedirect?.({
             paymentIntentId,
             paymentType: 'Card',
@@ -732,12 +732,15 @@ const CheckoutForm = ({
           },
         },
         redirect: 'if_required',
+      }).catch((error: unknown) => {
+        settleRedirectPrep?.(false);
+        throw error;
       });
 
       // Error o cobro resuelto en la pagina: no hubo redirect y el pedido
       // guardado sobra. Cualquier otra respuesta lo conserva y lo poda el TTL:
       // no dependemos de que Stripe nunca resuelva mientras redirige.
-      if (error || paymentIntent?.status === 'succeeded') undoRedirectPrep?.();
+      settleRedirectPrep?.(Boolean(error) || paymentIntent?.status === 'succeeded');
 
       if (error) {
         setErrorMessage(error.message || 'Error al procesar el pago');

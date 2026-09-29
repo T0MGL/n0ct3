@@ -27,11 +27,11 @@ const REPORTED_KEY = "nocte_payment_reported";
 // Deja rastro en el backend de un cobro que este navegador no puede convertir
 // en pedido. El backend verifica el pago contra Stripe antes de alertar, asi
 // que no sirve para inventar alertas. Una vez por pago y pestaña: recargar no
-// le duplica la alerta a quien la carga a mano.
+// le duplica la alerta a quien la carga a mano. La marca va recien con la
+// respuesta: un aviso que no llego se reintenta en la proxima carga.
 const reportPaidWithoutOrder = (paymentIntentId: string, clientSecret: string): void => {
   try {
     if (window.sessionStorage.getItem(REPORTED_KEY) === paymentIntentId) return;
-    window.sessionStorage.setItem(REPORTED_KEY, paymentIntentId);
   } catch {
     // Sin sessionStorage se avisa igual: una alerta de mas es mejor que ninguna.
   }
@@ -40,7 +40,11 @@ const reportPaidWithoutOrder = (paymentIntentId: string, clientSecret: string): 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ paymentIntentId, clientSecret }),
     keepalive: true,
-  }).catch(() => undefined);
+  })
+    .then((response) => {
+      if (response.ok) window.sessionStorage.setItem(REPORTED_KEY, paymentIntentId);
+    })
+    .catch(() => undefined);
 };
 
 // Una sola curva para la entrada de cada estado: es el unico movimiento de la

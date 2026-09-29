@@ -164,14 +164,15 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
    * Corre justo antes de confirmPayment. Si el metodo de pago redirige, esta
    * pagina se descarga y el pedido lo manda /payment-success desde lo que se
    * guarda aca, que es exactamente lo que handlePaymentSuccess habria mandado.
-   * Devuelve con que deshacerlo cuando la confirmacion vuelve sin redirigir.
+   * Devuelve que hacer cuando la confirmacion vuelve a esta pagina: el aviso de
+   * salida se rearma siempre, el pedido guardado se tira solo si se pide.
    */
   const preparePaymentRedirect = useCallback((result: PaymentResult) => {
     savePendingPayment(result.paymentIntentId, buildPaidOrder(checkoutData, result), window.location.pathname);
     leavingForPaymentRef.current = true;
-    return () => {
+    return (discardPending: boolean) => {
       leavingForPaymentRef.current = false;
-      discardPendingPayment(result.paymentIntentId);
+      if (discardPending) discardPendingPayment(result.paymentIntentId);
     };
   }, [checkoutData]);
 

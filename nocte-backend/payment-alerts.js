@@ -11,8 +11,9 @@
  *   stripe.payment_succeeded  cada cobro confirmado (webhook). Se cruza contra
  *                             Ordefy por orderNumber.
  *   PAGO_SIN_PEDIDO           un cobro confirmado que el navegador del cliente
- *                             no pudo convertir en pedido. Hay que cargarlo a
- *                             mano: la orden no existe en Ordefy.
+ *                             no pudo convertir en pedido, o cuyo envio no
+ *                             confirmo. Buscar el orderNumber en Ordefy antes
+ *                             de cargarlo a mano: el pedido pudo llegar igual.
  *
  * Ninguna de las dos lleva datos del cliente: el orderNumber alcanza para
  * encontrarlo en Stripe.
@@ -29,7 +30,7 @@ const describe = (paymentIntent) => {
 const succeededPaymentLog = (paymentIntent) => `stripe.payment_succeeded ${describe(paymentIntent)}`;
 
 const paymentWithoutOrderAlert = (paymentIntent) =>
-  `🚨 PAGO_SIN_PEDIDO ${describe(paymentIntent)}. Cobrado y sin pedido en Ordefy: cargarlo a mano.`;
+  `🚨 PAGO_SIN_PEDIDO ${describe(paymentIntent)}. Cobrado y el navegador no confirmo el pedido: verificar en Ordefy por orderNumber antes de cargarlo.`;
 
 /**
  * Valida el aviso de /payment-success antes de alertar. Mismo criterio que
