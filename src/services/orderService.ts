@@ -7,6 +7,7 @@ import { getClientIpv6 } from '@/lib/meta-ip';
 
 import { API_CONFIG } from '@/lib/stripe';
 import type { OrderLine } from '@/lib/order';
+import type { OrderAttribution } from '@/lib/attribution';
 
 export interface OrderData {
   name: string;
@@ -41,6 +42,11 @@ export interface OrderData {
    */
   fbp?: string;
   fbc?: string;
+  /**
+   * Ultimo toque de campana (UTMs, click ids) para Ordefy. Ausente cuando no
+   * hay ninguno vivo: el body queda identico al de antes, sin la key.
+   */
+  attribution?: OrderAttribution;
 }
 
 export interface GeocodeResponse {

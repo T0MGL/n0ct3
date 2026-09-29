@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { captureFbclid, ensureFbp } from "./lib/meta-matching";
+import { captureAttribution } from "./lib/attribution";
 
 // Meta Pixel is initialized in index.html for faster loading
 // Capture fbclid into _fbc cookie before React mounts so every subsequent
@@ -10,6 +11,9 @@ import { captureFbclid, ensureFbp } from "./lib/meta-matching";
 collectClientIpv6();
 captureFbclid();
 ensureFbp();
+// Antes del primer render: el router y los redirects de /certificados pueden
+// cambiar la URL y con ella las UTMs del anuncio.
+captureAttribution();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
