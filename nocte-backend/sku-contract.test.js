@@ -384,5 +384,25 @@ test('Purchase del servidor: el antifaz como producto principal lleva su identid
     ]),
     undefined,
   );
-  assert.equal(content([{ product: 'clipon', quantity: 1, amount: 169000 }]), undefined);
+});
+
+test('Purchase del servidor: el clip-on sale con el mismo content_id que el pixel', () => {
+  const parse = (raw) => readOrderLines(raw).lines;
+  const clipOn = { content_name: 'NOCTE® Clip-On Rojo', content_ids: ['nocte-clipon-rojo'], num_items: 1 };
+
+  assert.deepEqual(purchaseContent(parse([{ product: 'clipon', quantity: 1, amount: 169000 }])), clipOn);
+
+  // Clip-on con el antifaz del bump y envio: las tres lineas llegan al pedido
+  // al precio que valida el backend, y la identidad sigue siendo la del clip-on,
+  // como en metaContent y metaNumItems del navegador.
+  const raw = [
+    { product: 'clipon', quantity: 1, amount: 169000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 99000 },
+    { product: 'envio-prioritario', quantity: 1, amount: 10000 },
+  ];
+  const lines = parse(raw);
+  assert.deepEqual(priceMismatches(lines), []);
+  assert.deepEqual(lines.map((line) => line.product), ['clipon', 'sleepmask', 'envio-prioritario']);
+  assert.equal(lines.reduce((total, line) => total + line.amount, 0), 278000);
+  assert.deepEqual(purchaseContent(lines), clipOn);
 });
