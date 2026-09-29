@@ -84,6 +84,14 @@ async function resolvePaymentReturn(deps: PaymentReturnDeps): Promise<PaymentRet
     return { kind: "paid", paid: pending.paid };
   }
 
+  // markSent tambien da false cuando otra pestaña o una recarga ganaron la
+  // carrera y ya mandaron el pedido mientras esta consultaba a Stripe. Eso no
+  // es un pago sin pedido: alertarlo haria que alguien lo cargue dos veces.
+  const current = deps.readPending();
+  if (current?.paymentIntentId === paymentIntentId && current.status === "sent") {
+    return { kind: "already-sent", orderNumber: current.orderNumber };
+  }
+
   deps.reportPaidWithoutOrder(paymentIntentId, clientSecret);
   return { kind: "paid-without-order", paymentIntentId };
 }

@@ -119,8 +119,16 @@ export const PaymentReturn = () => {
   const navigate = useNavigate();
   const [outcome, setOutcome] = useState<PaymentReturnOutcome | null>(null);
 
+  // La URL lleva el client secret del pago y no tiene nada que indexar. El
+  // meta robots es el de index.html; se restaura al salir de la pagina.
   useEffect(() => {
     document.title = PAGE_TITLE;
+    const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const previous = robots?.content;
+    robots?.setAttribute("content", "noindex, nofollow");
+    return () => {
+      if (robots && previous !== undefined) robots.setAttribute("content", previous);
+    };
   }, []);
 
   useEffect(() => {

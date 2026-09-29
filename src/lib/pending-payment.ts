@@ -30,6 +30,11 @@ export type PendingPayment =
   | { paymentIntentId: string; savedAt: number; status: "pending"; paid: PaidOrder; checkoutPath: string }
   | { paymentIntentId: string; savedAt: number; status: "sent"; orderNumber: string; sentAt: number };
 
+// Leer window.localStorage tira SecurityError con el storage bloqueado (Safari
+// o Firefox sin cookies, Chrome con datos del sitio bloqueados). Por eso el env
+// se resuelve adentro del try de cada funcion y nunca como parametro por
+// defecto: si el storage falla se pierde la red del retorno, nunca el checkout
+// ni el arranque de la app.
 const browserEnv = (): PendingPaymentEnv | undefined => {
   if (typeof window === "undefined") return undefined;
   return { storage: window.localStorage, now: Date.now() };
@@ -105,9 +110,10 @@ export const savePendingPayment = (
   paymentIntentId: string,
   paid: PaidOrder,
   checkoutPath: string,
-  env = browserEnv(),
+  override?: PendingPaymentEnv,
 ): void => {
   try {
+    const env = override ?? browserEnv();
     if (!env) return;
     const record: PendingPayment = { paymentIntentId, savedAt: env.now, status: "pending", paid, checkoutPath };
     env.storage.setItem(STORAGE_KEY, JSON.stringify(record));
@@ -118,8 +124,9 @@ export const savePendingPayment = (
 };
 
 /** El pedido pendiente vivo, o undefined si no hay, vencio o no se puede leer. */
-export const readPendingPayment = (env = browserEnv()): PendingPayment | undefined => {
+export const readPendingPayment = (override?: PendingPaymentEnv): PendingPayment | undefined => {
   try {
+    const env = override ?? browserEnv();
     if (!env) return undefined;
     const raw = env.storage.getItem(STORAGE_KEY);
     const pending = parsePending(raw, env.now);
@@ -140,8 +147,13 @@ export const readPendingPayment = (env = browserEnv()): PendingPayment | undefin
  * navegador; queda la linea stripe.payment_succeeded del webhook para
  * conciliar. Devuelve false si no pudo escribir, y entonces el pedido no sale.
  */
-export const markPendingPaymentSent = (paymentIntentId: string, orderNumber: string, env = browserEnv()): boolean => {
+export const markPendingPaymentSent = (
+  paymentIntentId: string,
+  orderNumber: string,
+  override?: PendingPaymentEnv,
+): boolean => {
   try {
+    const env = override ?? browserEnv();
     if (!env) return false;
     const current = parsePending(env.storage.getItem(STORAGE_KEY), env.now);
     if (!current || current.paymentIntentId !== paymentIntentId || current.status !== "pending") return false;
@@ -160,8 +172,9 @@ export const markPendingPaymentSent = (paymentIntentId: string, orderNumber: str
 };
 
 /** Borra el pedido pendiente de este pago. Uno de otro pago no se toca. */
-export const discardPendingPayment = (paymentIntentId: string, env = browserEnv()): void => {
+export const discardPendingPayment = (paymentIntentId: string, override?: PendingPaymentEnv): void => {
   try {
+    const env = override ?? browserEnv();
     if (!env) return;
     const raw = env.storage.getItem(STORAGE_KEY);
     if (!raw) return;

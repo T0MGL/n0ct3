@@ -168,7 +168,13 @@ export function useCheckoutFlow({ initialItem, checkoutLabel, exitIntentProduct 
    * salida se rearma siempre, el pedido guardado se tira solo si se pide.
    */
   const preparePaymentRedirect = useCallback((result: PaymentResult) => {
-    savePendingPayment(result.paymentIntentId, buildPaidOrder(checkoutData, result), window.location.pathname);
+    // Corre antes de cobrar: nada de lo que pase aca puede frenar el pago. Si
+    // falla se pierde solo la red del retorno.
+    try {
+      savePendingPayment(result.paymentIntentId, buildPaidOrder(checkoutData, result), window.location.pathname);
+    } catch {
+      // savePendingPayment no tira; buildPaidOrder lee cookies y storage.
+    }
     leavingForPaymentRef.current = true;
     return (discardPending: boolean) => {
       leavingForPaymentRef.current = false;

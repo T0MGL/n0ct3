@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   discardPendingPayment,
   markPendingPaymentSent,
@@ -136,6 +136,32 @@ describe("pedido pendiente de un pago con redirect", () => {
     expect(storage.data.has(KEY)).toBe(true);
     discardPendingPayment(PI, at(storage, T0));
     expect(storage.data.has(KEY)).toBe(false);
+  });
+
+  describe("con el acceso a localStorage bloqueado en el navegador", () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    // Safari o Firefox sin cookies, Chrome con los datos del sitio bloqueados:
+    // el getter de window.localStorage tira. main.tsx llama readPendingPayment
+    // antes del primer render y el checkout llama savePendingPayment antes de
+    // cobrar, los dos sin env: si esto tira, la tienda queda en blanco.
+    const blockStorage = () =>
+      vi.stubGlobal(
+        "window",
+        Object.defineProperty({}, "localStorage", {
+          get() {
+            throw new DOMException("The operation is insecure.", "SecurityError");
+          },
+        }),
+      );
+
+    it("ninguna de las cuatro funciones tira sin env explicito", () => {
+      blockStorage();
+      expect(() => savePendingPayment(PI, paid(), "/")).not.toThrow();
+      expect(readPendingPayment()).toBeUndefined();
+      expect(markPendingPaymentSent(PI, "#NOC-0928-4417")).toBe(false);
+      expect(() => discardPendingPayment(PI)).not.toThrow();
+    });
   });
 
   it("con el storage bloqueado nada tira", () => {

@@ -246,6 +246,44 @@ describe("retorno de Stripe con el pago confirmado", () => {
     expect(readPendingPayment()?.status).toBe("sent");
   });
 
+  it("dos pestañas que vuelven a la vez mandan un solo pedido y ninguna alerta", async () => {
+    prepareBeforeRedirect();
+    let releaseSecondTab: () => void = () => undefined;
+    const secondTabRetrieve = () =>
+      new Promise<{ id: string; status: "succeeded" }>((resolve) => {
+        releaseSecondTab = () => resolve({ id: PI, status: "succeeded" });
+      });
+    const reportPaidWithoutOrder = vi.fn();
+
+    // La segunda pestaña lee el pendiente y se queda esperando a Stripe
+    // mientras la primera manda el pedido.
+    const secondTab = settlePaymentReturn(
+      deps({ search: `${RETURN_SEARCH}&tab=2`, retrieve: secondTabRetrieve, reportPaidWithoutOrder }),
+    );
+    const firstTab = await settlePaymentReturn(deps({ reportPaidWithoutOrder }));
+    releaseSecondTab();
+
+    expect(firstTab.kind).toBe("paid");
+    expect(await secondTab).toEqual({ kind: "already-sent", orderNumber: ORDER_NUMBER });
+    await settled();
+    expect(sendOrderCalls()).toHaveLength(1);
+    expect(purchases()).toHaveLength(1);
+    expect(reportPaidWithoutOrder).not.toHaveBeenCalled();
+  });
+
+  it("con localStorage bloqueado, preparar el redirect no frena el pago", () => {
+    vi.stubGlobal(
+      "window",
+      Object.defineProperty({ location: { href: "https://nocte.studio/", hostname: "nocte.studio", protocol: "https:" } }, "localStorage", {
+        get() {
+          throw new DOMException("The operation is insecure.", "SecurityError");
+        },
+      }),
+    );
+    expect(() => savePendingPayment(PI, buildPaidOrder(checkout, result), "/")).not.toThrow();
+    expect(readPendingPayment()).toBeUndefined();
+  });
+
   it("si no puede marcar el envio no manda nada y avisa al backend", async () => {
     prepareBeforeRedirect();
     const reportPaidWithoutOrder = vi.fn();
