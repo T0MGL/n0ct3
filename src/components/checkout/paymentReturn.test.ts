@@ -234,6 +234,18 @@ describe("retorno de Stripe con el pago confirmado", () => {
     expect(purchases()).toHaveLength(1);
   });
 
+  it("si el pedido no llega al backend avisa, sin reintentar", async () => {
+    prepareBeforeRedirect();
+    const reportPaidWithoutOrder = vi.fn();
+    const outcome = await settlePaymentReturn(
+      deps({ submit: async () => ({ success: false }), reportPaidWithoutOrder }),
+    );
+    await vi.waitFor(() => expect(reportPaidWithoutOrder).toHaveBeenCalledWith(PI, SECRET));
+
+    expect(outcome.kind).toBe("paid");
+    expect(readPendingPayment()?.status).toBe("sent");
+  });
+
   it("si no puede marcar el envio no manda nada y avisa al backend", async () => {
     prepareBeforeRedirect();
     const reportPaidWithoutOrder = vi.fn();

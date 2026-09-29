@@ -22,10 +22,19 @@ const retrievePaymentIntent = async (clientSecret: string) => {
   return paymentIntent;
 };
 
+const REPORTED_KEY = "nocte_payment_reported";
+
 // Deja rastro en el backend de un cobro que este navegador no puede convertir
 // en pedido. El backend verifica el pago contra Stripe antes de alertar, asi
-// que no sirve para inventar alertas.
+// que no sirve para inventar alertas. Una vez por pago y pestaña: recargar no
+// le duplica la alerta a quien la carga a mano.
 const reportPaidWithoutOrder = (paymentIntentId: string, clientSecret: string): void => {
+  try {
+    if (window.sessionStorage.getItem(REPORTED_KEY) === paymentIntentId) return;
+    window.sessionStorage.setItem(REPORTED_KEY, paymentIntentId);
+  } catch {
+    // Sin sessionStorage se avisa igual: una alerta de mas es mejor que ninguna.
+  }
   void fetch(`${API_CONFIG.baseUrl}/api/payment-without-order`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -120,9 +129,11 @@ export const PaymentReturn = () => {
       retrieve: retrievePaymentIntent,
       submit: submitPaidOrder,
       reportPaidWithoutOrder,
-    }).then((result) => {
-      if (!cancelled) setOutcome(result);
-    });
+    })
+      .catch((): PaymentReturnOutcome => ({ kind: "unverified" }))
+      .then((result) => {
+        if (!cancelled) setOutcome(result);
+      });
     return () => {
       cancelled = true;
     };

@@ -1,4 +1,4 @@
-import { sendOrderInBackground, type OrderData } from "@/services/orderService";
+import { sendOrderInBackground, type OrderData, type SendOrderResponse } from "@/services/orderService";
 import { trackPurchase, trackServerPurchase, type MetaUserData, type PurchaseParams } from "@/lib/meta-pixel";
 import {
   getFbc,
@@ -100,9 +100,10 @@ export function buildPaidOrder(checkout: CheckoutSnapshot, result: PaymentResult
 /**
  * Manda el pedido y dispara el Purchase. La pantalla de exito nunca espera
  * esto, solo el pixel: con META_SERVER_PURCHASE prendido el servidor emite el
- * Purchase y responde con su event_id.
+ * Purchase y responde con su event_id. Devuelve el envio para quien necesite
+ * saber si el pedido llego; nunca rechaza.
  */
-export function submitPaidOrder({ order, purchase }: PaidOrder): void {
+export function submitPaidOrder({ order, purchase }: PaidOrder): Promise<SendOrderResponse> {
   const orderSent = sendOrderInBackground(order);
 
   // Hash the Advanced Matching payload off the main thread while the order is
@@ -147,6 +148,8 @@ export function submitPaidOrder({ order, purchase }: PaidOrder): void {
       trackPurchase(purchase, userData, order.orderNumber);
     }
   })();
+
+  return orderSent;
 }
 
 export interface SuccessOrderData {

@@ -711,9 +711,7 @@ const CheckoutForm = ({
           })
         : undefined;
 
-      // Confirm payment using PaymentElement. Si Stripe redirige, la pagina se
-      // descarga antes de que esto resuelva y el finally nunca corre: el pedido
-      // guardado queda para /payment-success.
+      // Confirm payment using PaymentElement
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -734,7 +732,12 @@ const CheckoutForm = ({
           },
         },
         redirect: 'if_required',
-      }).finally(() => undoRedirectPrep?.());
+      });
+
+      // Error o cobro resuelto en la pagina: no hubo redirect y el pedido
+      // guardado sobra. Cualquier otra respuesta lo conserva y lo poda el TTL:
+      // no dependemos de que Stripe nunca resuelva mientras redirige.
+      if (error || paymentIntent?.status === 'succeeded') undoRedirectPrep?.();
 
       if (error) {
         setErrorMessage(error.message || 'Error al procesar el pago');

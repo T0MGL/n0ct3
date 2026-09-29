@@ -28,7 +28,8 @@ export interface PaymentReturnDeps {
   discard: (paymentIntentId: string) => void;
   /** stripe.retrievePaymentIntent con el client secret de la URL. */
   retrieve: (clientSecret: string) => Promise<Pick<PaymentIntent, "id" | "status"> | undefined>;
-  submit: (paid: PaidOrder) => void;
+  /** Resuelve con success:false si el pedido no llego al backend. Nunca rechaza. */
+  submit: (paid: PaidOrder) => Promise<{ success: boolean }>;
   reportPaidWithoutOrder: (paymentIntentId: string, clientSecret: string) => void;
 }
 
@@ -74,7 +75,12 @@ async function resolvePaymentReturn(deps: PaymentReturnDeps): Promise<PaymentRet
   }
 
   if (pending?.status === "pending" && deps.markSent(paymentIntentId, pending.paid.order.orderNumber)) {
-    deps.submit(pending.paid);
+    // Ya marcado como enviado, un envio que falla no se reintenta solo: se
+    // avisa al backend para cargarlo a mano. Reintentar desde aca arriesga el
+    // pedido doble que la marca existe para evitar.
+    void deps.submit(pending.paid).then(({ success }) => {
+      if (!success) deps.reportPaidWithoutOrder(paymentIntentId, clientSecret);
+    });
     return { kind: "paid", paid: pending.paid };
   }
 

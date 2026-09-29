@@ -134,10 +134,11 @@ export const readPendingPayment = (env = browserEnv()): PendingPayment | undefin
 
 /**
  * Marca el pago como pedido enviado y tira los datos del cliente. Va ANTES de
- * mandar el pedido: si la pestaña muere en el medio se pierde a lo sumo un
- * envio, que el backend ve como pago sin pedido; al reves serian dos pedidos y
- * dos confirmaciones de WhatsApp para un solo pago. Devuelve false si no pudo
- * escribir, y entonces el pedido no sale.
+ * mandar el pedido: al reves, una recarga en el medio serian dos pedidos y dos
+ * confirmaciones de WhatsApp para un solo pago. El costo es que si la pestaña
+ * muere entre la marca y el envio, ese pedido se pierde sin aviso del
+ * navegador; queda la linea stripe.payment_succeeded del webhook para
+ * conciliar. Devuelve false si no pudo escribir, y entonces el pedido no sale.
  */
 export const markPendingPaymentSent = (paymentIntentId: string, orderNumber: string, env = browserEnv()): boolean => {
   try {
