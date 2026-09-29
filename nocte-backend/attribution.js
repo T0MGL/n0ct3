@@ -11,7 +11,8 @@
 
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id'];
 
-const MAX_ATTRIBUTION_CHARS = 8 * 1024;
+// Ordefy mide el tope en bytes UTF-8 (Buffer.byteLength), no en caracteres.
+const MAX_ATTRIBUTION_BYTES = 8 * 1024;
 const MAX_CLICK_IDS = 10;
 const MAX_CLICK_IDS_CHARS = 3 * 1024;
 const MAX_UTM_LENGTH = 255;
@@ -61,7 +62,7 @@ const cleanClickIds = (value) => {
   for (const [rawKey, rawValue] of Object.entries(value)) {
     if (Object.keys(clickIds).length >= MAX_CLICK_IDS) break;
     const key = rawKey.toLowerCase();
-    if (!CLICK_ID_KEY.test(key) || isForbiddenClickIdKey(key) || key in clickIds) continue;
+    if (!CLICK_ID_KEY.test(key) || isForbiddenClickIdKey(key) || Object.hasOwn(clickIds, key)) continue;
     const id = toIdString(rawValue)?.trim();
     if (id && CLICK_ID_VALUE.test(id)) clickIds[key] = id;
   }
@@ -98,7 +99,8 @@ const cleanCapturedAt = (value, now) => {
 function sanitizeAttribution(raw, now = Date.now()) {
   try {
     if (!isPlainObject(raw)) return undefined;
-    if (JSON.stringify(raw).length > MAX_ATTRIBUTION_CHARS) return undefined;
+    // Corte temprano contra bodies inflados, antes de recorrer nada.
+    if (JSON.stringify(raw).length > MAX_ATTRIBUTION_BYTES) return undefined;
 
     const attribution = {};
     const source = cleanSource(raw.source);
@@ -119,6 +121,9 @@ function sanitizeAttribution(raw, now = Date.now()) {
     const capturedAt = cleanCapturedAt(raw.captured_at, now);
     if (capturedAt) attribution.captured_at = capturedAt;
     if (raw.touch === 'first' || raw.touch === 'last') attribution.touch = raw.touch;
+    // Un UTM de 255 caracteres no ASCII pesa hasta 765 bytes: lo que entra en
+    // caracteres puede pasarse en bytes, y Ordefy lo tiraria entero.
+    if (Buffer.byteLength(JSON.stringify(attribution)) > MAX_ATTRIBUTION_BYTES) return undefined;
     return attribution;
   } catch {
     return undefined;

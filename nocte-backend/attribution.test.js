@@ -88,6 +88,31 @@ test('click ids prohibidos, mal formados, duplicados por mayusculas y mas de 10 
   assert.equal(Object.keys(sanitizeAttribution({ click_ids: eleven }, NOW).click_ids).length, 10);
 });
 
+test('un click id que se llama como una key de Object.prototype se conserva', () => {
+  assert.deepEqual(sanitizeAttribution({ click_ids: { constructor: 'c1', fbclid: 'f1' } }, NOW), {
+    click_ids: { constructor: 'c1', fbclid: 'f1' },
+  });
+});
+
+test('el tope de 8 KB es en bytes UTF-8, como lo mide Ordefy', () => {
+  const build = (char) => ({
+    ...Object.fromEntries(
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id'].map((k) => [k, char.repeat(255)]),
+    ),
+    click_ids: Object.fromEntries(['fbclid', 'gclid', 'wbraid', 'gbraid', 'ttclid'].map((k) => [k, 'x'.repeat(500)])),
+    landing_page: `https://www.nocte.studio/${'p'.repeat(990)}`,
+  });
+
+  const wide = build('€');
+  assert.ok(JSON.stringify(wide).length < 8192, 'entra en caracteres');
+  assert.ok(Buffer.byteLength(JSON.stringify(wide)) > 8192, 'se pasa en bytes');
+  assert.equal(sanitizeAttribution(wide, NOW), undefined);
+
+  const ascii = build('a');
+  assert.ok(Buffer.byteLength(JSON.stringify(ascii)) < 8192);
+  assert.equal(sanitizeAttribution(ascii, NOW).utm_id, 'a'.repeat(255));
+});
+
 test('texto: saca control e invisibles, recorta, descarta vacios y mas de 255', () => {
   const result = sanitizeAttribution(
     {

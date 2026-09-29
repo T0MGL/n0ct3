@@ -94,6 +94,30 @@ describe("captura de la visita", () => {
   });
 });
 
+describe("vuelta de un pago con redirect", () => {
+  it("en /payment-success no se captura nada, ni el referrer del banco ni UTMs", () => {
+    const storage = memoryStorage();
+    visit(storage, "https://www.nocte.studio/payment-success?payment_intent=pi_1&utm_source=x", {
+      referrer: "https://hooks.stripe.com/3d_secure_2/hosted",
+    });
+    expect(storage.data.has(KEY)).toBe(false);
+
+    visit(storage, META_AD);
+    const before = storage.data.get(KEY);
+    visit(storage, "https://www.nocte.studio/payment-success?gclid=g1", {
+      now: T0 + 31 * DAY,
+      referrer: "https://acs.banco.com.py/challenge",
+    });
+    expect(storage.data.get(KEY)).toBe(before);
+  });
+
+  it("el control: la misma visita fuera de /payment-success si se guarda", () => {
+    const storage = memoryStorage();
+    visit(storage, "https://www.nocte.studio/", { referrer: "https://hooks.stripe.com/3d_secure_2/hosted" });
+    expect(read(storage)?.referrer).toBe("https://hooks.stripe.com/3d_secure_2/hosted");
+  });
+});
+
 describe("source", () => {
   const sourceFor = (query: string) => {
     const storage = memoryStorage();
@@ -320,6 +344,21 @@ describe("valores maliciosos en la URL", () => {
 
     expect(storage.data.get(KEY)).toBe(before);
     expect(before!.length).toBeLessThan(1024);
+  });
+
+  it("el tope del toque es en bytes: UTMs no ASCII que entran en caracteres no se guardan", () => {
+    const utms = (char: string) =>
+      ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id"]
+        .map((k) => `${k}=${encodeURIComponent(char.repeat(255))}`)
+        .join("&");
+
+    const wide = memoryStorage();
+    visit(wide, `https://www.nocte.studio/?${utms("€")}`);
+    expect(wide.data.has(KEY)).toBe(false);
+
+    const ascii = memoryStorage();
+    visit(ascii, `https://www.nocte.studio/?${utms("a")}`);
+    expect(read(ascii)?.utm_id).toHaveLength(255);
   });
 
   it("un landing_page de mas de 1024 caracteres se omite y el toque sigue", () => {

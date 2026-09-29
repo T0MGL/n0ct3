@@ -12,9 +12,12 @@
 
 const STORAGE_KEY = 'nocte_attribution_v1';
 const TOUCH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-// Ordefy tira el objeto entero si pasa de 8 KB. Un toque real ronda los 500
-// bytes: uno de 4 KB es basura y no vale la pena guardarlo.
-const MAX_TOUCH_CHARS = 4096;
+// Ordefy tira el objeto entero si pasa de 8 KB en UTF-8. Un toque real ronda
+// los 500 bytes: uno de 4 KB es basura y no vale la pena guardarlo.
+const MAX_TOUCH_BYTES = 4096;
+// Stripe vuelve aca despues de un pago con redirect (3DS, bancos). El referrer
+// es el host del banco o de Stripe, nunca un origen de campana.
+const PAYMENT_RETURN_PATH = '/payment-success';
 const MAX_UTM_LENGTH = 255;
 const MAX_URL_LENGTH = 1024;
 // Tolerancia para un reloj del dispositivo que va apenas adelantado. Ordefy
@@ -160,7 +163,7 @@ const buildTouch = (raw: Record<string, unknown>, capturedAt: string): Touch | u
     ...(referrer ? { referrer } : {}),
     captured_at: capturedAt,
   };
-  return JSON.stringify(touch).length <= MAX_TOUCH_CHARS ? touch : undefined;
+  return new TextEncoder().encode(JSON.stringify(touch)).length <= MAX_TOUCH_BYTES ? touch : undefined;
 };
 
 const isCampaignTouch = (touch: Touch): boolean =>
@@ -220,7 +223,7 @@ const touchFromVisit = (env: AttributionEnv): Touch | undefined => {
 export const captureAttribution = (override?: AttributionEnv): void => {
   try {
     const env = override ?? browserEnv();
-    if (!env) return;
+    if (!env || new URL(env.href).pathname === PAYMENT_RETURN_PATH) return;
     const stored = readStored(env.storage, env.now);
     const visit = touchFromVisit(env);
 
