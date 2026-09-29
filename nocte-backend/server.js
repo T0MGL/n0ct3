@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const metaCapi = require('./meta-capi');
 const { sanitizeAttribution, describeAttributionResult } = require('./attribution');
+const { succeededPaymentLog, verifyPaymentWithoutOrder } = require('./payment-alerts');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,9 +55,13 @@ app.use('/api/', apiLimiter);
 app.use('/api/create-payment-intent', paymentLimiter);
 app.use('/api/update-payment-intent', paymentLimiter);
 app.use('/api/send-order', paymentLimiter);
+app.use('/api/payment-without-order', paymentLimiter);
 
-// Parse JSON bodies
-app.use(express.json());
+// Parse JSON bodies. El webhook de Stripe queda afuera: la firma se verifica
+// sobre los bytes crudos, y con el body ya parseado constructEvent rechazaba
+// todos los eventos.
+const jsonParser = express.json();
+app.use((req, res, next) => (req.path === '/api/webhook' ? next() : jsonParser(req, res, next)));
 
 // CORS Configuration for localhost development
 const corsOptions = {
@@ -1470,6 +1475,18 @@ app.post('/api/checkout-started', async (req, res) => {
 });
 
 /**
+ * POST /api/payment-without-order
+ * /payment-success avisa un cobro confirmado cuyo pedido no esta en este
+ * navegador (el banco devolvio al cliente en otro navegador, storage borrado).
+ * No crea nada: deja la alerta PAGO_SIN_PEDIDO para cargarlo a mano.
+ */
+app.post('/api/payment-without-order', async (req, res) => {
+  const { status, alert } = await verifyPaymentWithoutOrder(req.body, (id) => stripe.paymentIntents.retrieve(id));
+  if (alert) console.error(alert);
+  res.status(status).json({ received: status === 202 });
+});
+
+/**
  * POST /api/webhook
  * Stripe webhook endpoint (for production use)
  */
@@ -1497,14 +1514,8 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
 
   switch (event.type) {
     case 'payment_intent.succeeded':
-      const paymentIntent = event.data.object;
-      console.log(`✅ Payment succeeded: ${paymentIntent.id}`);
-      console.log(`   Amount: ${paymentIntent.amount} ${paymentIntent.currency.toUpperCase()}`);
-      console.log(`   Email: ${paymentIntent.receipt_email}`);
-
-      // TODO: Update database
-      // TODO: Send confirmation email
-      // TODO: Update inventory
+      // Solo rastro para conciliar, nunca el pedido: ver payment-alerts.js.
+      console.log(succeededPaymentLog(event.data.object));
       break;
 
     case 'payment_intent.payment_failed':
