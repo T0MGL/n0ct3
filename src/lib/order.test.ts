@@ -56,9 +56,9 @@ describe("checkout del antifaz", () => {
   });
 
   it("con lentes rojos: antifaz primero a 119.000 y lentes a 229.000, total 348.000", () => {
-    const lines = buildOrderLines(sleepMaskItem(["rosado"]), { ...NO_UPSELLS, redGlasses: true });
+    const lines = buildOrderLines(sleepMaskItem(["negro"]), { ...NO_UPSELLS, redGlasses: true });
     expect(lines).toEqual([
-      { product: "sleepmask", color: "rosado", quantity: 1, amount: 119000 },
+      { product: "sleepmask", color: "negro", quantity: 1, amount: 119000 },
       { product: "lentes", quantity: 1, amount: 229000, colors: ["rojo"] },
     ]);
     expect(sumLines(lines)).toBe(348000);
@@ -86,16 +86,16 @@ describe("checkout del antifaz", () => {
   });
 
   it("la pantalla de exito y WhatsApp nombran el antifaz con su color y los lentes rojos", () => {
-    const lines = buildOrderLines(sleepMaskItem(["rosado"]), { sleepMaskPicks: [], redGlasses: true, priorityShipping: true });
+    const lines = buildOrderLines(sleepMaskItem(["negro"]), { sleepMaskPicks: [], redGlasses: true, priorityShipping: true });
     expect(summarizeOrder(lines)).toEqual({
       items: [
-        { key: "sleepmask-rosado", name: "Antifaz 3D Rosado", quantity: 1 },
+        { key: "sleepmask-negro", name: "Antifaz 3D Negro", quantity: 1 },
         { key: "lentes-rojo", name: "Lentes Rojos", quantity: 1 },
       ],
       priorityShipping: true,
     });
     expect(describeOrderLines(lines)).toBe(
-      "😴 1x NOCTE® Antifaz 3D rosado para dormir\n🔴 1x NOCTE® Lentes Rojos\n🚀 Envío Prioritario VIP",
+      "😴 1x NOCTE® Antifaz 3D negro para dormir\n🔴 1x NOCTE® Lentes Rojos\n🚀 Envío Prioritario VIP",
     );
   });
 });
@@ -115,17 +115,11 @@ describe("packs del antifaz sin lentes", () => {
     expect(lines).toEqual([{ product: "sleepmask", color: "negro", quantity: 2, amount: 269000 }]);
   });
 
-  it("mezcla de colores: el pack se reparte por unidad y la suma es el pack", () => {
+  it("un rosado agotado se cobra como negro: el pack entero queda en una linea", () => {
     const two = buildOrderLines(sleepMaskItem(["rosado", "negro"]), NO_UPSELLS);
-    expect(two).toEqual([
-      { product: "sleepmask", color: "negro", quantity: 1, amount: 134500 },
-      { product: "sleepmask", color: "rosado", quantity: 1, amount: 134500 },
-    ]);
+    expect(two).toEqual([{ product: "sleepmask", color: "negro", quantity: 2, amount: 269000 }]);
     const three = buildOrderLines(sleepMaskItem(["negro", "rosado", "negro"]), NO_UPSELLS);
-    expect(three).toEqual([
-      { product: "sleepmask", color: "negro", quantity: 2, amount: 246000 },
-      { product: "sleepmask", color: "rosado", quantity: 1, amount: 123000 },
-    ]);
+    expect(three).toEqual([{ product: "sleepmask", color: "negro", quantity: 3, amount: 369000 }]);
     expect(sumLines(three)).toBe(369000);
   });
 
@@ -149,8 +143,8 @@ describe("packs del antifaz sin lentes", () => {
   });
 
   it("nombre corto del pedido", () => {
-    expect(describeMaskColors(["rosado"])).toBe("Antifaz 3D Rosado");
-    expect(describeMaskColors(["rosado", "negro", "negro"])).toBe("3 antifaces 3D: 2 negros, 1 rosado");
+    expect(describeMaskColors(["rosado"])).toBe("Antifaz 3D Negro");
+    expect(describeMaskColors(["rosado", "negro", "negro"])).toBe("3 antifaces 3D: 3 negros");
   });
 });
 

@@ -40,7 +40,7 @@ export const MASK_COLORS: Readonly<Record<MaskColorId, MaskColor>> = {
     swatch: "#F2B8C6",
     ring: "#F2B8C6",
     needsOutline: false,
-    soldOut: false,
+    soldOut: true,
   },
 };
 
