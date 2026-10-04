@@ -1,33 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { resizeMaskPicks, resolveActiveMaskColor, selectedUnitAfterResize } from "@/lib/mask-colors";
+import {
+  MASK_COLOR_IDS,
+  resizeMaskPicks,
+  resolveActiveMaskColor,
+  selectedUnitAfterResize,
+} from "@/lib/mask-colors";
+
+describe("catalogo del antifaz", () => {
+  it("negro es el unico color: el rosado salio de la web", () => {
+    expect(MASK_COLOR_IDS).toEqual(["negro"]);
+  });
+});
 
 describe("color activo de /sleep-mask", () => {
-  it("con colores mezclados manda la unidad seleccionada", () => {
-    expect(resolveActiveMaskColor(["negro", "rosado"], 1)).toBe("rosado");
-    expect(resolveActiveMaskColor(["negro", "rosado"], 0)).toBe("negro");
-  });
-
-  it("sin ninguna tocada manda la primera", () => {
-    expect(resolveActiveMaskColor(["rosado", "negro", "negro"], 0)).toBe("rosado");
+  it("sin ninguna unidad tocada manda la primera", () => {
+    expect(resolveActiveMaskColor(["negro", "negro"], 0)).toBe("negro");
   });
 
   it("si la unidad seleccionada sale del pedido manda la primera", () => {
-    const quantity = 1;
-    const unit = selectedUnitAfterResize(1, quantity);
+    const unit = selectedUnitAfterResize(1, 1);
     expect(unit).toBe(0);
-    expect(resolveActiveMaskColor(resizeMaskPicks(["negro", "rosado"], quantity), unit)).toBe("negro");
+    expect(resolveActiveMaskColor(resizeMaskPicks(["negro", "negro"], 1), unit)).toBe("negro");
     expect(selectedUnitAfterResize(1, 3)).toBe(1);
   });
 
-  it("tocar el color que una unidad ya tiene la selecciona igual", () => {
-    // La pagina marca la unidad en cada onChange, cambie o no el color.
-    const picks = ["rosado", "negro"] as const;
-    expect(resolveActiveMaskColor(picks, 0)).toBe("rosado");
-    expect(resolveActiveMaskColor(picks, 1)).toBe("negro");
+  it("siempre es un color del pedido", () => {
+    expect(resolveActiveMaskColor(["negro"], 7)).toBe("negro");
+    expect(resolveActiveMaskColor([], 0)).toBe("negro");
   });
 
-  it("siempre es un color del pedido", () => {
-    expect(resolveActiveMaskColor(["negro", "rosado"], 7)).toBe("negro");
-    expect(resolveActiveMaskColor(["rosado"], 7)).toBe("rosado");
+  it("al crecer el pedido completa con negro", () => {
+    expect(resizeMaskPicks(["negro"], 3)).toEqual(["negro", "negro", "negro"]);
   });
 });

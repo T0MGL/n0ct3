@@ -33,7 +33,7 @@ interface LineBase {
 
 /**
  * Una linea por producto y, en el antifaz, una por color: cada color es un SKU
- * distinto en Ordefy. Dos negros y un rosado son dos lineas. Los lentes van en
+ * distinto en Ordefy. Los lentes van en
  * una sola linea con el color de cada unidad, porque en Ordefy el pack es un
  * solo item con su composicion adentro.
  */
@@ -69,8 +69,8 @@ export const PRIORITY_SHIPPING: AddOn = {
 
 /**
  * Packs del antifaz comprado sin lentes ni clip-on, solo en la web (/sleep-mask).
- * El pack se cuenta sobre el total de antifaces del pedido, colores sumados: un
- * negro y un rosado son el pack de dos. Helena cobra lineal y no lee esto.
+ * El pack se cuenta sobre el total de antifaces del pedido: dos antifaces son el
+ * pack de dos. Helena cobra lineal y no lee esto.
  * Espejo en nocte-backend/server.js (SLEEP_MASK_PACK_PRICE): si cambia un
  * precio, cambia en los dos lados o el backend rebota los pedidos en COD.
  */
@@ -265,7 +265,7 @@ export function metaNumItems(item: CheckoutItem, lines: readonly OrderLine[]): n
     .reduce((units, line) => units + line.quantity, 0);
 }
 
-/** "1 negro, 2 rosados": el color de cada antifaz del pedido, en el orden del catalogo. */
+/** "2 negros": el color de cada antifaz del pedido, en el orden del catalogo. */
 export function maskColorBreakdown(colors: readonly MaskColorId[]): string {
   // Los dos nombres terminan en vocal, asi que el plural es sumar una s.
   return countMaskColors(colors)
@@ -273,7 +273,7 @@ export function maskColorBreakdown(colors: readonly MaskColorId[]): string {
     .join(", ");
 }
 
-/** Como se nombra el pedido de antifaces en textos cortos: "Antifaz 3D Negro", "2 antifaces 3D: 1 negro, 1 rosado". */
+/** Como se nombra el pedido de antifaces en textos cortos: "Antifaz 3D Negro", "2 antifaces 3D: 2 negros". */
 export function describeMaskColors(colors: readonly MaskColorId[]): string {
   if (colors.length === 1) return `Antifaz 3D ${MASK_COLORS[resolveSelectableMaskColor(colors[0])].name}`;
   return `${colors.length} antifaces 3D: ${maskColorBreakdown(colors)}`;

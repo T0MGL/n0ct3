@@ -106,7 +106,7 @@ const SleepMask = () => {
   // REGLA DE COLOR, una sola para la pagina (resolveActiveMaskColor): la unidad
   // seleccionada manda y, si no esta en el pedido, la primera. La siguen las
   // fotos del antifaz (hero, construccion y ritual); la barra fija no tiene
-  // foto. Las rosadas de construccion son recoloreos (ver photos.ts).
+  // foto.
   const [selectedUnit, setSelectedUnit] = useState(0);
   const activeColor = resolveActiveMaskColor(picks, selectedUnit);
   const heroCtaRef = useRef<HTMLButtonElement>(null);

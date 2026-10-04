@@ -21,7 +21,7 @@ const FAQS: readonly FaqEntry[] = [
   },
   {
     q: "¿Qué colores hay?",
-    a: `Negro y rosado. Los dos tienen la misma copa 3D y la misma correa ajustable.${MASK_SOLD_OUT_NOTICE ? ` ${MASK_SOLD_OUT_NOTICE}` : ""}`,
+    a: `Negro. Tiene la copa 3D y la correa ajustable.${MASK_SOLD_OUT_NOTICE ? ` ${MASK_SOLD_OUT_NOTICE}` : ""}`,
   },
   {
     q: "¿Cómo pago y cuánto sale el envío?",
