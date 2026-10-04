@@ -6,7 +6,7 @@
 // El SKU de cada color vive en el backend (nocte-backend/server.js), junto al
 // resto del contrato con Ordefy. Aca solo la clave, el nombre y la muestra.
 
-export type MaskColorId = "negro" | "rosado";
+export type MaskColorId = "negro";
 
 export interface MaskColor {
   id: MaskColorId;
@@ -20,7 +20,7 @@ export interface MaskColor {
   needsOutline: boolean;
   /**
    * Flag manual de stock. En true el color se sigue mostrando pero no se puede
-   * elegir. El rosado se agota primero: hay bastante menos que del negro.
+   * elegir.
    */
   soldOut: boolean;
 }
@@ -34,17 +34,9 @@ export const MASK_COLORS: Readonly<Record<MaskColorId, MaskColor>> = {
     needsOutline: true,
     soldOut: false,
   },
-  rosado: {
-    id: "rosado",
-    name: "Rosado",
-    swatch: "#F2B8C6",
-    ring: "#F2B8C6",
-    needsOutline: false,
-    soldOut: true,
-  },
 };
 
-export const MASK_COLOR_IDS = ["negro", "rosado"] as const satisfies readonly MaskColorId[];
+export const MASK_COLOR_IDS = ["negro"] as const satisfies readonly MaskColorId[];
 
 export const isMaskColorSoldOut = (id: MaskColorId): boolean => MASK_COLORS[id].soldOut;
 
