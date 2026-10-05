@@ -293,7 +293,7 @@ const MASK_ORDER_BODY = {
   total: 348000,
   colors: ['rojo'],
   lines: [
-    { product: 'sleepmask', color: 'rosado', quantity: 1, amount: 119000 },
+    { product: 'sleepmask', color: 'negro', quantity: 1, amount: 119000 },
     { product: 'lentes', quantity: 1, amount: 229000, colors: ['rojo'] },
   ],
 };

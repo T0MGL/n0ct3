@@ -651,20 +651,15 @@ const SIMPLE_PRODUCT = {
   'envio-prioritario': { sku: 'NOCTE-ENVIO-PRIORITARIO', name: 'Envío Prioritario VIP' },
 };
 
-// El antifaz tiene un SKU por color: NOCTE-SLEEPMASK-3D es el padre y Ordefy lo
-// rechaza. Cada linea de antifaz trae su `color` y sale con el SKU de esa
-// variante; dos negros y un rosado son dos items. Los `name` coinciden con el
+// El antifaz tiene un SKU por variante: NOCTE-SLEEPMASK-3D es el padre y Ordefy
+// lo rechaza. Negro es el unico color a la venta; cualquier otro color no tiene
+// entrada aca y readOrderLines lo separa. Los `name` coinciden con el
 // variant_title del catalogo de Ordefy.
 const SLEEP_MASK_VARIANT = {
   negro: {
     sku: 'NOCTE-SLEEPMASK-3D-NEGRO',
     name: 'NOCTE Sleep Mask 3D Negro',
     label: 'NOCTE® Antifaz 3D negro para dormir',
-  },
-  rosado: {
-    sku: 'NOCTE-SLEEPMASK-3D-ROSADO',
-    name: 'NOCTE Sleep Mask 3D Rosado',
-    label: 'NOCTE® Antifaz 3D rosado para dormir',
   },
 };
 
@@ -1032,7 +1027,7 @@ function purchaseContent(lines) {
  *   sku         el SKU que va a Ordefy. En lentes es el del pack, con
  *               quantity 1 en Ordefy: no multiplicar sku por quantity.
  *   name        como lo lee el cliente, en espanol.
- *   color       solo sleepmask: 'negro' | 'rosado'. Una linea por color.
+ *   color       solo sleepmask: 'negro', el unico color a la venta. Una linea por color.
  *   colors      solo lentes: el tono de cada lente, uno por unidad, ya
  *               resuelto como va a Ordefy ('rojo' | 'naranja' | 'amarillo').
  *
