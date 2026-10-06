@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run && node --test nocte-backend/sku-contract.test.js nocte-backend/meta-capi.test.js nocte-backend/attribution.test.js"
+    "test": "vitest run && node --test nocte-backend/sku-contract.test.js nocte-backend/meta-capi.test.js nocte-backend/attribution.test.js nocte-backend/payment-alerts.test.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

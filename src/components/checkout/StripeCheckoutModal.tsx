@@ -439,6 +439,12 @@ interface StripeCheckoutModalProps {
   onClose: () => void;
   onBack: () => void;
   onSuccess: (result: PaymentResult) => void;
+  /**
+   * Guarda el pedido antes de confirmar la tarjeta, para el caso en que Stripe
+   * saque al cliente de la pagina (banco, 3DS a pantalla completa). Devuelve
+   * que llamar cuando la confirmacion vuelve a esta pagina.
+   */
+  preparePaymentRedirect?: (result: PaymentResult) => (discardPending: boolean) => void;
   /** Que se esta comprando: pack de lentes, clip-on o antifaz. Los upsells se eligen aca. */
   item: CheckoutItem;
   currency: string;
@@ -462,8 +468,11 @@ const CheckoutForm = ({
   customerData,
   onCloseAttempt,
   syncPaymentIntentAmount,
+  preparePaymentRedirect,
+  paymentIntentId,
 }: Omit<StripeCheckoutModalProps, 'isOpen'> & {
   onCloseAttempt: () => void;
+  paymentIntentId: string | null;
   /** Deja el PaymentIntent en el monto pedido. No-op si ya esta ahi. */
   syncPaymentIntentAmount: (amount: number) => Promise<void>;
 }) => {
@@ -690,6 +699,18 @@ const CheckoutForm = ({
         return;
       }
 
+      const settleRedirectPrep = paymentIntentId
+        ? preparePaymentRedirect?.({
+            paymentIntentId,
+            paymentType: 'Card',
+            isPaid: true,
+            deliveryType: isPriorityShipping ? 'premium' : 'común',
+            lines: orderLines,
+            finalTotal,
+            email: emailTrimmed,
+          })
+        : undefined;
+
       // Confirm payment using PaymentElement
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
@@ -711,7 +732,15 @@ const CheckoutForm = ({
           },
         },
         redirect: 'if_required',
+      }).catch((error: unknown) => {
+        settleRedirectPrep?.(false);
+        throw error;
       });
+
+      // Error o cobro resuelto en la pagina: no hubo redirect y el pedido
+      // guardado sobra. Cualquier otra respuesta lo conserva y lo poda el TTL:
+      // no dependemos de que Stripe nunca resuelva mientras redirige.
+      settleRedirectPrep?.(Boolean(error) || paymentIntent?.status === 'succeeded');
 
       if (error) {
         setErrorMessage(error.message || 'Error al procesar el pago');
@@ -1161,6 +1190,7 @@ export const StripeCheckoutModal = ({
   onClose,
   onBack,
   onSuccess,
+  preparePaymentRedirect,
   item,
   currency,
   isProcessingOrder = false,
@@ -1403,6 +1433,8 @@ export const StripeCheckoutModal = ({
                 >
                   <CheckoutForm
                     onSuccess={onSuccess}
+                    preparePaymentRedirect={preparePaymentRedirect}
+                    paymentIntentId={paymentIntentId}
                     onClose={onClose}
                     onBack={onBack}
                     item={item}
