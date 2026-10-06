@@ -81,7 +81,7 @@ const TerminosCondiciones = () => {
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li><strong>Tarjeta de crédito/débito:</strong> Procesado de forma segura por Stripe</li>
-              <li><strong>Pago contra entrega:</strong> En efectivo al momento de recibir el producto (solo Asunción y Departamento Central)</li>
+              <li><strong>Pago contra entrega:</strong> En efectivo al momento de recibir el producto, en todo el territorio de la República del Paraguay. El courier coordina con usted la fecha y el horario de entrega. Si su localidad no tuviera cobertura, se lo informaremos antes de confirmar el pedido.</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
               Los precios pueden variar sin previo aviso. El precio aplicable será el vigente al momento de confirmar su compra.
