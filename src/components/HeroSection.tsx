@@ -8,11 +8,11 @@ import {
   FaceSmileIcon,
   ArrowDownIcon
 } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import tarjetasImage from "@/assets/tarjetas.webp";
 import { LivePurchaseNotification, getRandomBuyer } from "@/components/LivePurchaseNotification";
 import { BundleSelector } from "@/components/BundleSelector";
+import { StarRating } from "@/components/StarRating";
 import { ProductHero } from "@/components/ProductHero";
 import { AuthorityBadge } from "@/components/AuthorityBadge";
 import { trackViewContent } from "@/lib/meta-pixel";
@@ -317,27 +317,7 @@ export const HeroSection = ({
               </p>
 
               {/* Star Rating + Social Proof */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-0.5">
-                  <StarIcon className="w-5 h-5 star-gold" />
-                  <StarIcon className="w-5 h-5 star-gold" />
-                  <StarIcon className="w-5 h-5 star-gold" />
-                  <StarIcon className="w-5 h-5 star-gold" />
-                  {/* El fondo de la media estrella tiene que verse apagado o
-                      el 4.8 se lee como 5 lleno. Va con un blanco al 20% y no
-                      con text-muted-foreground, que es blanco pleno a proposito
-                      en todo el sitio: aca el atenuado ES el dato. */}
-                  <div className="relative w-5 h-5">
-                    <StarIcon className="w-5 h-5 text-white/20 absolute" />
-                    <div className="overflow-hidden absolute inset-0" style={{ width: '80%' }}>
-                      <StarIcon className="w-5 h-5 star-gold" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-foreground font-medium">
-                  4.8/5 (+5.380 Clientes Satisfechos)
-                </p>
-              </div>
+              <StarRating partial={0.8} label="4.8/5 (+5.380 Clientes Satisfechos)" />
             </div>
 
             {/* Benefits Grid - 2x2 Icons */}
